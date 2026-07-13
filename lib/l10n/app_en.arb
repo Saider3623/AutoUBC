@@ -1,0 +1,179 @@
+{
+  "@@locale": "en",
+  "appTitle": "AutoUBC",
+  "addCar": "Add Car",
+  "selectCar": "Select Car",
+  "deleteCar": "Delete Current Car",
+  "carSettings": "Car Settings",
+  "reminders": "Reminders",
+  "serviceBook": "Service Book",
+  "exportReports": "Export Reports",
+  "enterCarName": "Enter car name",
+  "cancel": "Cancel",
+  "add": "Add",
+  "deleteConfirmation": "Are you sure you want to delete the car \"{carName}\"? All related mileage and refueling records will also be deleted.",
+  "@deleteConfirmation": {
+    "description": "Confirmation message before deleting a car",
+    "placeholders": {
+      "carName": {
+        "type": "String",
+        "description": "Name of the car"
+      }
+    }
+  },
+  "delete": "Delete",
+  "confirm": "Confirm",
+  "enterData": "Enter Data",
+  "historyAndReports": "History and Reports",
+  "date": "Date",
+  "odometer": "Odometer",
+  "km": "km",
+  "liters": "l",
+  "save": "Save",
+  "saveOdometerSuccess": "Odometer reading saved",
+  "saveError": "Save error: {error}",
+  "@saveError": {
+    "description": "Error message when saving fails",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Error message"
+      }
+    }
+  },
+  "refuelingAdded": "Refueling added",
+  "addRefueling": "Add Refueling",
+  "customReminder": "Other",
+  "insuranceReminder": "Insurance",
+  "maintenanceReminder": "Maintenance",
+  "inspectionReminder": "Inspection",
+  "reminderTitle": "Reminder Title",
+  "reminderCondition": "Condition",
+  "byDate": "By Date",
+  "byMileage": "By Mileage",
+  "repeatEvery": "Repeat every",
+  "months": "months",
+  "currentMileage": "Current mileage: {mileage} km",
+  "@currentMileage": {
+    "description": "Current mileage display",
+    "placeholders": {
+      "mileage": {
+        "type": "int",
+        "description": "Current mileage value"
+      }
+    }
+  },
+  "mileage": "Mileage: {current} / {due} km",
+  "@mileage": {
+    "description": "Mileage reminder display",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "description": "Current mileage"
+      },
+      "due": {
+        "type": "int",
+        "description": "Due mileage"
+      }
+    }
+  },
+  "upcoming": "Upcoming",
+  "overdue": "Overdue",
+  "signInToGoogleDrive": "Sign in to Google Drive",
+  "signOutFromGoogle": "Sign out from Google",
+  "connectedToGoogleDrive": "Connected to Google Drive ✅",
+  "connectionFailed": "Failed to connect",
+  "dataRestoredFromGoogleDrive": "Data restored from Google Drive ☁️",
+  "signedOutFromGoogleDrive": "Signed out from Google Drive",
+  "addCarFirst": "Add a car first",
+  "noReminders": "No reminders",
+  "edit": "Edit",
+  "addReminder": "Add Reminder",
+  "addACarToGetStarted": "Add a car to get started",
+  "active": "Active",
+  "completed": "Completed",
+  "language": "Language",
+  "selectLanguage": "Select language",
+  "selectMonthForReport": "Select month for report",
+  "exportToPDF": "Export to PDF",
+  "exportError": "Export error: {error}",
+  "@exportError": {
+    "description": "Error message when export fails",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Error message"
+      }
+    }
+  },
+  "loading": "Loading…",
+  "english": "English",
+  "russian": "Russian",
+  "ukrainian": "Ukrainian",
+  "selectACar": "Select a car",
+  "noServiceLogs": "No service book entries",
+  "addServiceLog": "Add Service Entry",
+  "editServiceLog": "Edit Service Entry",
+  "mileageKm": "Mileage (km)",
+  "whatWasDone": "What was done (new line = new item)",
+  "confirmDelete": "Confirm deletion",
+  "deleteServiceLogConfirmation": "Are you sure you want to delete this entry?",
+  "history": "History",
+  "weeklyReport": "Weekly Report",
+  "selectCarGeneric": "Select a car",
+  "noRecords": "No records",
+  "deleteOdometerLogConfirmation": "Are you sure you want to delete this odometer entry?",
+  "deleteFuelLogConfirmation": "Are you sure you want to delete this refueling entry?",
+  "odometerLabel": "Odometer",
+  "kilometers": "km",
+  "litersShort": "L",
+  "saveTooltip": "Save",
+  "fuelTypesForCar": "Fuel types for {carName}",
+  "@fuelTypesForCar": {
+    "description": "Fuel types section title",
+    "placeholders": {
+      "carName": {
+        "type": "String",
+        "description": "Name of the car"
+      }
+    }
+  },
+  "fuelTypesHint": "Add or remove fuel types used by this car.",
+  "newFuelTypeHint": "New type (e.g., Diesel, 98, Electric)",
+  "weeklyReportDistance": "Distance: {distance} km",
+  "@weeklyReportDistance": {
+    "description": "Weekly report distance display",
+    "placeholders": {
+      "distance": {
+        "type": "int",
+        "description": "Distance in kilometers"
+      }
+    }
+  },
+  "odometerSection": "ODOMETER",
+  "startLabel": "Start",
+  "endLabel": "End",
+  "fuelSection": "FUEL",
+  "noRefuels": "No refuels",
+  "averageFuelConsumption": "Average Fuel Consumption (last 30 days)",
+  "averageFuelConsumptionFor": "{fuelType}: {consumption} L/100km",
+  "@averageFuelConsumptionFor": {
+    "description": "Average fuel consumption display",
+    "placeholders": {
+      "fuelType": {
+        "type": "String",
+        "description": "Type of fuel"
+      },
+      "consumption": {
+        "type": "String",
+        "description": "Fuel consumption value"
+      }
+    }
+  },
+  "primaryFuelType": "Primary Fuel Type",
+  "selectPrimaryFuelType": "Select primary fuel type",
+  "carName": "Car Name",
+  "editCar": "Edit Car",
+  "carAdded": "Car added successfully!",
+  "carUpdated": "Car updated successfully!"
+}

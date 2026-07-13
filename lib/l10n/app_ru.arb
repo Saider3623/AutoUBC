@@ -1,0 +1,179 @@
+{
+  "@@locale": "ru",
+  "appTitle": "AutoUBC",
+  "addCar": "Добавить автомобиль",
+  "selectCar": "Выбрать автомобиль",
+  "deleteCar": "Удалить текущий автомобиль",
+  "carSettings": "Настройки автомобиля",
+  "reminders": "Напоминания",
+  "serviceBook": "Сервисная книжка",
+  "exportReports": "Экспорт отчетов",
+  "enterCarName": "Введите название автомобиля",
+  "cancel": "Отмена",
+  "add": "Добавить",
+  "deleteConfirmation": "Вы уверены, что хотите удалить автомобиль \"{carName}\"? Все связанные записи пробега и заправок также будут удалены.",
+  "@deleteConfirmation": {
+    "description": "Подтверждение перед удалением автомобиля",
+    "placeholders": {
+      "carName": {
+        "type": "String",
+        "description": "Название автомобиля"
+      }
+    }
+  },
+  "delete": "Удалить",
+  "confirm": "Подтвердить",
+  "enterData": "Ввод данных",
+  "historyAndReports": "История и отчеты",
+  "date": "Дата",
+  "odometer": "Одометр",
+  "km": "км",
+  "liters": "л",
+  "save": "Сохранить",
+  "saveOdometerSuccess": "Показания одометра сохранены",
+  "saveError": "Ошибка сохранения: {error}",
+  "@saveError": {
+    "description": "Сообщение об ошибке при сохранении",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Текст ошибки"
+      }
+    }
+  },
+  "refuelingAdded": "Заправка добавлена",
+  "addRefueling": "Добавить заправку",
+  "customReminder": "Другое",
+  "insuranceReminder": "Страховка",
+  "maintenanceReminder": "ТО",
+  "inspectionReminder": "Техосмотр",
+  "reminderTitle": "Название напоминания",
+  "reminderCondition": "Условие",
+  "byDate": "По дате",
+  "byMileage": "По пробегу",
+  "repeatEvery": "Повторять каждые",
+  "months": "месяцев",
+  "currentMileage": "Текущий пробег: {mileage} км",
+  "@currentMileage": {
+    "description": "Отображение текущего пробега",
+    "placeholders": {
+      "mileage": {
+        "type": "int",
+        "description": "Значение текущего пробега"
+      }
+    }
+  },
+  "mileage": "Пробег: {current} / {due} км",
+  "@mileage": {
+    "description": "Отображение напоминания по пробегу",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "description": "Текущий пробег"
+      },
+      "due": {
+        "type": "int",
+        "description": "Пробег, на который задано напоминание"
+      }
+    }
+  },
+  "upcoming": "Скоро",
+  "overdue": "Просрочено",
+  "signInToGoogleDrive": "Войти в Google Drive",
+  "signOutFromGoogle": "Выйти из Google",
+  "connectedToGoogleDrive": "Подключено к Google Drive ✅",
+  "connectionFailed": "Не удалось подключиться",
+  "dataRestoredFromGoogleDrive": "Данные восстановлены из Google Drive ☁️",
+  "signedOutFromGoogleDrive": "Отключено от Google Drive",
+  "addCarFirst": "Сначала добавьте автомобиль",
+  "noReminders": "Нет напоминаний",
+  "edit": "Редактировать",
+  "addReminder": "Добавить напоминание",
+  "addACarToGetStarted": "Добавьте автомобиль, чтобы начать",
+  "active": "Активные",
+  "completed": "Завершенные",
+  "language": "Язык",
+  "selectLanguage": "Выберите язык",
+  "selectMonthForReport": "Выберите месяц для отчета",
+  "exportToPDF": "Экспорт в PDF",
+  "exportError": "Ошибка при экспорте: {error}",
+  "@exportError": {
+    "description": "Сообщение об ошибке при экспорте",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Текст ошибки"
+      }
+    }
+  },
+  "loading": "Загрузка…",
+  "english": "Английский",
+  "russian": "Русский",
+  "ukrainian": "Украинский",
+  "selectACar": "Выберите автомобиль",
+  "noServiceLogs": "Нет записей в сервисной книжке",
+  "addServiceLog": "Добавить запись ТО",
+  "editServiceLog": "Редактировать запись ТО",
+  "mileageKm": "Пробег (км)",
+  "whatWasDone": "Что сделано (новая строка = новый пункт)",
+  "confirmDelete": "Подтвердить удаление",
+  "deleteServiceLogConfirmation": "Вы уверены, что хотите удалить эту запись?",
+  "history": "История",
+  "weeklyReport": "Еженедельный отчет",
+  "selectCarGeneric": "Выберите автомобиль",
+  "noRecords": "Нет записей",
+  "deleteOdometerLogConfirmation": "Вы уверены, что хотите удалить эту запись пробега?",
+  "deleteFuelLogConfirmation": "Вы уверены, что хотите удалить эту запись заправки?",
+  "odometerLabel": "Одометр",
+  "kilometers": "км",
+  "litersShort": "л",
+  "saveTooltip": "Сохранить",
+  "fuelTypesForCar": "Типы топлива для {carName}",
+  "@fuelTypesForCar": {
+    "description": "Заголовок секции типов топлива",
+    "placeholders": {
+      "carName": {
+        "type": "String",
+        "description": "Название автомобиля"
+      }
+    }
+  },
+  "fuelTypesHint": "Добавьте или удалите типы топлива, используемые этим автомобилем.",
+  "newFuelTypeHint": "Новый тип (например, Дизель, 98, Электрика)",
+  "weeklyReportDistance": "Пробег: {distance} км",
+  "@weeklyReportDistance": {
+    "description": "Отображение пробега в еженедельном отчете",
+    "placeholders": {
+      "distance": {
+        "type": "int",
+        "description": "Расстояние в километрах"
+      }
+    }
+  },
+  "odometerSection": "ОДОМЕТР",
+  "startLabel": "Начало",
+  "endLabel": "Конец",
+  "fuelSection": "ТОПЛИВО",
+  "noRefuels": "Нет заправок",
+  "averageFuelConsumption": "Средний расход топлива (последние 30 дней)",
+  "averageFuelConsumptionFor": "{fuelType}: {consumption} л/100км",
+  "@averageFuelConsumptionFor": {
+    "description": "Отображение среднего расхода топлива",
+    "placeholders": {
+      "fuelType": {
+        "type": "String",
+        "description": "Тип топлива"
+      },
+      "consumption": {
+        "type": "String",
+        "description": "Значение расхода топлива"
+      }
+    }
+  },
+  "primaryFuelType": "Основной вид топлива",
+  "selectPrimaryFuelType": "Выберите основной вид топлива",
+  "carName": "Название автомобиля",
+  "editCar": "Изменить автомобиль",
+  "carAdded": "Автомобиль успешно добавлен!",
+  "carUpdated": "Автомобиль успешно обновлен!"
+}
