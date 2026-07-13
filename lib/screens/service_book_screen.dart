@@ -6,8 +6,23 @@ import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-class ServiceBookScreen extends StatelessWidget {
+class ServiceBookScreen extends StatefulWidget {
   const ServiceBookScreen({super.key});
+
+  @override
+  State<ServiceBookScreen> createState() => _ServiceBookScreenState();
+}
+
+class _ServiceBookScreenState extends State<ServiceBookScreen> {
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,8 +32,64 @@ class ServiceBookScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.serviceBook),
+        leading: _isSearching
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _searchQuery = '';
+                    _searchController.clear();
+                  });
+                },
+              )
+            : null,
+        title: _isSearching
+            ? Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: loc.search,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon:
+                                const Icon(Icons.clear, color: Colors.black54),
+                            onPressed: () {
+                              setState(() {
+                                _searchQuery = '';
+                                _searchController.clear();
+                              });
+                            },
+                          )
+                        : null,
+                  ),
+                  style: const TextStyle(color: Colors.black87),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                ),
+              )
+            : Text(loc.serviceBook),
         actions: [
+          if (!_isSearching)
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                setState(() {
+                  _isSearching = true;
+                });
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _showAddServiceDialog(context),
@@ -31,7 +102,13 @@ class ServiceBookScreen extends StatelessWidget {
             return Center(child: Text(loc.selectACar));
           }
 
-          final logs = provider.serviceLogs;
+          final logs = _searchQuery.isEmpty
+              ? provider.serviceLogs
+              : provider.serviceLogs
+                  .where((log) => log.description
+                      .toLowerCase()
+                      .contains(_searchQuery.toLowerCase()))
+                  .toList();
 
           if (logs.isEmpty) {
             return Center(

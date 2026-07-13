@@ -175,5 +175,6 @@
   "carName": "Car Name",
   "editCar": "Edit Car",
   "carAdded": "Car added successfully!",
-  "carUpdated": "Car updated successfully!"
+  "carUpdated": "Car updated successfully!",
+  "search": "Search"
 }
