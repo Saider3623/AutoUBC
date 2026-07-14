@@ -7,6 +7,7 @@ import '../models/odometer_log.dart';
 import '../models/fuel_log.dart';
 import '../models/reminder.dart';
 import '../models/service_log.dart';
+import '../models/note.dart';
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -58,7 +59,8 @@ class DatabaseService {
         OdometerLogSchema,
         FuelLogSchema,
         ReminderSchema,
-        ServiceLogSchema
+        ServiceLogSchema,
+        NoteSchema
       ],
       directory: appDir.path,
       name: 'autoubc',
@@ -97,6 +99,7 @@ class DatabaseService {
       await db.fuelLogs.filter().carIdEqualTo(car.id).deleteAll();
       await db.reminders.filter().carIdEqualTo(car.id).deleteAll();
       await db.serviceLogs.filter().carIdEqualTo(car.id).deleteAll();
+      await db.notes.filter().carIdEqualTo(car.id).deleteAll();
       // Удаляем саму машину
       await db.cars.delete(car.id);
     });
@@ -318,6 +321,33 @@ class DatabaseService {
     await db.writeTxn(() => db.serviceLogs.delete(log.id));
   }
 
+  // Методы для работы с Note
+  Future<List<Note>> getNotesForCar(int carId) async {
+    final db = await isar;
+    return db.notes.filter().carIdEqualTo(carId).sortByDateTimeDesc().findAll();
+  }
+
+  Future<void> addNote(Note note) async {
+    final db = await isar;
+    final car = await db.cars.get(note.carId!);
+    if (car == null) return;
+
+    await db.writeTxn(() async {
+      note.car.value = car;
+      await db.notes.put(note);
+    });
+  }
+
+  Future<void> updateNote(Note note) async {
+    final db = await isar;
+    await db.writeTxn(() => db.notes.put(note));
+  }
+
+  Future<void> deleteNote(Note note) async {
+    final db = await isar;
+    await db.writeTxn(() => db.notes.delete(note.id));
+  }
+
   // Методы для бэкапа и восстановления
   Future<String> getDatabasePath() async {
     final db = await isar;
@@ -328,28 +358,30 @@ class DatabaseService {
     try {
       final dbPath = await getDatabasePath();
       final dbFile = File(dbPath);
-      
+
       // Получаем директорию для сохранения бэкапов
       Directory directory;
       if (Platform.isAndroid) {
-        directory = await getExternalStorageDirectory() ?? await getApplicationDocumentsDirectory();
+        directory = await getExternalStorageDirectory() ??
+            await getApplicationDocumentsDirectory();
       } else {
         directory = await getApplicationDocumentsDirectory();
       }
-      
+
       final backupDir = Directory('${directory.path}/AutoUBC_Backups');
       if (!await backupDir.exists()) {
         await backupDir.create(recursive: true);
       }
-      
+
       // Создаем имя файла бэкапа с датой и временем
       final now = DateTime.now();
-      final backupFileName = 'autoubc_backup_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}.isar';
+      final backupFileName =
+          'autoubc_backup_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}.isar';
       final backupFile = File('${backupDir.path}/$backupFileName');
-      
+
       // Копируем файл базы данных
       await dbFile.copy(backupFile.path);
-      
+
       // Удаляем старые бэкапы, оставляем последние 7
       await _cleanOldBackups(backupDir);
     } catch (e) {
@@ -365,7 +397,7 @@ class DatabaseService {
           .where((file) => file.path.endsWith('.isar'))
           .toList()
         ..sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
-      
+
       // Удаляем все бэкапы, кроме последних 7
       if (backupFiles.length > 7) {
         for (int i = 7; i < backupFiles.length; i++) {

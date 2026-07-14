@@ -7,6 +7,7 @@ import '../models/odometer_log.dart';
 import '../models/fuel_log.dart';
 import '../models/reminder.dart';
 import '../models/service_log.dart';
+import '../models/note.dart';
 
 class AppProvider extends ChangeNotifier {
   final DatabaseService _db = DatabaseService();
@@ -16,6 +17,7 @@ class AppProvider extends ChangeNotifier {
   List<FuelLog> _fuelLogs = [];
   List<Reminder> _reminders = [];
   List<ServiceLog> _serviceLogs = [];
+  List<Note> _notes = [];
   bool _isLoading = false;
   Future<bool> Function()?
       onDataSaved; // Изменено: теперь возвращает результат синхронизации
@@ -30,6 +32,7 @@ class AppProvider extends ChangeNotifier {
   List<FuelLog> get fuelLogs => _fuelLogs;
   List<Reminder> get reminders => _reminders;
   List<ServiceLog> get serviceLogs => _serviceLogs;
+  List<Note> get notes => _notes;
   bool get isLoading => _isLoading;
 
   AppProvider() {
@@ -131,6 +134,7 @@ class AppProvider extends ChangeNotifier {
       _fuelLogs = await _db.getFuelLogsForCar(carId);
       _reminders = await _db.getRemindersForCar(carId);
       _serviceLogs = await _db.getServiceLogsForCar(carId);
+      _notes = await _db.getNotesForCar(carId);
     } catch (e) {
       debugPrint('Помилка завантаження логів: $e');
     } finally {
@@ -315,6 +319,44 @@ class AppProvider extends ChangeNotifier {
       _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка видалення логу обслуговування: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> addNote(Note note) async {
+    try {
+      if (_selectedCar == null) return;
+      await _db.addNote(note);
+      await loadLogsForCar(_selectedCar!.id);
+      _scheduleBackupAndSync();
+    } catch (e) {
+      debugPrint('Помилка додавання нотатки: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateNote(Note note) async {
+    try {
+      await _db.updateNote(note);
+      if (_selectedCar != null) {
+        await loadLogsForCar(_selectedCar!.id);
+      }
+      _scheduleBackupAndSync();
+    } catch (e) {
+      debugPrint('Помилка оновлення нотатки: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteNote(Note note) async {
+    try {
+      await _db.deleteNote(note);
+      if (_selectedCar != null) {
+        await loadLogsForCar(_selectedCar!.id);
+      }
+      _scheduleBackupAndSync();
+    } catch (e) {
+      debugPrint('Помилка видалення нотатки: $e');
       rethrow;
     }
   }
