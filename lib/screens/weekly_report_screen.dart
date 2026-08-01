@@ -305,7 +305,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     DateTime currentStart = firstDayOfMonth;
     while (currentStart.isBefore(lastDayOfMonth) ||
         currentStart.isAtSameMomentAs(lastDayOfMonth)) {
-      int daysToSunday = 7 - currentStart.weekday;
+      final daysToSunday = 7 - currentStart.weekday;
       DateTime currentEnd = currentStart.add(Duration(days: daysToSunday));
 
       if (currentEnd.isAfter(lastDayOfMonth)) {
@@ -333,12 +333,13 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
         await _db.getFuelLogsInRange(carId, startString, endString);
 
     // Получаем последнюю запись до начала недели
-    final previousWeekLog = await _db.getLastOdometerLogBeforeDate(carId, startString);
-    
+    final previousWeekLog =
+        await _db.getLastOdometerLogBeforeDate(carId, startString);
+
     int? odometerStart;
     int? odometerEnd;
     int distance = 0;
-    
+
     if (odometerLogs.isNotEmpty) {
       odometerLogs.sort((a, b) => a.dateString.compareTo(b.dateString));
       // Если есть запись из предыдущей недели - берем её, иначе первую запись текущей недели

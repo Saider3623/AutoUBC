@@ -126,7 +126,6 @@ class ReportService {
     // Bold variant: same font with pw.FontWeight.bold
     final ttfBold = ttf;
 
-    // Завантажуємо всі дані за місяць
     final startStr = DateFormat('yyyy-MM-dd').format(startDate);
     final endStr = DateFormat('yyyy-MM-dd').format(endDate);
 
@@ -137,7 +136,6 @@ class ReportService {
     final fuelLogs = await _db.getFuelLogsInRange(car.id, startStr, endStr);
     fuelLogs.sort((a, b) => a.dateString.compareTo(b.dateString));
 
-    // Розбиваємо місяць на календарні тижні
     final weeks = await _buildWeeks(
         car.id, startDate, endDate, odometerLogs, fuelLogs, languageCode, t);
 
@@ -196,11 +194,9 @@ class ReportService {
   ) async {
     final weeks = <_WeekData>[];
 
-    // Знаходимо початок першого тижня (Пн або 1-е число)
     DateTime current = monthStart;
 
     while (!current.isAfter(monthEnd)) {
-      // Кінець тижня = Неділя поточного тижня або кінець місяця
       final daysUntilSunday = 7 - current.weekday; // weekday: 1=Пн..7=Нд
       DateTime weekEnd = current.add(Duration(days: daysUntilSunday));
       if (weekEnd.isAfter(monthEnd)) weekEnd = monthEnd;
@@ -210,6 +206,7 @@ class ReportService {
         final d = DateTime.parse(log.dateString);
         return !d.isBefore(current) && !d.isAfter(weekEnd);
       }).toList();
+      weekOdoLogs.sort((a, b) => a.dateString.compareTo(b.dateString));
 
       // Заправки в межах тижня
       final weekFuelLogs = fuelLogs.where((log) {

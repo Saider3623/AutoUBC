@@ -204,12 +204,34 @@ class DatabaseService {
   Future<OdometerLog?> getLastOdometerLogBeforeDate(
       int carId, String dateString) async {
     final db = await isar;
-    return db.odometerLogs
+    final log = await db.odometerLogs
         .filter()
         .carIdEqualTo(carId)
         .dateStringLessThan(dateString)
         .sortByDateStringDesc()
         .findFirst();
+    if (log != null) {
+      return log;
+    }
+
+    final target = DateTime.tryParse(dateString);
+    if (target == null) {
+      return null;
+    }
+
+    final all = await db.odometerLogs
+        .filter()
+        .carIdEqualTo(carId)
+        .sortByDateStringDesc()
+        .findAll();
+
+    for (final item in all) {
+      final d = DateTime.tryParse(item.dateString);
+      if (d != null && d.isBefore(target)) {
+        return item;
+      }
+    }
+    return null;
   }
 
   Future<List<FuelLog>> getFuelLogsInRange(

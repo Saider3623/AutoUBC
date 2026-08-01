@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -7,6 +9,39 @@ import 'package:http/http.dart' as http;
 /// Ім'я файлу бекапу на Google Диску.
 const _kBackupFileName = 'autoubc_backup.isar';
 const _kDriveScope = 'https://www.googleapis.com/auth/drive.appdata';
+
+// #region debug-point A:dbg-config
+const String _kDbgServerUrl =
+    String.fromEnvironment('DEBUG_SERVER_URL', defaultValue: '');
+const String _kDbgSessionId = String.fromEnvironment(
+  'DEBUG_SESSION_ID',
+  defaultValue: 'google-drive-sync-missing-odometer',
+);
+const String _kDbgRunId = String.fromEnvironment('DEBUG_RUN_ID', defaultValue: 'pre-fix');
+
+Future<void> _dbg(
+  String hypothesisId,
+  String msg, {
+  Map<String, Object?> data = const {},
+}) async {
+  if (_kDbgServerUrl.isEmpty) return;
+  try {
+    await http.post(
+      Uri.parse(_kDbgServerUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'sessionId': _kDbgSessionId,
+        'runId': _kDbgRunId,
+        'hypothesisId': hypothesisId,
+        'location': 'google_drive_sync_service.dart',
+        'msg': '[DEBUG] $msg',
+        'data': data,
+        'ts': DateTime.now().millisecondsSinceEpoch,
+      }),
+    );
+  } catch (_) {}
+}
+// #endregion
 
 /// HTTP-клієнт, що автоматично додає токен авторизації Google.
 class _AuthenticatedClient extends http.BaseClient {
@@ -56,11 +91,15 @@ class GoogleDriveSyncService extends ChangeNotifier {
   /// Не показує жодних діалогів, якщо акаунт вже прив'язаний.
   Future<bool> signInSilently() async {
     try {
+      unawaited(_dbg('A', 'signInSilently:start'));
       final account = await _googleSignIn.signInSilently();
       _currentUser = account;
+      unawaited(_dbg('A', 'signInSilently:result',
+          data: {'connected': account != null}));
       notifyListeners();
       return account != null;
     } catch (e) {
+      unawaited(_dbg('B', 'signInSilently:error', data: {'error': '$e'}));
       debugPrint('[GoogleDrive] Тихий вхід не вдався: $e');
       return false;
     }
@@ -69,11 +108,15 @@ class GoogleDriveSyncService extends ChangeNotifier {
   /// Інтерактивний вхід — викликається лише по кнопці.
   Future<bool> signIn() async {
     try {
+      unawaited(_dbg('A', 'signIn:start'));
       final account = await _googleSignIn.signIn();
       _currentUser = account;
+      unawaited(
+          _dbg('A', 'signIn:result', data: {'connected': account != null}));
       notifyListeners();
       return account != null;
     } catch (e) {
+      unawaited(_dbg('B', 'signIn:error', data: {'error': '$e'}));
       debugPrint('[GoogleDrive] Помилка входу: $e');
       _lastSyncError = 'Помилка входу: $e';
       notifyListeners();
@@ -97,13 +140,20 @@ class GoogleDriveSyncService extends ChangeNotifier {
     final user = _currentUser;
     if (user == null) return null;
     try {
+      unawaited(_dbg('B', '_getDriveApi:start'));
       final auth = await user.authentication;
+      unawaited(_dbg('B', '_getDriveApi:token', data: {
+        'hasAccessToken': auth.accessToken != null,
+        'hasIdToken': auth.idToken != null,
+      }));
       final client = _AuthenticatedClient(
         {'Authorization': 'Bearer ${auth.accessToken}'},
         http.Client(),
       );
+      unawaited(_dbg('B', '_getDriveApi:ready'));
       return drive.DriveApi(client);
     } catch (e) {
+      unawaited(_dbg('B', '_getDriveApi:error', data: {'error': '$e'}));
       debugPrint('[GoogleDrive] Помилка отримання DriveApi: $e');
       return null;
     }
@@ -112,15 +162,24 @@ class GoogleDriveSyncService extends ChangeNotifier {
   /// Знайти ID файлу бекапу в appDataFolder (якщо він існує).
   Future<String?> _findBackupFileId(drive.DriveApi api) async {
     try {
+      unawaited(_dbg('C', '_findBackupFileId:start'));
       final list = await api.files.list(
         spaces: 'appDataFolder',
         q: "name = '$_kBackupFileName'",
         $fields: 'files(id, name, modifiedTime)',
       );
       if (list.files != null && list.files!.isNotEmpty) {
+        final files = list.files!;
+        unawaited(_dbg('C', '_findBackupFileId:found', data: {
+          'count': files.length,
+          'firstId': files.first.id,
+          'firstModifiedTime': files.first.modifiedTime?.toIso8601String(),
+        }));
         return list.files!.first.id;
       }
+      unawaited(_dbg('C', '_findBackupFileId:empty'));
     } catch (e) {
+      unawaited(_dbg('C', '_findBackupFileId:error', data: {'error': '$e'}));
       debugPrint('[GoogleDrive] Помилка пошуку файлу: $e');
     }
     return null;
@@ -135,6 +194,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      unawaited(_dbg('A', 'uploadBackup:start'));
       final api = await _getDriveApi();
       if (api == null) throw Exception('Не вдалося ініціалізувати Drive API');
 
@@ -144,6 +204,10 @@ class GoogleDriveSyncService extends ChangeNotifier {
       }
 
       final existingId = await _findBackupFileId(api);
+      unawaited(_dbg('A', 'uploadBackup:local', data: {
+        'existingId': existingId,
+        'fileLength': await dbFile.length(),
+      }));
       final media = drive.Media(
         dbFile.openRead(),
         await dbFile.length(),
@@ -157,6 +221,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
           existingId,
           uploadMedia: media,
         );
+        unawaited(_dbg('A', 'uploadBackup:patched', data: {'id': existingId}));
         debugPrint('[GoogleDrive] Бекап оновлено (PATCH). ID: $existingId');
       } else {
         // Файлу ще немає — створюємо.
@@ -164,12 +229,15 @@ class GoogleDriveSyncService extends ChangeNotifier {
           ..name = _kBackupFileName
           ..parents = ['appDataFolder'];
         await api.files.create(driveFile, uploadMedia: media);
+        unawaited(_dbg('A', 'uploadBackup:created'));
         debugPrint('[GoogleDrive] Бекап створено (POST).');
       }
       _isSyncing = false;
+      unawaited(_dbg('A', 'uploadBackup:success'));
       notifyListeners();
       return true;
     } catch (e) {
+      unawaited(_dbg('B', 'uploadBackup:error', data: {'error': '$e'}));
       debugPrint('[GoogleDrive] Помилка вивантаження: $e');
       _lastSyncError = 'Помилка синхронізації: $e';
       _isSyncing = false;
@@ -187,17 +255,20 @@ class GoogleDriveSyncService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      unawaited(_dbg('A', 'downloadBackup:start'));
       final api = await _getDriveApi();
       if (api == null) throw Exception('Не вдалося ініціалізувати Drive API');
 
       final fileId = await _findBackupFileId(api);
       if (fileId == null) {
+        unawaited(_dbg('C', 'downloadBackup:no-remote-file'));
         debugPrint('[GoogleDrive] Бекап на Диску не знайдено.');
         _isSyncing = false;
         notifyListeners();
         return false;
       }
 
+      unawaited(_dbg('A', 'downloadBackup:remote', data: {'id': fileId}));
       final response = await api.files.get(
         fileId,
         downloadOptions: drive.DownloadOptions.fullMedia,
@@ -208,11 +279,16 @@ class GoogleDriveSyncService extends ChangeNotifier {
       await sink.addStream(response.stream);
       await sink.close();
 
+      unawaited(_dbg('A', 'downloadBackup:wrote', data: {
+        'fileLength': await targetFile.length(),
+      }));
       debugPrint('[GoogleDrive] Бекап завантажено в $targetFilePath.');
       _isSyncing = false;
+      unawaited(_dbg('A', 'downloadBackup:success'));
       notifyListeners();
       return true;
     } catch (e) {
+      unawaited(_dbg('B', 'downloadBackup:error', data: {'error': '$e'}));
       debugPrint('[GoogleDrive] Помилка завантаження: $e');
       _lastSyncError = 'Помилка завантаження: $e';
       _isSyncing = false;
