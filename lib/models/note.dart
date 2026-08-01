@@ -11,5 +11,5 @@ class Note {
   int? carId;
 
   String description = '';
-  DateTime dateTime = DateTime.now();
+  DateTime? dateTime;
 }

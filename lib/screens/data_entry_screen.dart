@@ -316,30 +316,13 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                   // Заметки
                   Consumer<AppProvider>(
                     builder: (context, provider, child) {
-                      final loc = AppLocalizations.of(context)!;
                       final notes = provider.notes;
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Center(
-                            child: Text(
-                              loc.notes,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
                           if (notes.isEmpty)
-                            Center(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 32),
-                                child: Text(loc.noNotes),
-                              ),
-                            )
+                            const SizedBox.shrink()
                           else
                             ...notes
                                 .map((note) => _buildNoteCard(context, note)),
@@ -382,14 +365,15 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                DateFormat.yMMMd(languageCode).add_Hm().format(note.dateTime),
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
+              if (note.dateTime != null)
+                Text(
+                  DateFormat.yMMMd(languageCode).format(note.dateTime!),
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
+              SizedBox(height: note.dateTime != null ? 4 : 0),
               Text(
                 note.description,
                 style: const TextStyle(fontSize: 15),
@@ -446,7 +430,7 @@ class _NoteDialog extends StatefulWidget {
 }
 
 class _NoteDialogState extends State<_NoteDialog> {
-  DateTime _dateTime = DateTime.now();
+  DateTime? _dateTime;
   final TextEditingController _descriptionController = TextEditingController();
 
   @override
@@ -476,33 +460,43 @@ class _NoteDialogState extends State<_NoteDialog> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(
-                DateFormat.yMMMd(languageCode).add_Hm().format(_dateTime),
+                _dateTime != null
+                    ? DateFormat.yMMMd(languageCode).format(_dateTime!)
+                    : loc.chooseDate,
               ),
-              trailing: const Icon(Icons.calendar_today),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_dateTime != null)
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        setState(() {
+                          _dateTime = null;
+                        });
+                      },
+                    ),
+                  const Icon(Icons.calendar_today),
+                ],
+              ),
               onTap: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final noteDateSelectedText = loc.noteDateSelected;
                 final pickedDate = await showDatePicker(
                   context: context,
-                  initialDate: _dateTime,
+                  initialDate: _dateTime ?? DateTime.now(),
                   firstDate: DateTime(2000),
                   lastDate: DateTime(2100),
                   locale: localeProvider.locale,
                 );
-                if (pickedDate != null && mounted) {
-                  final pickedTime = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay.fromDateTime(_dateTime),
+                if (!mounted) return;
+                if (pickedDate != null) {
+                  setState(() {
+                    _dateTime = pickedDate;
+                  });
+                  messenger.showSnackBar(
+                    SnackBar(content: Text(noteDateSelectedText)),
                   );
-                  if (pickedTime != null && mounted) {
-                    setState(() {
-                      _dateTime = DateTime(
-                        pickedDate.year,
-                        pickedDate.month,
-                        pickedDate.day,
-                        pickedTime.hour,
-                        pickedTime.minute,
-                      );
-                    });
-                  }
                 }
               },
             ),
@@ -524,6 +518,8 @@ class _NoteDialogState extends State<_NoteDialog> {
         if (widget.noteToEdit != null)
           TextButton(
             onPressed: () async {
+              final provider = Provider.of<AppProvider>(context, listen: false);
+              final navigator = Navigator.of(context);
               final confirmed = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -543,13 +539,11 @@ class _NoteDialogState extends State<_NoteDialog> {
                 ),
               );
 
-              if (confirmed == true && mounted) {
-                final provider =
-                    Provider.of<AppProvider>(context, listen: false);
+              if (!mounted) return;
+              if (confirmed == true) {
                 await provider.deleteNote(widget.noteToEdit!);
-                if (mounted) {
-                  Navigator.pop(context);
-                }
+                if (!mounted) return;
+                navigator.pop();
               }
             },
             child:

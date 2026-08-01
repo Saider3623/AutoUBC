@@ -184,5 +184,7 @@
   "noteDateTime": "Дата та час",
   "deleteNote": "Видалити нотатку",
   "deleteNoteConfirmation": "Ви впевнені, що хочете видалити цю нотатку?",
-  "noNotes": "Нотаток ще немає"
+  "noNotes": "Нотаток ще немає",
+  "chooseDate": "Вибрати дату",
+  "noteDateSelected": "Дату встановлено"
 }

@@ -184,5 +184,7 @@
   "noteDateTime": "Дата и время",
   "deleteNote": "Удалить заметку",
   "deleteNoteConfirmation": "Вы уверены, что хотите удалить эту заметку?",
-  "noNotes": "Заметок пока нет"
+  "noNotes": "Заметок пока нет",
+  "chooseDate": "Выбрать дату",
+  "noteDateSelected": "Дата установлена"
 }

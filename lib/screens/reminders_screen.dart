@@ -268,6 +268,7 @@ class _ReminderDialogState extends State<_ReminderDialog> {
   late int _repeatMonths;
   late int _repeatKm;
   late bool _useKmForCustom;
+  late bool _repeatMonthsEnabled;
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _repeatMonthsController = TextEditingController();
   final TextEditingController _repeatKmController = TextEditingController();
@@ -282,16 +283,18 @@ class _ReminderDialogState extends State<_ReminderDialog> {
       _repeatKm = widget.reminder!.repeatKm ?? 10000;
       _titleController.text = widget.reminder!.title ?? '';
       _useKmForCustom = widget.reminder!.repeatKm != null;
-      _repeatMonthsController.text = _repeatMonths.toString();
+      _repeatMonthsEnabled = _repeatMonths > 0;
+      _repeatMonthsController.text = _repeatMonthsEnabled ? _repeatMonths.toString() : '';
       _repeatKmController.text = _repeatKm.toString();
     } else {
       _type = ReminderType.insurance;
       _dueDate = DateTime.now().add(const Duration(days: 30));
-      _repeatMonths = 12;
+      _repeatMonths = 0;
       _repeatKm = 10000;
       _useKmForCustom = false;
+      _repeatMonthsEnabled = false;
       _titleController.text = '';
-      _repeatMonthsController.text = '12';
+      _repeatMonthsController.text = '';
       _repeatKmController.text = '10000';
     }
   }
@@ -350,23 +353,8 @@ class _ReminderDialogState extends State<_ReminderDialog> {
                 onChanged: (value) {
                   setState(() {
                     _type = value!;
-                    // Устанавливаем стандартные значения по типу
-                    switch (_type) {
-                      case ReminderType.insurance:
-                        _repeatMonths = 12;
-                        _repeatMonthsController.text = '12';
-                        break;
-                      case ReminderType.maintenance:
-                        _repeatKm = 10000;
-                        _repeatKmController.text = '10000';
-                        break;
-                      case ReminderType.inspection:
-                        _repeatMonths = 24;
-                        _repeatMonthsController.text = '24';
-                        break;
-                      case ReminderType.custom:
-                        _useKmForCustom = false;
-                        break;
+                    if (_type == ReminderType.custom) {
+                      _useKmForCustom = false;
                     }
                   });
                 },
@@ -447,19 +435,40 @@ class _ReminderDialogState extends State<_ReminderDialog> {
                 const SizedBox(height: 16),
               if (_type != ReminderType.maintenance &&
                   !(_type == ReminderType.custom && _useKmForCustom))
-                TextField(
-                  controller: _repeatMonthsController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: '${loc.repeatEvery} (${loc.months})',
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onChanged: (value) {
-                    _repeatMonths = int.tryParse(value) ?? _repeatMonths;
-                  },
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text('${loc.repeatEvery} (${loc.months})'),
+                      value: _repeatMonthsEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          _repeatMonthsEnabled = value;
+                          if (!_repeatMonthsEnabled) {
+                            _repeatMonths = 0;
+                            _repeatMonthsController.clear();
+                          }
+                        });
+                      },
+                    ),
+                    if (_repeatMonthsEnabled)
+                      TextField(
+                        controller: _repeatMonthsController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: loc.repeatEvery,
+                          suffixText: loc.months,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 14),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onChanged: (value) {
+                          _repeatMonths = int.tryParse(value) ?? _repeatMonths;
+                        },
+                      ),
+                  ],
                 ),
               if (_type == ReminderType.maintenance ||
                   (_type == ReminderType.custom && _useKmForCustom))
@@ -497,13 +506,15 @@ class _ReminderDialogState extends State<_ReminderDialog> {
         ),
         ElevatedButton(
           onPressed: () {
+            final parsedRepeatMonths = int.tryParse(_repeatMonthsController.text);
+            final repeatMonths = _repeatMonthsEnabled ? (parsedRepeatMonths ?? 0) : 0;
             final reminder = Reminder()
               ..carId = widget.carId
               ..type = _type
               ..title =
                   _type == ReminderType.custom ? _titleController.text : null
               ..dueDate = _dueDate
-              ..repeatMonths = _repeatMonths
+              ..repeatMonths = repeatMonths
               ..repeatKm = (_type == ReminderType.maintenance ||
                       (_type == ReminderType.custom && _useKmForCustom))
                   ? _repeatKm

@@ -258,6 +258,17 @@ class DatabaseService {
     final car = await db.cars.get(reminder.carId!);
     if (car == null) return;
 
+    final hasKmRepeat = (reminder.repeatKm ?? 0) > 0;
+    final hasMonthRepeat = reminder.repeatMonths > 0;
+
+    if (!hasKmRepeat && !hasMonthRepeat) {
+      await db.writeTxn(() async {
+        reminder.isCompleted = true;
+        await db.reminders.put(reminder);
+      });
+      return;
+    }
+
     final newReminder = Reminder()
       ..carId = reminder.carId
       ..type = reminder.type
@@ -265,8 +276,8 @@ class DatabaseService {
       ..repeatKm = reminder.repeatKm
       ..isCompleted = false;
 
-    if (reminder.type == ReminderType.maintenance) {
-      // Для ТО беремо останній пробіг та додаємо repeatKm
+    if (hasKmRepeat) {
+      // Для пробігових беремо останній пробіг та додаємо repeatKm
       final odometerLogs = await db.odometerLogs
           .filter()
           .carIdEqualTo(reminder.carId!)
@@ -324,7 +335,30 @@ class DatabaseService {
   // Методы для работы с Note
   Future<List<Note>> getNotesForCar(int carId) async {
     final db = await isar;
-    return db.notes.filter().carIdEqualTo(carId).sortByDateTimeDesc().findAll();
+    final notes = await db.notes
+        .filter()
+        .carIdEqualTo(carId)
+        .sortByDateTimeDesc()
+        .findAll();
+    notes.sort((a, b) {
+      final aDate = a.dateTime;
+      final bDate = b.dateTime;
+      if (aDate == null && bDate == null) {
+        return b.id.compareTo(a.id);
+      }
+      if (aDate == null) {
+        return 1;
+      }
+      if (bDate == null) {
+        return -1;
+      }
+      final dateCompare = bDate.compareTo(aDate);
+      if (dateCompare != 0) {
+        return dateCompare;
+      }
+      return b.id.compareTo(a.id);
+    });
+    return notes;
   }
 
   Future<void> addNote(Note note) async {

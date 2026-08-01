@@ -97,7 +97,7 @@ Note _noteDeserialize(
 ) {
   final object = Note();
   object.carId = reader.readLongOrNull(offsets[0]);
-  object.dateTime = reader.readDateTime(offsets[1]);
+  object.dateTime = reader.readDateTimeOrNull(offsets[1]);
   object.description = reader.readString(offsets[2]);
   object.id = id;
   return object;
@@ -113,7 +113,7 @@ P _noteDeserializeProp<P>(
     case 0:
       return (reader.readLongOrNull(offset)) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 2:
       return (reader.readString(offset)) as P;
     default:
@@ -394,8 +394,24 @@ extension NoteQueryFilter on QueryBuilder<Note, Note, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Note, Note, QAfterFilterCondition> dateTimeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'dateTime',
+      ));
+    });
+  }
+
+  QueryBuilder<Note, Note, QAfterFilterCondition> dateTimeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'dateTime',
+      ));
+    });
+  }
+
   QueryBuilder<Note, Note, QAfterFilterCondition> dateTimeEqualTo(
-      DateTime value) {
+      DateTime? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'dateTime',
@@ -405,7 +421,7 @@ extension NoteQueryFilter on QueryBuilder<Note, Note, QFilterCondition> {
   }
 
   QueryBuilder<Note, Note, QAfterFilterCondition> dateTimeGreaterThan(
-    DateTime value, {
+    DateTime? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -418,7 +434,7 @@ extension NoteQueryFilter on QueryBuilder<Note, Note, QFilterCondition> {
   }
 
   QueryBuilder<Note, Note, QAfterFilterCondition> dateTimeLessThan(
-    DateTime value, {
+    DateTime? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -431,8 +447,8 @@ extension NoteQueryFilter on QueryBuilder<Note, Note, QFilterCondition> {
   }
 
   QueryBuilder<Note, Note, QAfterFilterCondition> dateTimeBetween(
-    DateTime lower,
-    DateTime upper, {
+    DateTime? lower,
+    DateTime? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
@@ -768,7 +784,7 @@ extension NoteQueryProperty on QueryBuilder<Note, Note, QQueryProperty> {
     });
   }
 
-  QueryBuilder<Note, DateTime, QQueryOperations> dateTimeProperty() {
+  QueryBuilder<Note, DateTime?, QQueryOperations> dateTimeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'dateTime');
     });
