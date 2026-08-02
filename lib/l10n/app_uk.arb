@@ -155,6 +155,8 @@
       }
     }
   },
+  "weeklyReportNoMileage": "Без пробігу",
+  "weeklyReportNoActivity": "Пробіг за цей період не зафіксований",
   "odometerSection": "ОДОМЕТР",
   "startLabel": "Початок",
   "endLabel": "Кінець",

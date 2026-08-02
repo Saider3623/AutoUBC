@@ -155,6 +155,8 @@
       }
     }
   },
+  "weeklyReportNoMileage": "No mileage",
+  "weeklyReportNoActivity": "No mileage recorded during this period",
   "odometerSection": "ODOMETER",
   "startLabel": "Start",
   "endLabel": "End",

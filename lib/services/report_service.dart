@@ -9,6 +9,7 @@ import '../models/car.dart';
 import '../models/odometer_log.dart';
 import '../models/fuel_log.dart';
 import '../db/database_service.dart';
+import '../utils/report_status.dart';
 
 /// Дані по одному тижню для звіту
 class _WeekData {
@@ -40,6 +41,8 @@ class _PdfTranslations {
   final String mileage;
   final String refuelCount;
   final String refueledFuel;
+  final String noMileage;
+  final String noActivity;
   final String pcs;
   final String km;
   final String l;
@@ -53,6 +56,8 @@ class _PdfTranslations {
     required this.mileage,
     required this.refuelCount,
     required this.refueledFuel,
+    required this.noMileage,
+    required this.noActivity,
     required this.pcs,
     required this.km,
     required this.l,
@@ -70,6 +75,8 @@ class _PdfTranslations {
           mileage: 'Пробег за неделю',
           refuelCount: 'Заправки (количество чеков)',
           refueledFuel: 'Заправлено топлива',
+          noMileage: 'Без пробега',
+          noActivity: 'Пробег за этот период не зафиксирован',
           pcs: 'шт.',
           km: 'км',
           l: 'л',
@@ -84,6 +91,8 @@ class _PdfTranslations {
           mileage: 'Weekly mileage',
           refuelCount: 'Refuels (number of receipts)',
           refueledFuel: 'Fuel filled',
+          noMileage: 'No mileage',
+          noActivity: 'No mileage recorded during this period',
           pcs: 'pcs',
           km: 'km',
           l: 'L',
@@ -99,6 +108,8 @@ class _PdfTranslations {
           mileage: 'Пробіг за тиждень',
           refuelCount: 'Заправки (кількість чеків)',
           refueledFuel: 'Заправлено пального',
+          noMileage: 'Без пробігу',
+          noActivity: 'Пробіг за цей період не зафіксований',
           pcs: 'шт.',
           km: 'км',
           l: 'л',
@@ -265,6 +276,7 @@ class ReportService {
   ) {
     final dateRange =
         '${DateFormat('d MMM', languageCode).format(week.weekStart)} – ${DateFormat('d MMM yyyy', languageCode).format(week.weekEnd)}';
+    final isNoMileage = classifyWeeklyReportStatus(week.mileage).isNoMileage;
 
     final odoStartStr =
         week.odometerStart != null ? '${week.odometerStart} ${t.km}' : '—';
@@ -297,26 +309,64 @@ class ReportService {
           ),
         ),
 
-        // Таблиця даних
-        pw.Table(
-          border: pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.5),
-          columnWidths: {
-            0: const pw.FlexColumnWidth(2.5),
-            1: const pw.FlexColumnWidth(2),
-          },
-          children: [
-            _tableRow(t.odometerStart, odoStartStr, ttf, ttfBold, header: true),
-            _tableRow(t.odometerEnd, odoEndStr, ttf, ttfBold),
-            _tableRow(t.mileage, mileageStr, ttf, ttfBold),
-            _tableRow(
-              t.refuelCount,
-              week.fuelCount > 0 ? '${week.fuelCount} ${t.pcs}' : '—',
-              ttf,
-              ttfBold,
+        if (isNoMileage)
+          pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.blueGrey50,
+              border: pw.Border.all(color: PdfColors.blueGrey200, width: 0.5),
             ),
-            _tableRow(t.refueledFuel, litersStr, ttf, ttfBold),
-          ],
-        ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  t.noMileage,
+                  style: pw.TextStyle(
+                    font: ttfBold,
+                    fontSize: 12,
+                    color: PdfColors.blueGrey800,
+                  ),
+                ),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  t.noActivity,
+                  style: pw.TextStyle(
+                    font: ttf,
+                    fontSize: 10,
+                    color: PdfColors.blueGrey700,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          // Таблиця даних для тижнів із пробігом
+          pw.Table(
+            border:
+                pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.5),
+            columnWidths: {
+              0: const pw.FlexColumnWidth(2.5),
+              1: const pw.FlexColumnWidth(2),
+            },
+            children: [
+              _tableRow(
+                t.odometerStart,
+                odoStartStr,
+                ttf,
+                ttfBold,
+                header: true,
+              ),
+              _tableRow(t.odometerEnd, odoEndStr, ttf, ttfBold),
+              _tableRow(t.mileage, mileageStr, ttf, ttfBold),
+              _tableRow(
+                t.refuelCount,
+                week.fuelCount > 0 ? '${week.fuelCount} ${t.pcs}' : '—',
+                ttf,
+                ttfBold,
+              ),
+              _tableRow(t.refueledFuel, litersStr, ttf, ttfBold),
+            ],
+          ),
 
         pw.SizedBox(height: 20),
       ],

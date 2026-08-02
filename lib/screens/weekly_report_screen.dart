@@ -5,6 +5,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
 import '../db/database_service.dart';
+import '../utils/report_status.dart';
 
 class WeeklyReportScreen extends StatefulWidget {
   const WeeklyReportScreen({super.key});
@@ -14,6 +15,9 @@ class WeeklyReportScreen extends StatefulWidget {
 }
 
 class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
+  static const _noMileageBackground = Color(0xFFFFFBF2);
+  static const _noMileageForeground = Color(0xFF8D6E63);
+
   DateTime _selectedMonth = DateTime.now();
   final DatabaseService _db = DatabaseService();
 
@@ -135,8 +139,11 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                       }
 
                       final data = snapshot.data!;
+                      final status = classifyWeeklyReportStatus(data.distance);
+                      final isNoMileage = status.isNoMileage;
                       return Card(
-                        elevation: 1.5,
+                        elevation: isNoMileage ? 0 : 1.5,
+                        color: isNoMileage ? _noMileageBackground : null,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -151,25 +158,42 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    '${DateFormat.d(languageCode).format(week['start']!)} - ${DateFormat.d(languageCode).format(week['end']!)} ${DateFormat.MMMM(languageCode).format(week['start']!)}',
-                                    style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
+                                  Expanded(
                                     child: Text(
-                                      loc.weeklyReportDistance(data.distance),
+                                      '${DateFormat.d(languageCode).format(week['start']!)} - ${DateFormat.d(languageCode).format(week['end']!)} ${DateFormat.MMMM(languageCode).format(week['start']!)}',
                                       style: const TextStyle(
-                                        color: Colors.blue,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Semantics(
+                                    label: isNoMileage
+                                        ? loc.weeklyReportNoActivity
+                                        : loc.weeklyReportDistance(
+                                            data.distance),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: isNoMileage
+                                            ? _noMileageForeground
+                                                .withOpacity(0.12)
+                                            : Colors.blue.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        isNoMileage
+                                            ? loc.weeklyReportNoMileage
+                                            : loc.weeklyReportDistance(
+                                                data.distance),
+                                        style: TextStyle(
+                                          color: isNoMileage
+                                              ? _noMileageForeground
+                                              : Colors.blue,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -177,6 +201,29 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                               ),
                               const SizedBox(height: 10),
                               const Divider(height: 1, thickness: 0.5),
+                              if (isNoMileage) ...[
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.weekend_outlined,
+                                      size: 18,
+                                      color: _noMileageForeground,
+                                      semanticLabel: loc.weeklyReportNoMileage,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        loc.weeklyReportNoActivity,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: _noMileageForeground,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                               const SizedBox(height: 10),
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
