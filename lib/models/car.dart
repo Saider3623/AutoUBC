@@ -9,6 +9,8 @@ class Car {
   late String name;
 
   List<String>? fuelTypes;
-  
-  List<String>? selectedFuelTypesForConsumption; // Типы топлива для показа расхода
+
+  // Legacy field retained in the Isar schema so existing backups keep opening.
+  // The current report logic derives consumption from all configured fuel types.
+  List<String>? selectedFuelTypesForConsumption;
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
@@ -16,6 +17,124 @@ import 'screens/manage_cars_screen.dart';
 import 'db/database_service.dart';
 import 'models/reminder.dart';
 import 'services/google_drive_sync_service.dart';
+
+Future<void> _deleteFileIfExists(String path) async {
+  try {
+    await File(path).delete();
+  } catch (_) {}
+}
+
+Future<void> _initializeCloudSync({
+  required BuildContext context,
+  required GoogleDriveSyncService sync,
+  required AppProvider appProvider,
+  required DatabaseService dbService,
+  required ScaffoldMessengerState messenger,
+  required AppLocalizations loc,
+}) async {
+  if (!sync.isConnected) return;
+
+  // AppProvider starts loading immediately in its constructor. Await that
+  // exact operation instead of starting a second concurrent DB read.
+  await appProvider.initialization;
+  final action = await sync.decideStartupAction(
+    hasLocalData: appProvider.cars.isNotEmpty,
+    hasPendingLocalChanges: appProvider.hasPendingSync,
+  );
+
+  switch (action) {
+    case SyncStartupAction.download:
+      final dbPath = await dbService.getDatabasePath();
+      await dbService.close();
+      final downloaded = await sync.downloadBackup(
+        dbPath,
+        validateFile: dbService.verifyDatabaseSnapshot,
+      );
+      if (downloaded) {
+        // The database file was replaced while Isar was closed. Explicitly
+        // reopen the new file before refreshing provider state.
+        await dbService.reopen();
+        await appProvider.refreshAll();
+        await appProvider.markSyncCompleted();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(loc.dataRestoredFromGoogleDrive),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      break;
+    case SyncStartupAction.upload:
+      sync.markRemoteBaselineReady();
+      final snapshotPath = await dbService.createDatabaseSnapshot();
+      final uploaded = await sync.uploadBackup(snapshotPath);
+      await _deleteFileIfExists(snapshotPath);
+      if (uploaded) {
+        await appProvider.markSyncCompleted();
+      } else {
+        messenger.showSnackBar(SnackBar(content: Text(loc.saveError(
+            sync.lastSyncError ?? 'Cloud backup failed'))));
+      }
+      break;
+    case SyncStartupAction.conflict:
+      if (!context.mounted) return;
+      final useCloud = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(loc.syncConflictTitle),
+          content: Text(loc.syncConflictNeedsReview),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(loc.keepLocalData),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(loc.useCloudData),
+            ),
+          ],
+        ),
+      );
+      if (!context.mounted) return;
+
+      if (useCloud == true) {
+        final dbPath = await dbService.getDatabasePath();
+        await dbService.close();
+        final downloaded = await sync.downloadBackup(
+          dbPath,
+          validateFile: dbService.verifyDatabaseSnapshot,
+        );
+        if (downloaded) {
+          await dbService.reopen();
+          await appProvider.refreshAll();
+          await appProvider.markSyncCompleted();
+        }
+      } else if (useCloud == false) {
+        sync.markRemoteBaselineReady();
+        final snapshotPath = await dbService.createDatabaseSnapshot();
+        try {
+          final uploaded = await sync.uploadBackup(snapshotPath);
+          if (uploaded) await appProvider.markSyncCompleted();
+        } finally {
+          await _deleteFileIfExists(snapshotPath);
+        }
+      }
+      break;
+    case SyncStartupAction.error:
+      if (context.mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              loc.saveError(sync.lastSyncError ?? 'Cloud sync check failed'),
+            ),
+          ),
+        );
+      }
+      break;
+    case SyncStartupAction.none:
+      break;
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -109,9 +228,12 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen>
+    with WidgetsBindingObserver {
   late PageController _pageController;
   final DatabaseService _db = DatabaseService();
+  AppProvider? _appProvider;
+  GoogleDriveSyncService? _syncService;
   final int _totalPages = 3;
   static const int _initialPage = 1000; // Велике число для кругової прокрутки
   int _currentDisplayPage = 0;
@@ -119,6 +241,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pageController =
         PageController(initialPage: _initialPage + _currentDisplayPage);
 
@@ -126,45 +249,51 @@ class _MainScreenState extends State<MainScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final sync = Provider.of<GoogleDriveSyncService>(context, listen: false);
       final appProvider = Provider.of<AppProvider>(context, listen: false);
+      _syncService = sync;
+      _appProvider = appProvider;
       final dbService = DatabaseService();
       final scaffoldMessenger = ScaffoldMessenger.of(context);
       final loc = AppLocalizations.of(context)!;
 
       // Налаштовуємо авто-синхронізацію при кожному збереженні даних
       appProvider.onDataSaved = () async {
-        if (sync.isConnected) {
-          final dbPath = await dbService.getDatabasePath();
-          return await sync.uploadBackup(dbPath);
+        if (!sync.isConnected) return false;
+        final snapshotPath = await dbService.createDatabaseSnapshot();
+        try {
+          return await sync.uploadBackup(snapshotPath);
+        } finally {
+          await _deleteFileIfExists(snapshotPath);
         }
-        return false; // Не подключено к Google Drive — синхронізація не удалася
       };
 
       await sync.signInSilently();
-      if (sync.isConnected) {
-        await appProvider.loadCars();
-        if (appProvider.cars.isEmpty) {
-          final dbPath = await dbService.getDatabasePath();
-          await dbService.close();
-          final downloaded = await sync.downloadBackup(dbPath);
-          if (downloaded && mounted) {
-            await appProvider.refreshAll();
-            scaffoldMessenger.showSnackBar(
-              SnackBar(
-                content: Text(loc.dataRestoredFromGoogleDrive),
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-        } else {
-          final dbPath = await dbService.getDatabasePath();
-          unawaited(sync.uploadBackup(dbPath));
-        }
+      if (mounted) {
+        await _initializeCloudSync(
+          context: context,
+          sync: sync,
+          appProvider: appProvider,
+          dbService: dbService,
+          messenger: scaffoldMessenger,
+          loc: loc,
+        );
       }
     });
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      final appProvider = _appProvider;
+      if (_syncService?.isConnected == true && appProvider != null) {
+        unawaited(appProvider.flushPendingSync());
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     super.dispose();
   }
@@ -346,6 +475,9 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: Consumer<AppProvider>(
         builder: (context, provider, child) {
+          if (provider.isLoading && provider.cars.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
           if (provider.cars.isEmpty) {
             return Center(
               child: Padding(
@@ -447,28 +579,21 @@ class _MainScreenState extends State<MainScreen> {
                 success ? loc.connectedToGoogleDrive : loc.connectionFailed),
           ));
         }
-        if (success) {
-          await appProvider.loadCars();
-          if (appProvider.cars.isEmpty) {
-            final dbPath = await _db.getDatabasePath();
-            await _db.close();
-            final downloaded = await sync.downloadBackup(dbPath);
-            if (downloaded && mounted) {
-              await appProvider.refreshAll();
-              scaffoldMessenger.showSnackBar(
-                SnackBar(
-                  content: Text(loc.dataRestoredFromGoogleDrive),
-                  duration: const Duration(seconds: 3),
-                ),
-              );
-            }
-          } else {
-            final dbPath = await _db.getDatabasePath();
-            unawaited(sync.uploadBackup(dbPath));
-          }
+        if (success && mounted) {
+          await _initializeCloudSync(
+            context: context,
+            sync: sync,
+            appProvider: appProvider,
+            dbService: _db,
+            messenger: scaffoldMessenger,
+            loc: loc,
+          );
         }
         break;
       case 'google_sign_out':
+        // Flush the latest local state before disconnecting the account. This
+        // keeps deletions and other recent edits from remaining only locally.
+        await appProvider.flushPendingSync();
         await sync.signOut();
         if (mounted) {
           scaffoldMessenger.showSnackBar(

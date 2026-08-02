@@ -8,6 +8,8 @@ import '../models/fuel_log.dart';
 import '../models/reminder.dart';
 import '../models/service_log.dart';
 import '../models/note.dart';
+import '../utils/date_utils.dart';
+import '../utils/validation.dart';
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -15,11 +17,27 @@ class DatabaseService {
   DatabaseService._internal();
 
   Isar? _isar;
+  Future<void>? _initialization;
+  Future<void> _lifecycleQueue = Future<void>.value();
 
-  Future<Isar> get isar async {
-    if (_isar != null) return _isar!;
-    await _init();
-    return _isar!;
+  Future<T> _enqueueLifecycle<T>(Future<T> Function() operation) {
+    final result = _lifecycleQueue.then((_) => operation());
+    _lifecycleQueue = result.then<void>((_) {}, onError: (_, __) {});
+    return result;
+  }
+
+  Future<Isar> get isar {
+    return _enqueueLifecycle(() async {
+      if (_isar == null) {
+        _initialization ??= _init();
+        try {
+          await _initialization;
+        } finally {
+          _initialization = null;
+        }
+      }
+      return _isar!;
+    });
   }
 
   Future<void> _init() async {
@@ -28,7 +46,6 @@ class DatabaseService {
     final dirsToTry = <Future<Directory>>[
       getApplicationSupportDirectory(),
       getApplicationDocumentsDirectory(),
-      getTemporaryDirectory(),
     ];
 
     for (final dirFuture in dirsToTry) {
@@ -65,11 +82,43 @@ class DatabaseService {
       directory: appDir.path,
       name: 'autoubc',
     );
+
+    // Make a local snapshot before the non-destructive compatibility repair.
+    // Use the already opened instance here; calling the public `isar` getter
+    // would enqueue behind this initialization and deadlock the lifecycle queue.
+    await _createAutoLocalBackup(_isar!);
+    // Compatibility repair must not prevent a valid database from opening. An
+    // old backup can contain duplicate or partially migrated child records;
+    // those records are retained and can be repaired later without hiding all
+    // valid cars from the user.
+    try {
+      await _repairCarIdsFromLinks(_isar!);
+    } catch (error, stackTrace) {
+      debugPrint('[Database] Compatibility repair skipped: $error');
+      debugPrint('$stackTrace');
+    }
   }
 
-  Future<void> close() async {
-    await _isar?.close();
-    _isar = null;
+  Future<void> close() {
+    return _enqueueLifecycle(() async {
+      final db = _isar;
+      _isar = null;
+      await db?.close();
+    });
+  }
+
+  /// Reopens the active database after an external file replacement.
+  Future<Isar> reopen() {
+    return _enqueueLifecycle(() async {
+      if (_isar != null) return _isar!;
+      _initialization ??= _init();
+      try {
+        await _initialization;
+      } finally {
+        _initialization = null;
+      }
+      return _isar!;
+    });
   }
 
   // Методы для работы с Car
@@ -78,17 +127,87 @@ class DatabaseService {
     return db.cars.where().findAll();
   }
 
-  Future<void> addCar(Car car) async {
+  Future<Car> addCar(Car car) async {
     final db = await isar;
-    if (car.fuelTypes == null || car.fuelTypes!.isEmpty) {
-      car.fuelTypes = ['ГАЗ', '95'];
-    }
+    _validateCar(car);
     await db.writeTxn(() => db.cars.put(car));
+    return car;
   }
 
   Future<void> updateCar(Car car) async {
     final db = await isar;
+    _validateCar(car);
     await db.writeTxn(() => db.cars.put(car));
+  }
+
+  void _validateCar(Car car) {
+    car.name = car.name.trim();
+    if (car.name.isEmpty) {
+      throw const DataValidationException('Car name cannot be empty.');
+    }
+
+    final fuelTypes = (car.fuelTypes ?? const <String>[])
+        .map((fuelType) => fuelType.trim())
+        .where((fuelType) => fuelType.isNotEmpty)
+        .toSet()
+        .toList();
+    car.fuelTypes = fuelTypes.isEmpty ? ['ГАЗ', '95'] : fuelTypes;
+  }
+
+  Future<void> _repairCarIdsFromLinks(Isar db) async {
+    await db.writeTxn(() async {
+      final odometerLogs = await db.odometerLogs.where().findAll();
+      for (final log in odometerLogs) {
+        final linkedCarId = log.car.value?.id;
+        if (linkedCarId != null && log.carId != linkedCarId) {
+          final duplicate = await db.odometerLogs
+              .filter()
+              .carIdEqualTo(linkedCarId)
+              .dateStringEqualTo(log.dateString)
+              .findFirst();
+          if (duplicate == null || duplicate.id == log.id) {
+            log.carId = linkedCarId;
+            await db.odometerLogs.put(log);
+          }
+        }
+      }
+
+      final fuelLogs = await db.fuelLogs.where().findAll();
+      for (final log in fuelLogs) {
+        final linkedCarId = log.car.value?.id;
+        if (linkedCarId != null && log.carId != linkedCarId) {
+          log.carId = linkedCarId;
+          await db.fuelLogs.put(log);
+        }
+      }
+
+      final reminders = await db.reminders.where().findAll();
+      for (final reminder in reminders) {
+        final linkedCarId = reminder.car.value?.id;
+        if (linkedCarId != null && reminder.carId != linkedCarId) {
+          reminder.carId = linkedCarId;
+          await db.reminders.put(reminder);
+        }
+      }
+
+      final serviceLogs = await db.serviceLogs.where().findAll();
+      for (final log in serviceLogs) {
+        final linkedCarId = log.car.value?.id;
+        if (linkedCarId != null && log.carId != linkedCarId) {
+          log.carId = linkedCarId;
+          await db.serviceLogs.put(log);
+        }
+      }
+
+      final notes = await db.notes.where().findAll();
+      for (final note in notes) {
+        final linkedCarId = note.car.value?.id;
+        if (linkedCarId != null && note.carId != linkedCarId) {
+          note.carId = linkedCarId;
+          await db.notes.put(note);
+        }
+      }
+    });
   }
 
   Future<void> deleteCar(Car car) async {
@@ -118,22 +237,44 @@ class DatabaseService {
   Future<void> saveOdometerLog(
       int carId, String dateString, int odometer) async {
     final db = await isar;
-    final car = await db.cars.get(carId);
-    if (car == null) return;
+    await _requireCar(db, carId);
+    validateDateString(dateString);
+    validateNonNegativeNumber(odometer, 'Odometer');
 
     await db.writeTxn(() async {
-      // Проверяем, есть ли уже запись за этот день
       final existing = await db.odometerLogs
           .filter()
           .carIdEqualTo(carId)
           .dateStringEqualTo(dateString)
           .findFirst();
+
+      final previous = await db.odometerLogs
+          .filter()
+          .carIdEqualTo(carId)
+          .dateStringLessThan(dateString)
+          .sortByDateStringDesc()
+          .findFirst();
+      if (previous != null && odometer < previous.odometer) {
+        throw DataValidationException(
+            'Odometer cannot be lower than the previous reading (${previous.odometer}).');
+      }
+
+      final next = await db.odometerLogs
+          .filter()
+          .carIdEqualTo(carId)
+          .dateStringGreaterThan(dateString)
+          .sortByDateString()
+          .findFirst();
+      if (next != null && odometer > next.odometer) {
+        throw DataValidationException(
+            'Odometer cannot be higher than the next reading (${next.odometer}).');
+      }
+
       if (existing != null) {
         existing.odometer = odometer;
         await db.odometerLogs.put(existing);
       } else {
         final log = OdometerLog()
-          ..car.value = car
           ..carId = carId
           ..dateString = dateString
           ..odometer = odometer;
@@ -160,16 +301,20 @@ class DatabaseService {
   Future<void> addFuelLog(int carId, String dateString, String timeString,
       String fuelType, double liters) async {
     final db = await isar;
-    final car = await db.cars.get(carId);
-    if (car == null) return;
+    await _requireCar(db, carId);
+    validateDateString(dateString);
+    validateTimeString(timeString);
+    validateNonNegativeNumber(liters, 'Liters');
+    if (fuelType.trim().isEmpty) {
+      throw const DataValidationException('Fuel type cannot be empty.');
+    }
 
     await db.writeTxn(() async {
       final log = FuelLog()
-        ..car.value = car
         ..carId = carId
         ..dateString = dateString
         ..timeString = timeString
-        ..fuelType = fuelType
+        ..fuelType = fuelType.trim()
         ..liters = liters;
       await db.fuelLogs.put(log);
     });
@@ -188,6 +333,14 @@ class DatabaseService {
         .sortByDateStringDesc()
         .thenByTimeStringDesc()
         .findAll();
+  }
+
+  Future<Car> _requireCar(Isar db, int carId) async {
+    final car = await db.cars.get(carId);
+    if (car == null) {
+      throw const DataValidationException('Car no longer exists.');
+    }
+    return car;
   }
 
   // Методы для отчетов
@@ -256,18 +409,38 @@ class DatabaseService {
 
   Future<void> addReminder(Reminder reminder) async {
     final db = await isar;
-    final car = await db.cars.get(reminder.carId!);
-    if (car == null) return;
+    final carId = reminder.carId;
+    if (carId == null) {
+      throw const DataValidationException('Reminder must have a car.');
+    }
+    await _requireCar(db, carId);
+    _validateReminder(reminder);
 
-    await db.writeTxn(() async {
-      reminder.car.value = car;
-      await db.reminders.put(reminder);
-    });
+    await db.writeTxn(() => db.reminders.put(reminder));
   }
 
   Future<void> updateReminder(Reminder reminder) async {
     final db = await isar;
+    final carId = reminder.carId;
+    if (carId == null) {
+      throw const DataValidationException('Reminder must have a car.');
+    }
+    await _requireCar(db, carId);
+    _validateReminder(reminder);
     await db.writeTxn(() => db.reminders.put(reminder));
+  }
+
+  void _validateReminder(Reminder reminder) {
+    validateNonNegativeNumber(reminder.repeatMonths, 'Repeat months');
+    if (reminder.repeatKm != null) {
+      validateNonNegativeNumber(reminder.repeatKm!, 'Repeat kilometers');
+    }
+    if (reminder.startKm != null) {
+      validateNonNegativeNumber(reminder.startKm!, 'Starting kilometers');
+    }
+    if (reminder.title != null && reminder.title!.trim().isEmpty) {
+      reminder.title = null;
+    }
   }
 
   Future<void> deleteReminder(Reminder reminder) async {
@@ -277,8 +450,12 @@ class DatabaseService {
 
   Future<void> completeReminder(Reminder reminder) async {
     final db = await isar;
-    final car = await db.cars.get(reminder.carId!);
-    if (car == null) return;
+    final carId = reminder.carId;
+    if (carId == null) {
+      throw const DataValidationException('Reminder must have a car.');
+    }
+    await _requireCar(db, carId);
+    _validateReminder(reminder);
 
     final hasKmRepeat = (reminder.repeatKm ?? 0) > 0;
     final hasMonthRepeat = reminder.repeatMonths > 0;
@@ -292,8 +469,9 @@ class DatabaseService {
     }
 
     final newReminder = Reminder()
-      ..carId = reminder.carId
+      ..carId = carId
       ..type = reminder.type
+      ..title = reminder.title
       ..repeatMonths = reminder.repeatMonths
       ..repeatKm = reminder.repeatKm
       ..isCompleted = false;
@@ -302,7 +480,7 @@ class DatabaseService {
       // Для пробігових беремо останній пробіг та додаємо repeatKm
       final odometerLogs = await db.odometerLogs
           .filter()
-          .carIdEqualTo(reminder.carId!)
+          .carIdEqualTo(carId)
           .sortByDateStringDesc()
           .findFirst();
       final currentKm = odometerLogs?.odometer ?? 0;
@@ -310,20 +488,16 @@ class DatabaseService {
       newReminder.dueDate = DateTime.now(); // Для ТО дата менш важлива
     } else {
       // Для страхування та техогляду - додаємо місяці
-      newReminder.dueDate = DateTime(
-        reminder.dueDate.year + (reminder.repeatMonths ~/ 12),
-        reminder.dueDate.month + (reminder.repeatMonths % 12),
-        reminder.dueDate.day,
+      newReminder.dueDate = addMonthsClamped(
+        reminder.dueDate,
+        reminder.repeatMonths,
       );
       newReminder.startKm = reminder.startKm;
     }
 
     await db.writeTxn(() async {
-      // Обновляем старое напоминание как выполненное
       reminder.isCompleted = true;
       await db.reminders.put(reminder);
-      // Добавляем новое напоминание
-      newReminder.car.value = car;
       await db.reminders.put(newReminder);
     });
   }
@@ -340,13 +514,17 @@ class DatabaseService {
 
   Future<void> addServiceLog(ServiceLog log) async {
     final db = await isar;
-    final car = await db.cars.get(log.carId!);
-    if (car == null) return;
+    final carId = log.carId;
+    if (carId == null) {
+      throw const DataValidationException('Service entry must have a car.');
+    }
+    await _requireCar(db, carId);
+    validateNonNegativeNumber(log.odometer, 'Service odometer');
+    if (log.description.trim().isEmpty) {
+      throw const DataValidationException('Service description cannot be empty.');
+    }
 
-    await db.writeTxn(() async {
-      log.car.value = car;
-      await db.serviceLogs.put(log);
-    });
+    await db.writeTxn(() => db.serviceLogs.put(log));
   }
 
   Future<void> deleteServiceLog(ServiceLog log) async {
@@ -385,18 +563,32 @@ class DatabaseService {
 
   Future<void> addNote(Note note) async {
     final db = await isar;
-    final car = await db.cars.get(note.carId!);
-    if (car == null) return;
+    final carId = note.carId;
+    if (carId == null) {
+      throw const DataValidationException('Note must have a car.');
+    }
+    await _requireCar(db, carId);
+    _validateNote(note);
 
-    await db.writeTxn(() async {
-      note.car.value = car;
-      await db.notes.put(note);
-    });
+    await db.writeTxn(() => db.notes.put(note));
   }
 
   Future<void> updateNote(Note note) async {
     final db = await isar;
+    final carId = note.carId;
+    if (carId == null) {
+      throw const DataValidationException('Note must have a car.');
+    }
+    await _requireCar(db, carId);
+    _validateNote(note);
     await db.writeTxn(() => db.notes.put(note));
+  }
+
+  void _validateNote(Note note) {
+    note.description = note.description.trim();
+    if (note.description.isEmpty) {
+      throw const DataValidationException('Note cannot be empty.');
+    }
   }
 
   Future<void> deleteNote(Note note) async {
@@ -410,11 +602,61 @@ class DatabaseService {
     return db.path!;
   }
 
-  Future<void> createAutoLocalBackup() async {
-    try {
-      final dbPath = await getDatabasePath();
-      final dbFile = File(dbPath);
+  /// Opens a downloaded snapshot with the current schemas before it replaces
+  /// the active database file.
+  Future<bool> verifyDatabaseSnapshot(String filePath) async {
+    final file = File(filePath);
+    if (!await file.exists() || await file.length() == 0) return false;
 
+    final fileName = filePath.split(RegExp(r'[/\\]')).last;
+    if (!fileName.endsWith('.isar')) return false;
+    final databaseName = fileName.substring(0, fileName.length - '.isar'.length);
+    Isar? checkDb;
+    try {
+      checkDb = await Isar.open(
+        [
+          CarSchema,
+          OdometerLogSchema,
+          FuelLogSchema,
+          ReminderSchema,
+          ServiceLogSchema,
+          NoteSchema,
+        ],
+        directory: file.parent.path,
+        name: databaseName,
+      );
+      final cars = await checkDb.cars.where().findAll();
+      debugPrint(
+          '[Database] Snapshot verified: ${file.path}, cars=${cars.length}');
+      return true;
+    } catch (error) {
+      debugPrint('[Database] Snapshot validation failed: $error');
+      return false;
+    } finally {
+      await checkDb?.close();
+      final lockFile = File('$filePath.lock');
+      if (await lockFile.exists()) await lockFile.delete();
+    }
+  }
+
+  /// Creates a compact snapshot for cloud upload without reading the live DB
+  /// file while it may still be changing.
+  Future<String> createDatabaseSnapshot() async {
+    final db = await isar;
+    final directory = await getTemporaryDirectory();
+    final snapshot = File(
+      '${directory.path}/autoubc_sync_${DateTime.now().microsecondsSinceEpoch}.isar',
+    );
+    await db.copyToFile(snapshot.path);
+    return snapshot.path;
+  }
+
+  Future<void> createAutoLocalBackup() async {
+    await _createAutoLocalBackup(await isar);
+  }
+
+  Future<void> _createAutoLocalBackup(Isar db) async {
+    try {
       // Получаем директорию для сохранения бэкапов
       Directory directory;
       if (Platform.isAndroid) {
@@ -434,9 +676,16 @@ class DatabaseService {
       final backupFileName =
           'autoubc_backup_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}.isar';
       final backupFile = File('${backupDir.path}/$backupFileName');
+      final tempBackupFile = File('${backupFile.path}.tmp');
 
-      // Копируем файл базы данных
-      await dbFile.copy(backupFile.path);
+      // Isar creates a compact, transaction-safe snapshot for backups.
+      if (await tempBackupFile.exists()) await tempBackupFile.delete();
+      await db.copyToFile(tempBackupFile.path);
+      if (!await tempBackupFile.exists() || await tempBackupFile.length() == 0) {
+        throw StateError('Local backup snapshot is empty.');
+      }
+      if (await backupFile.exists()) await backupFile.delete();
+      await tempBackupFile.rename(backupFile.path);
 
       // Удаляем старые бэкапы, оставляем последние 7
       await _cleanOldBackups(backupDir);

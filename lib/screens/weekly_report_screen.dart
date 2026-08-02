@@ -277,6 +277,30 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                                             ],
                                           ),
                                         ],
+                                        if (data.consumption95 != null ||
+                                            data.consumptionGas != null) ...[
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            [
+                                              if (data.consumption95 != null)
+                                                loc.averageFuelConsumptionFor(
+                                                  '95',
+                                                  data.consumption95!
+                                                      .toStringAsFixed(2),
+                                                ),
+                                              if (data.consumptionGas != null)
+                                                loc.averageFuelConsumptionFor(
+                                                  'ГАЗ',
+                                                  data.consumptionGas!
+                                                      .toStringAsFixed(2),
+                                                ),
+                                            ].join('\n'),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.blueGrey,
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),

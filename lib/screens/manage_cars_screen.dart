@@ -53,6 +53,12 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
             icon: const Icon(Icons.check),
             onPressed: () async {
               if (appProvider.selectedCar != null) {
+                if (_localFuelTypes.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(loc.atLeastOneFuelType)),
+                  );
+                  return;
+                }
                 final navigator = Navigator.of(context);
                 final car = appProvider.selectedCar!;
                 car.fuelTypes = _localFuelTypes;

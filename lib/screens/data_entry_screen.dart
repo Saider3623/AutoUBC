@@ -20,6 +20,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
   final _litersController = TextEditingController();
   String _selectedFuelType = 'ГАЗ';
   final DatabaseService _db = DatabaseService();
+  int? _loadedCarId;
 
   @override
   void initState() {
@@ -33,20 +34,37 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
     _loadCurrentOdometer();
   }
 
-  Future<void> _loadCurrentOdometer() async {
-    final provider = Provider.of<AppProvider>(context, listen: false);
-    if (provider.selectedCar == null) return;
-    final dateString = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final log = await _db.getOdometerLog(provider.selectedCar!.id, dateString);
-    if (log != null) {
-      setState(() {
-        _odometerController.text = log.odometer.toString();
-      });
-    } else {
-      setState(() {
-        _odometerController.clear();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final carId = Provider.of<AppProvider>(context).selectedCar?.id;
+    if (carId != _loadedCarId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadCurrentOdometer();
       });
     }
+  }
+
+  Future<void> _loadCurrentOdometer() async {
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    final carId = provider.selectedCar?.id;
+    if (carId == null) {
+      _loadedCarId = null;
+      return;
+    }
+    final dateString = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    final log = await _db.getOdometerLog(carId, dateString);
+    if (!mounted || Provider.of<AppProvider>(context, listen: false).selectedCar?.id != carId) {
+      return;
+    }
+    _loadedCarId = carId;
+    setState(() {
+      if (log != null) {
+        _odometerController.text = log.odometer.toString();
+      } else {
+        _odometerController.clear();
+      }
+    });
   }
 
   @override

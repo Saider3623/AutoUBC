@@ -25,6 +25,14 @@ class AppProvider extends ChangeNotifier {
   DateTime? _lastBackupTime;
   bool _needsSync =
       false; // Флаг: нужна ли синхронизация (если предыдущая не удалась)
+  static const _pendingSyncKey = 'autoubc_pending_sync';
+  bool _disposed = false;
+  Future<void> _syncQueue = Future<void>.value();
+  Future<void> _persistenceQueue = Future<void>.value();
+  late final Future<void> _initialization;
+  Future<void>? _loadCarsFuture;
+
+  Future<void> get initialization => _initialization;
 
   List<Car> get cars => _cars;
   Car? get selectedCar => _selectedCar;
@@ -34,37 +42,78 @@ class AppProvider extends ChangeNotifier {
   List<ServiceLog> get serviceLogs => _serviceLogs;
   List<Note> get notes => _notes;
   bool get isLoading => _isLoading;
+  bool get hasPendingSync => _needsSync;
 
   AppProvider() {
-    loadCars();
+    _initialization = _loadPendingSync().then((_) => loadCars());
+  }
+
+  Future<void> _loadPendingSync() async {
+    final prefs = await SharedPreferences.getInstance();
+    _needsSync = prefs.getBool(_pendingSyncKey) ?? false;
+  }
+
+  Future<void> _persistPendingSync() {
+    final pending = _needsSync;
+    final operation = _persistenceQueue.then((_) async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_pendingSyncKey, pending);
+    });
+    _persistenceQueue = operation.then<void>((_) {}, onError: (_, __) {});
+    return operation;
+  }
+
+  Future<void> markSyncCompleted() async {
+    _needsSync = false;
+    await _persistPendingSync();
   }
 
   // Метод с debounce для запуска бэкапа и синхронизации
   void _scheduleBackupAndSync() {
+    _needsSync = true;
+    unawaited(_persistPendingSync());
     // Отменяем предыдущий таймер, если он был
     _backupTimer?.cancel();
     // Запускаем новый таймер на 3 секунды (быстрый debounce)
-    _backupTimer = Timer(const Duration(seconds: 3), () async {
-      await _performBackupAndSync();
+    _backupTimer = Timer(const Duration(seconds: 3), () {
+      unawaited(_performBackupAndSync());
     });
   }
 
   @override
   void dispose() {
-    // Если таймер запущен — запускаем бэкап сразу при закрытии
-    if (_backupTimer != null && _backupTimer!.isActive) {
-      _backupTimer!.cancel();
-      // Запускаем бэкап синхронно при закрытии (без ожидания)
-      _performBackupAndSync();
-    }
+    // `dispose` не может надёжно дождаться сетевого запроса. Асинхронный
+    // flush здесь также мог обратиться к уже уничтоженному notifier.
+    _disposed = true;
+    _backupTimer?.cancel();
+    _backupTimer = null;
+    onDataSaved = null;
     super.dispose();
   }
 
+  /// Immediately flushes the latest local state to Google Drive when possible.
+  /// This is used for destructive actions that must not wait for the debounce.
+  Future<bool> flushPendingSync() async {
+    _backupTimer?.cancel();
+    _backupTimer = null;
+    await _performBackupAndSync(force: true);
+    return !_needsSync;
+  }
+
   // Основной метод для выполнения бэкапа и синхронизации
-  Future<void> _performBackupAndSync() async {
+  Future<void> _performBackupAndSync({bool force = false}) {
+    final operation = _syncQueue.then(
+      (_) => _performBackupAndSyncInternal(force: force),
+    );
+    _syncQueue = operation.then<void>((_) {}, onError: (_, __) {});
+    return operation;
+  }
+
+  Future<void> _performBackupAndSyncInternal({bool force = false}) async {
+    if (_disposed) return;
     final now = DateTime.now();
-    bool shouldBackup = false;
-    bool shouldSync = false;
+    bool shouldBackup = force;
+    bool shouldSync = force;
 
     // Проверка: нужно ли запускать локальный бэкап
     if (_lastBackupTime == null ||
@@ -88,38 +137,65 @@ class AppProvider extends ChangeNotifier {
     if (shouldSync) {
       // Синхронизация с Google Drive
       if (onDataSaved != null) {
-        final syncSuccess = await onDataSaved!();
-        if (syncSuccess) {
-          _needsSync = false; // Синхронизация удалась — сбрасываем флаг
-        } else {
-          _needsSync =
-              true; // Синхронизация не удалась — установим флаг для следующего раза
+        try {
+          final syncSuccess = await onDataSaved!();
+          _needsSync = !syncSuccess;
+          await _persistPendingSync();
+        } catch (error, stackTrace) {
+          _needsSync = true;
+          unawaited(_persistPendingSync());
+          debugPrint('Помилка синхронізації після зміни даних: $error');
+          debugPrint('$stackTrace');
         }
+      } else {
+        _needsSync = true;
+        await _persistPendingSync();
       }
     }
   }
 
-  Future<void> loadCars() async {
+  Future<void> loadCars() {
+    final current = _loadCarsFuture;
+    if (current != null) return current;
+
+    final future = _loadCarsInternal();
+    _loadCarsFuture = future;
+    return future.whenComplete(() {
+      if (identical(_loadCarsFuture, future)) _loadCarsFuture = null;
+    });
+  }
+
+  Future<void> _loadCarsInternal() async {
     try {
       _isLoading = true;
       notifyListeners();
       _cars = await _db.getAllCars();
-      if (_cars.isNotEmpty && _selectedCar == null) {
-        final prefs = await SharedPreferences.getInstance();
-        final savedCarId = prefs.getInt('lastSelectedCarId');
-        if (savedCarId != null) {
-          try {
-            _selectedCar = _cars.firstWhere((car) => car.id == savedCarId);
-          } catch (_) {
-            _selectedCar = _cars.first;
-          }
+      if (_cars.isEmpty) {
+        _selectedCar = null;
+        _odometerLogs = [];
+        _fuelLogs = [];
+        _reminders = [];
+        _serviceLogs = [];
+        _notes = [];
+      } else {
+        final selectedId = _selectedCar?.id;
+        final selectedStillExists = selectedId != null &&
+            _cars.any((car) => car.id == selectedId);
+        if (!selectedStillExists) {
+          final prefs = await SharedPreferences.getInstance();
+          final savedCarId = prefs.getInt('lastSelectedCarId');
+          _selectedCar = _cars.firstWhere(
+            (car) => car.id == savedCarId,
+            orElse: () => _cars.first,
+          );
         } else {
-          _selectedCar = _cars.first;
+          _selectedCar = _cars.firstWhere((car) => car.id == selectedId);
         }
         await loadLogsForCar(_selectedCar!.id);
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Помилка завантаження машин: $e');
+      debugPrint('$stackTrace');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -157,10 +233,10 @@ class AppProvider extends ChangeNotifier {
   Future<void> addCar(String name) async {
     try {
       final car = Car()..name = name;
-      await _db.addCar(car);
+      final savedCar = await _db.addCar(car);
       await loadCars();
-      // После добавления сразу выбираем новый автомобиль
-      final newCar = _cars.firstWhere((c) => c.name == name);
+      // Select by the persisted Isar id, not by a non-unique name.
+      final newCar = _cars.firstWhere((candidate) => candidate.id == savedCar.id);
       await selectCar(newCar);
       _scheduleBackupAndSync();
     } catch (e) {
@@ -176,7 +252,13 @@ class AppProvider extends ChangeNotifier {
         _selectedCar = null;
       }
       await loadCars();
-      _scheduleBackupAndSync();
+      // A deleted car must be uploaded immediately. Waiting for the debounce
+      // can leave the old car in Google Drive if the app is removed at once.
+      final synced = await flushPendingSync();
+      if (!synced) {
+        debugPrint(
+            'Видалення машини збережено локально; синхронізація не вдалася.');
+      }
     } catch (e) {
       debugPrint('Помилка видалення машини: $e');
       rethrow;
@@ -288,6 +370,9 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> updateCar(Car car) async {
     try {
+      if (car.fuelTypes == null || car.fuelTypes!.isEmpty) {
+        car.fuelTypes = ['ГАЗ', '95'];
+      }
       await _db.updateCar(car);
       await loadCars();
       _scheduleBackupAndSync();

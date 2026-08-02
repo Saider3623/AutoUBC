@@ -84,6 +84,10 @@
   "connectedToGoogleDrive": "Подключено к Google Drive ✅",
   "connectionFailed": "Не удалось подключиться",
   "dataRestoredFromGoogleDrive": "Данные восстановлены из Google Drive ☁️",
+  "syncConflictNeedsReview": "Локальные и облачные данные существуют. Локальные данные сохранены; проверьте синхронизацию перед перезаписью.",
+  "syncConflictTitle": "Конфликт синхронизации",
+  "keepLocalData": "Оставить локальные данные",
+  "useCloudData": "Использовать данные из облака",
   "signedOutFromGoogleDrive": "Отключено от Google Drive",
   "addCarFirst": "Сначала добавьте автомобиль",
   "noReminders": "Нет напоминаний",
@@ -139,6 +143,7 @@
     }
   },
   "fuelTypesHint": "Добавьте или удалите типы топлива, используемые этим автомобилем.",
+  "atLeastOneFuelType": "Оставьте хотя бы один вид топлива.",
   "newFuelTypeHint": "Новый тип (например, Дизель, 98, Электрика)",
   "weeklyReportDistance": "Пробег: {distance} км",
   "@weeklyReportDistance": {

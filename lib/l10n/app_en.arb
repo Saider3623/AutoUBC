@@ -84,6 +84,10 @@
   "connectedToGoogleDrive": "Connected to Google Drive ✅",
   "connectionFailed": "Failed to connect",
   "dataRestoredFromGoogleDrive": "Data restored from Google Drive ☁️",
+  "syncConflictNeedsReview": "Local and cloud data both exist. Local data was kept; review sync before overwriting either copy.",
+  "syncConflictTitle": "Sync conflict",
+  "keepLocalData": "Keep local data",
+  "useCloudData": "Use cloud data",
   "signedOutFromGoogleDrive": "Signed out from Google Drive",
   "addCarFirst": "Add a car first",
   "noReminders": "No reminders",
@@ -139,6 +143,7 @@
     }
   },
   "fuelTypesHint": "Add or remove fuel types used by this car.",
+  "atLeastOneFuelType": "Keep at least one fuel type.",
   "newFuelTypeHint": "New type (e.g., Diesel, 98, Electric)",
   "weeklyReportDistance": "Distance: {distance} km",
   "@weeklyReportDistance": {

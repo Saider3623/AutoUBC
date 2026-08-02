@@ -84,6 +84,10 @@
   "connectedToGoogleDrive": "Підключено до Google Drive ✅",
   "connectionFailed": "Не вдалося підключитися",
   "dataRestoredFromGoogleDrive": "Дані відновлено з Google Drive ☁️",
+  "syncConflictNeedsReview": "Локальні та хмарні дані існують. Локальні дані збережено; перевірте синхронізацію перед перезаписом.",
+  "syncConflictTitle": "Конфлікт синхронізації",
+  "keepLocalData": "Залишити локальні дані",
+  "useCloudData": "Використати дані з хмари",
   "signedOutFromGoogleDrive": "Відключено від Google Drive",
   "addCarFirst": "Спочатку додайте автомобіль",
   "noReminders": "Немає нагадувань",
@@ -139,6 +143,7 @@
     }
   },
   "fuelTypesHint": "Додайте або видаліть типи пального, які використовує цей автомобіль.",
+  "atLeastOneFuelType": "Залиште хоча б один тип пального.",
   "newFuelTypeHint": "Новий тип (напр., Дизель, 98, Електрика)",
   "weeklyReportDistance": "Пробіг: {distance} км",
   "@weeklyReportDistance": {

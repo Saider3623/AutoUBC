@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Google Drive is the source of truth for the application database. -->
+    <!-- Do not let Android restore an older local Isar file after reinstall. -->
+    <exclude domain="file" path="autoubc" />
+</full-backup-content>

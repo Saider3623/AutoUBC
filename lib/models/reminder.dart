@@ -13,9 +13,10 @@ enum ReminderType {
 @collection
 class Reminder {
   Id id = Isar.autoIncrement;
+  // Retained for backwards-compatible Isar schema reads; business logic uses carId.
   final car = IsarLink<Car>();
   @Index()
-  int? carId;
+  int? carId; // Canonical relationship key; kept nullable for old backups.
 
   @Enumerated(EnumType.name)
   ReminderType type = ReminderType.insurance;
