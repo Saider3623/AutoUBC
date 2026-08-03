@@ -4,48 +4,38 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
-/// The action selected during the first sync handshake after sign-in.
-enum SyncStartupAction { none, download, upload, conflict, error }
+/// The action selected during startup or after the first authorization.
+enum SyncStartupAction { none, download, upload, error }
 
-/// Resolves the safe action for a checked local/remote sync state.
+/// Resolves the local-first startup policy.
+///
+/// Existing local data is authoritative on normal launches. A remote backup is
+/// downloaded only when the local database file was missing at startup. A
+/// pending mutation from an existing local database is uploaded silently.
 SyncStartupAction resolveSyncStartupAction({
   required bool hasLocalData,
   required bool remoteExists,
   bool hasPendingLocalChanges = false,
-  DateTime? lastKnownRemoteModified,
-  DateTime? remoteModified,
 }) {
   if (!hasLocalData && remoteExists) return SyncStartupAction.download;
-  if (hasLocalData && !remoteExists) return SyncStartupAction.upload;
-  if (!hasLocalData && !remoteExists) return SyncStartupAction.none;
-  if (hasPendingLocalChanges && hasLocalData && remoteExists) {
-    return SyncStartupAction.conflict;
-  }
-
-  if (lastKnownRemoteModified != null &&
-      remoteModified != null &&
-      lastKnownRemoteModified.toUtc().isAtSameMomentAs(remoteModified.toUtc())) {
-    return SyncStartupAction.none;
-  }
-
-  return SyncStartupAction.conflict;
+  if (hasPendingLocalChanges) return SyncStartupAction.upload;
+  if (hasLocalData) return SyncStartupAction.none;
+  return SyncStartupAction.none;
 }
 
 /// Returns the newest backup candidate from Drive results.
 drive.File? selectNewestBackupFile(Iterable<drive.File> files) {
-  final candidates = files
-      .where((file) => file.id != null && file.id!.isNotEmpty)
-      .toList()
-    ..sort((a, b) {
-      final aModified = a.modifiedTime;
-      final bModified = b.modifiedTime;
-      if (aModified == null && bModified == null) return 0;
-      if (aModified == null) return 1;
-      if (bModified == null) return -1;
-      return bModified.compareTo(aModified);
-    });
+  final candidates =
+      files.where((file) => file.id != null && file.id!.isNotEmpty).toList()
+        ..sort((a, b) {
+          final aModified = a.modifiedTime;
+          final bModified = b.modifiedTime;
+          if (aModified == null && bModified == null) return 0;
+          if (aModified == null) return 1;
+          if (bModified == null) return -1;
+          return bModified.compareTo(aModified);
+        });
 
   return candidates.isEmpty ? null : candidates.first;
 }
@@ -93,55 +83,13 @@ class GoogleDriveSyncService extends ChangeNotifier {
   );
 
   GoogleSignInAccount? _currentUser;
-  bool _isSyncing = false;
-  String? _lastSyncError;
   Future<void> _operationQueue = Future<void>.value();
-  bool _remoteBaselineReady = false;
-  DateTime? _lastKnownRemoteModified;
-
-  static const _lastRemoteModifiedKey = 'google_drive_last_remote_modified';
-  static const _lastRemoteAccountKey = 'google_drive_last_remote_account';
 
   /// Поточний Google-акаунт (null = не авторизований).
   GoogleSignInAccount? get currentUser => _currentUser;
 
-  /// Чи виконується синхронізація прямо зараз.
-  bool get isSyncing => _isSyncing;
-
-  /// Остання помилка синхронізації (null = немає помилок).
-  String? get lastSyncError => _lastSyncError;
-
   /// Чи підключений акаунт.
   bool get isConnected => _currentUser != null;
-
-  Future<void> _loadRemoteBaseline() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedAccount = prefs.getString(_lastRemoteAccountKey);
-    final currentAccount = _currentUser?.email;
-    if (savedAccount == null ||
-        currentAccount == null ||
-        savedAccount != currentAccount) {
-      _lastKnownRemoteModified = null;
-      _remoteBaselineReady = false;
-      return;
-    }
-
-    final raw = prefs.getString(_lastRemoteModifiedKey);
-    _lastKnownRemoteModified = raw == null ? null : DateTime.tryParse(raw);
-    _remoteBaselineReady = _lastKnownRemoteModified != null;
-  }
-
-  Future<void> _saveRemoteBaseline(DateTime? modifiedTime) async {
-    final baseline = (modifiedTime ?? DateTime.now()).toUtc();
-    _lastKnownRemoteModified = baseline;
-    _remoteBaselineReady = true;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_lastRemoteModifiedKey, baseline.toIso8601String());
-    final account = _currentUser?.email;
-    if (account != null) {
-      await prefs.setString(_lastRemoteAccountKey, account);
-    }
-  }
 
   Future<T> _enqueue<T>(Future<T> Function() operation) {
     final result = _operationQueue.then((_) => operation());
@@ -159,7 +107,6 @@ class GoogleDriveSyncService extends ChangeNotifier {
     try {
       final account = await _googleSignIn.signInSilently();
       _currentUser = account;
-      await _loadRemoteBaseline();
       notifyListeners();
       return account != null;
     } catch (e, stackTrace) {
@@ -174,15 +121,11 @@ class GoogleDriveSyncService extends ChangeNotifier {
     try {
       final account = await _googleSignIn.signIn();
       _currentUser = account;
-      await _loadRemoteBaseline();
-      _lastSyncError = null;
       notifyListeners();
       return account != null;
     } catch (e, stackTrace) {
       debugPrint('[GoogleDrive] Помилка входу: $e');
       debugPrint('$stackTrace');
-      _lastSyncError = 'Помилка входу: $e';
-      notifyListeners();
       return false;
     }
   }
@@ -191,12 +134,6 @@ class GoogleDriveSyncService extends ChangeNotifier {
   Future<void> signOut() async {
     await _googleSignIn.signOut();
     _currentUser = null;
-    _lastKnownRemoteModified = null;
-    _remoteBaselineReady = false;
-    _lastSyncError = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_lastRemoteModifiedKey);
-    await prefs.remove(_lastRemoteAccountKey);
     notifyListeners();
   }
 
@@ -204,57 +141,48 @@ class GoogleDriveSyncService extends ChangeNotifier {
   // РОБОТА З ДИСКОМ
   // ---------------------------------------------------------------------------
 
-  /// Selects a non-destructive action for the first sync after sign-in.
-  /// Existing local data is never overwritten unless the caller explicitly
-  /// chooses the download action.
+  /// Selects an action without comparing local and remote content.
+  ///
+  /// A normal authorized launch is local-first and does not contact Drive.
+  /// Drive is queried only when the caller explicitly allows an empty local
+  /// database to be restored (first authorization or missing local database).
   Future<SyncStartupAction> decideStartupAction({
     required bool hasLocalData,
     bool hasPendingLocalChanges = false,
+    bool restoreIfEmpty = false,
   }) async {
     if (_currentUser == null) return SyncStartupAction.none;
 
-    try {
-      final session = await _getDriveSession();
-      if (session == null) return SyncStartupAction.none;
-
-      drive.File? remoteFile;
+    // A missing local database must be restored before considering any stale
+    // pending marker from the previous local installation.
+    if (!hasLocalData && restoreIfEmpty) {
       try {
-        remoteFile = await _findBackupFile(session.api);
-      } finally {
-        session.close();
-      }
+        final session = await _getDriveSession();
+        if (session == null) return SyncStartupAction.none;
 
-      final remoteExists = remoteFile != null;
-      final action = resolveSyncStartupAction(
-        hasLocalData: hasLocalData,
-        remoteExists: remoteExists,
-        hasPendingLocalChanges: hasPendingLocalChanges,
-        lastKnownRemoteModified: _lastKnownRemoteModified,
-        remoteModified: remoteFile?.modifiedTime,
-      );
-      if (!hasLocalData && !remoteExists) {
-        // The cloud state was successfully checked and is empty. The first
-        // local save can safely create the initial backup.
-        _remoteBaselineReady = true;
-      } else if (action == SyncStartupAction.none) {
-        _remoteBaselineReady = true;
-      } else if (action == SyncStartupAction.upload) {
-        _remoteBaselineReady = false;
+        try {
+          final remoteFile = await _findBackupFile(session.api);
+          return resolveSyncStartupAction(
+            hasLocalData: false,
+            remoteExists: remoteFile != null,
+          );
+        } finally {
+          session.close();
+        }
+      } catch (e, stackTrace) {
+        debugPrint('[GoogleDrive] Помилка перевірки стану: $e');
+        debugPrint('$stackTrace');
+        return SyncStartupAction.error;
       }
-      return action;
-    } catch (e, stackTrace) {
-      _lastSyncError = 'Не вдалося перевірити Google Drive: $e';
-      debugPrint('[GoogleDrive] Помилка перевірки стану: $e');
-      debugPrint('$stackTrace');
-      notifyListeners();
-      return SyncStartupAction.error;
     }
-  }
 
-  /// Marks a successful download or an explicitly accepted local state as the
-  /// current sync baseline.
-  void markRemoteBaselineReady() {
-    _remoteBaselineReady = true;
+    if (hasPendingLocalChanges) return SyncStartupAction.upload;
+    if (hasLocalData) {
+      // During interactive first authorization, preserve the local database
+      // and seed/update Drive from it instead of overwriting local data.
+      return restoreIfEmpty ? SyncStartupAction.upload : SyncStartupAction.none;
+    }
+    return SyncStartupAction.none;
   }
 
   /// Отримати авторизований HTTP-клієнт для googleapis.
@@ -297,10 +225,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
   }
 
   Future<bool> _uploadBackup(String dbFilePath) async {
-    if (_currentUser == null || !_remoteBaselineReady) return false;
-    _isSyncing = true;
-    _lastSyncError = null;
-    notifyListeners();
+    if (_currentUser == null) return false;
 
     _DriveSession? session;
     try {
@@ -322,10 +247,9 @@ class GoogleDriveSyncService extends ChangeNotifier {
         contentType: 'application/octet-stream',
       );
 
-      drive.File? uploadedFile;
       if (existingFile?.id != null) {
         // Файл вже є — оновлюємо вміст (PATCH без зміни батьківської папки).
-        uploadedFile = await api.files.update(
+        await api.files.update(
           drive.File(),
           existingFile!.id!,
           uploadMedia: media,
@@ -337,30 +261,17 @@ class GoogleDriveSyncService extends ChangeNotifier {
         final driveFile = drive.File()
           ..name = _kBackupFileName
           ..parents = ['appDataFolder'];
-        uploadedFile = await api.files.create(driveFile, uploadMedia: media);
+        await api.files.create(driveFile, uploadMedia: media);
         debugPrint('[GoogleDrive] Бекап створено (POST).');
       }
 
-      final remoteModified = uploadedFile.modifiedTime ??
-          (await _findBackupFile(api))?.modifiedTime;
-      if (remoteModified == null) {
-        throw StateError('Google Drive did not return backup modifiedTime.');
-      }
-      await _saveRemoteBaseline(remoteModified);
-      _isSyncing = false;
-      notifyListeners();
       return true;
     } catch (e, stackTrace) {
       debugPrint('[GoogleDrive] Помилка вивантаження: $e');
       debugPrint('$stackTrace');
-      _lastSyncError = 'Помилка синхронізації: $e';
       return false;
     } finally {
       session?.close();
-      if (_isSyncing) {
-        _isSyncing = false;
-        notifyListeners();
-      }
     }
   }
 
@@ -379,9 +290,6 @@ class GoogleDriveSyncService extends ChangeNotifier {
     Future<bool> Function(String path)? validateFile,
   }) async {
     if (_currentUser == null) return false;
-    _isSyncing = true;
-    _lastSyncError = null;
-    notifyListeners();
 
     _DriveSession? session;
     File? tempFile;
@@ -395,8 +303,6 @@ class GoogleDriveSyncService extends ChangeNotifier {
       final remoteFile = await _findBackupFile(api);
       if (remoteFile == null || remoteFile.id == null) {
         debugPrint('[GoogleDrive] Бекап на Диску не знайдено.');
-        _isSyncing = false;
-        notifyListeners();
         return false;
       }
 
@@ -438,14 +344,13 @@ class GoogleDriveSyncService extends ChangeNotifier {
         if (await previousFile.exists()) await previousFile.delete();
       } catch (_) {
         if (await targetFile.exists()) await targetFile.delete();
-        if (await previousFile.exists()) await previousFile.rename(targetFile.path);
+        if (await previousFile.exists()) {
+          await previousFile.rename(targetFile.path);
+        }
         rethrow;
       }
 
-      await _saveRemoteBaseline(remoteFile.modifiedTime);
       debugPrint('[GoogleDrive] Бекап завантажено в $targetFilePath.');
-      _isSyncing = false;
-      notifyListeners();
       return true;
     } catch (e, stackTrace) {
       if (tempFile != null && await tempFile.exists()) {
@@ -455,14 +360,9 @@ class GoogleDriveSyncService extends ChangeNotifier {
       }
       debugPrint('[GoogleDrive] Помилка завантаження: $e');
       debugPrint('$stackTrace');
-      _lastSyncError = 'Помилка завантаження: $e';
       return false;
     } finally {
       session?.close();
-      if (_isSyncing) {
-        _isSyncing = false;
-        notifyListeners();
-      }
     }
   }
 }

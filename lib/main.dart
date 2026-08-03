@@ -25,113 +25,55 @@ Future<void> _deleteFileIfExists(String path) async {
 }
 
 Future<void> _initializeCloudSync({
-  required BuildContext context,
   required GoogleDriveSyncService sync,
   required AppProvider appProvider,
   required DatabaseService dbService,
-  required ScaffoldMessengerState messenger,
-  required AppLocalizations loc,
+  required bool restoreIfEmpty,
 }) async {
   if (!sync.isConnected) return;
 
   // AppProvider starts loading immediately in its constructor. Await that
-  // exact operation instead of starting a second concurrent DB read.
+  // exact operation before deciding whether the local database is usable.
   await appProvider.initialization;
   final action = await sync.decideStartupAction(
     hasLocalData: appProvider.cars.isNotEmpty,
     hasPendingLocalChanges: appProvider.hasPendingSync,
+    restoreIfEmpty: restoreIfEmpty,
   );
 
   switch (action) {
     case SyncStartupAction.download:
       final dbPath = await dbService.getDatabasePath();
       await dbService.close();
-      final downloaded = await sync.downloadBackup(
-        dbPath,
-        validateFile: dbService.verifyDatabaseSnapshot,
-      );
-      if (downloaded) {
-        // The database file was replaced while Isar was closed. Explicitly
-        // reopen the new file before refreshing provider state.
-        await dbService.reopen();
-        await appProvider.refreshAll();
-        await appProvider.markSyncCompleted();
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(loc.dataRestoredFromGoogleDrive),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-      break;
-    case SyncStartupAction.upload:
-      sync.markRemoteBaselineReady();
-      final snapshotPath = await dbService.createDatabaseSnapshot();
-      final uploaded = await sync.uploadBackup(snapshotPath);
-      await _deleteFileIfExists(snapshotPath);
-      if (uploaded) {
-        await appProvider.markSyncCompleted();
-      } else {
-        messenger.showSnackBar(SnackBar(content: Text(loc.saveError(
-            sync.lastSyncError ?? 'Cloud backup failed'))));
-      }
-      break;
-    case SyncStartupAction.conflict:
-      if (!context.mounted) return;
-      final useCloud = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(loc.syncConflictTitle),
-          content: Text(loc.syncConflictNeedsReview),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(loc.keepLocalData),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(loc.useCloudData),
-            ),
-          ],
-        ),
-      );
-      if (!context.mounted) return;
-
-      if (useCloud == true) {
-        final dbPath = await dbService.getDatabasePath();
-        await dbService.close();
-        final downloaded = await sync.downloadBackup(
+      bool downloaded = false;
+      try {
+        downloaded = await sync.downloadBackup(
           dbPath,
           validateFile: dbService.verifyDatabaseSnapshot,
         );
-        if (downloaded) {
-          await dbService.reopen();
-          await appProvider.refreshAll();
-          await appProvider.markSyncCompleted();
-        }
-      } else if (useCloud == false) {
-        sync.markRemoteBaselineReady();
-        final snapshotPath = await dbService.createDatabaseSnapshot();
-        try {
-          final uploaded = await sync.uploadBackup(snapshotPath);
-          if (uploaded) await appProvider.markSyncCompleted();
-        } finally {
-          await _deleteFileIfExists(snapshotPath);
-        }
+      } finally {
+        // Keep the local database usable even if the remote file disappeared
+        // between the state check and the download request.
+        await dbService.reopen();
+      }
+      if (downloaded) {
+        await appProvider.refreshAll();
+        await appProvider.markSyncCompleted();
+      }
+      break;
+    case SyncStartupAction.upload:
+      final snapshotPath = await dbService.createDatabaseSnapshot();
+      try {
+        final uploaded = await sync.uploadBackup(snapshotPath);
+        if (uploaded) await appProvider.markSyncCompleted();
+      } finally {
+        await _deleteFileIfExists(snapshotPath);
       }
       break;
     case SyncStartupAction.error:
-      if (context.mounted) {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              loc.saveError(sync.lastSyncError ?? 'Cloud sync check failed'),
-            ),
-          ),
-        );
-      }
-      break;
     case SyncStartupAction.none:
+      // Sync errors remain silent. Pending state is durable and will retry on
+      // the next local mutation, lifecycle flush, or application launch.
       break;
   }
 }
@@ -228,8 +170,7 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen>
-    with WidgetsBindingObserver {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   late PageController _pageController;
   final DatabaseService _db = DatabaseService();
   AppProvider? _appProvider;
@@ -237,6 +178,7 @@ class _MainScreenState extends State<MainScreen>
   final int _totalPages = 3;
   static const int _initialPage = 1000; // Велике число для кругової прокрутки
   int _currentDisplayPage = 0;
+  bool _isInteractiveSignIn = false;
 
   @override
   void initState() {
@@ -252,8 +194,6 @@ class _MainScreenState extends State<MainScreen>
       _syncService = sync;
       _appProvider = appProvider;
       final dbService = DatabaseService();
-      final scaffoldMessenger = ScaffoldMessenger.of(context);
-      final loc = AppLocalizations.of(context)!;
 
       // Налаштовуємо авто-синхронізацію при кожному збереженні даних
       appProvider.onDataSaved = () async {
@@ -269,12 +209,10 @@ class _MainScreenState extends State<MainScreen>
       await sync.signInSilently();
       if (mounted) {
         await _initializeCloudSync(
-          context: context,
           sync: sync,
           appProvider: appProvider,
           dbService: dbService,
-          messenger: scaffoldMessenger,
-          loc: loc,
+          restoreIfEmpty: !dbService.hadDatabaseAtStartup,
         );
       }
     });
@@ -479,15 +417,7 @@ class _MainScreenState extends State<MainScreen>
             return const Center(child: CircularProgressIndicator());
           }
           if (provider.cars.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  loc.addACarToGetStarted,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-            );
+            return _buildEmptyState(loc);
           }
           return Column(
             children: [
@@ -543,18 +473,121 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 
+  Widget _buildEmptyState(AppLocalizations loc) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                      child: CircleAvatar(
+                        radius: 32,
+                        backgroundColor: colorScheme.primary.withOpacity(0.1),
+                        child: Icon(
+                          Icons.directions_car_filled,
+                          size: 34,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      loc.welcomeToAutoUbc,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      loc.firstLaunchDescription,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: _isInteractiveSignIn ? null : _signInToGoogle,
+                      icon: _isInteractiveSignIn
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colorScheme.onPrimary,
+                              ),
+                            )
+                          : const Icon(Icons.cloud_download_outlined),
+                      label: Text(_isInteractiveSignIn
+                          ? loc.connectingToGoogleDrive
+                          : loc.restoreFromGoogleDrive),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: _isInteractiveSignIn ? null : _openManageCars,
+                      icon: const Icon(Icons.add_circle_outline),
+                      label: Text(loc.createCarLocally),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _signInToGoogle() async {
+    if (_isInteractiveSignIn) return;
+
+    setState(() => _isInteractiveSignIn = true);
+    final sync = Provider.of<GoogleDriveSyncService>(context, listen: false);
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+
+    try {
+      final success = await sync.signIn();
+      if (!mounted) return;
+
+      if (success) {
+        await _initializeCloudSync(
+          sync: sync,
+          appProvider: appProvider,
+          dbService: _db,
+          restoreIfEmpty: true,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isInteractiveSignIn = false);
+      }
+    }
+  }
+
+  Future<void> _openManageCars() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ManageCarsScreen()),
+    );
+  }
+
   Future<void> _handleMenuAction(String action) async {
     final sync = Provider.of<GoogleDriveSyncService>(context, listen: false);
     final appProvider = Provider.of<AppProvider>(context, listen: false);
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final loc = AppLocalizations.of(context)!;
 
     switch (action) {
       case 'manage_cars':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ManageCarsScreen()),
-        );
+        await _openManageCars();
         break;
       case 'reminders':
         Navigator.push(
@@ -572,34 +605,13 @@ class _MainScreenState extends State<MainScreen>
         _showLanguageDialog();
         break;
       case 'google_sign_in':
-        final success = await sync.signIn();
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(SnackBar(
-            content: Text(
-                success ? loc.connectedToGoogleDrive : loc.connectionFailed),
-          ));
-        }
-        if (success && mounted) {
-          await _initializeCloudSync(
-            context: context,
-            sync: sync,
-            appProvider: appProvider,
-            dbService: _db,
-            messenger: scaffoldMessenger,
-            loc: loc,
-          );
-        }
+        await _signInToGoogle();
         break;
       case 'google_sign_out':
         // Flush the latest local state before disconnecting the account. This
         // keeps deletions and other recent edits from remaining only locally.
         await appProvider.flushPendingSync();
         await sync.signOut();
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text(loc.signedOutFromGoogleDrive)),
-          );
-        }
         break;
     }
   }

@@ -19,6 +19,11 @@ class DatabaseService {
   Isar? _isar;
   Future<void>? _initialization;
   Future<void> _lifecycleQueue = Future<void>.value();
+  bool? _hadDatabaseAtStartup;
+
+  /// Whether the database file existed before the first local open.
+  /// A missing file is the only startup condition that permits cloud restore.
+  bool get hadDatabaseAtStartup => _hadDatabaseAtStartup ?? false;
 
   Future<T> _enqueueLifecycle<T>(Future<T> Function() operation) {
     final result = _lifecycleQueue.then((_) => operation());
@@ -69,6 +74,10 @@ class DatabaseService {
     if (appDir == null) {
       throw StateError('Could not find a writable directory for the database');
     }
+
+    _hadDatabaseAtStartup ??=
+        await File('${appDir.path}${Platform.pathSeparator}autoubc.isar')
+            .exists();
 
     _isar = await Isar.open(
       [
@@ -521,7 +530,8 @@ class DatabaseService {
     await _requireCar(db, carId);
     validateNonNegativeNumber(log.odometer, 'Service odometer');
     if (log.description.trim().isEmpty) {
-      throw const DataValidationException('Service description cannot be empty.');
+      throw const DataValidationException(
+          'Service description cannot be empty.');
     }
 
     await db.writeTxn(() => db.serviceLogs.put(log));
@@ -610,7 +620,8 @@ class DatabaseService {
 
     final fileName = filePath.split(RegExp(r'[/\\]')).last;
     if (!fileName.endsWith('.isar')) return false;
-    final databaseName = fileName.substring(0, fileName.length - '.isar'.length);
+    final databaseName =
+        fileName.substring(0, fileName.length - '.isar'.length);
     Isar? checkDb;
     try {
       checkDb = await Isar.open(
@@ -681,7 +692,8 @@ class DatabaseService {
       // Isar creates a compact, transaction-safe snapshot for backups.
       if (await tempBackupFile.exists()) await tempBackupFile.delete();
       await db.copyToFile(tempBackupFile.path);
-      if (!await tempBackupFile.exists() || await tempBackupFile.length() == 0) {
+      if (!await tempBackupFile.exists() ||
+          await tempBackupFile.length() == 0) {
         throw StateError('Local backup snapshot is empty.');
       }
       if (await backupFile.exists()) await backupFile.delete();

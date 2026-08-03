@@ -4,8 +4,8 @@ import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:autoubc/services/google_drive_sync_service.dart';
 
 void main() {
-  group('sync startup decisions', () {
-    test('downloads when only the remote backup exists', () {
+  group('local-first startup decisions', () {
+    test('downloads when the local database is empty and remote exists', () {
       expect(
         resolveSyncStartupAction(
           hasLocalData: false,
@@ -15,17 +15,28 @@ void main() {
       );
     });
 
-    test('uploads when only local data exists', () {
+    test('restores remote data even if a stale pending marker remains', () {
       expect(
         resolveSyncStartupAction(
-          hasLocalData: true,
-          remoteExists: false,
+          hasLocalData: false,
+          remoteExists: true,
+          hasPendingLocalChanges: true,
         ),
-        SyncStartupAction.upload,
+        SyncStartupAction.download,
       );
     });
 
-    test('keeps an empty first install idle after checking an empty cloud', () {
+    test('stays local when both local and remote databases exist', () {
+      expect(
+        resolveSyncStartupAction(
+          hasLocalData: true,
+          remoteExists: true,
+        ),
+        SyncStartupAction.none,
+      );
+    });
+
+    test('keeps an empty first install idle when the cloud is empty', () {
       expect(
         resolveSyncStartupAction(
           hasLocalData: false,
@@ -35,42 +46,25 @@ void main() {
       );
     });
 
-    test('keeps matching local and remote baselines idle', () {
-      final baseline = DateTime.utc(2026, 8, 2, 4, 0);
-      expect(
-        resolveSyncStartupAction(
-          hasLocalData: true,
-          remoteExists: true,
-          lastKnownRemoteModified: baseline.toLocal(),
-          remoteModified: baseline,
-        ),
-        SyncStartupAction.none,
-      );
-    });
-
-    test('requires confirmation for two data sets without a matching baseline', () {
-      expect(
-        resolveSyncStartupAction(
-          hasLocalData: true,
-          remoteExists: true,
-          lastKnownRemoteModified: DateTime.utc(2026, 8, 1),
-          remoteModified: DateTime.utc(2026, 8, 2),
-        ),
-        SyncStartupAction.conflict,
-      );
-    });
-
-    test('does not hide pending local edits behind a matching baseline', () {
-      final baseline = DateTime.utc(2026, 8, 2);
+    test('uploads pending local changes without checking for a conflict', () {
       expect(
         resolveSyncStartupAction(
           hasLocalData: true,
           remoteExists: true,
           hasPendingLocalChanges: true,
-          lastKnownRemoteModified: baseline,
-          remoteModified: baseline,
         ),
-        SyncStartupAction.conflict,
+        SyncStartupAction.upload,
+      );
+    });
+
+    test('uploads pending local changes even when the remote is missing', () {
+      expect(
+        resolveSyncStartupAction(
+          hasLocalData: true,
+          remoteExists: false,
+          hasPendingLocalChanges: true,
+        ),
+        SyncStartupAction.upload,
       );
     });
   });

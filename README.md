@@ -34,18 +34,18 @@ is packaged, such as an integration/device test target.
 
 Before local backups, Isar creates a compact snapshot with `copyToFile()`. Cloud
 downloads are written to a temporary file, schema-checked, and atomically
-swapped into place. If local and remote data both exist without a known sync
-baseline, the app keeps local data and asks before either copy is overwritten.
+swapped into place. The app uses a local-first policy: an existing local
+database is never replaced by a remote copy during a normal launch.
 
 Android system backup explicitly excludes `files/autoubc`, the active Isar
-database directory. Reinstalling or transferring the app therefore starts with
-an empty local database and restores the latest copy only through the in-app
-Google Drive handshake, instead of resurrecting an older local snapshot.
+database directory. If the local database file is missing, the first authorized
+startup silently restores the latest copy from Google Drive when one exists. If
+there is no cloud copy, the app continues with an empty local database.
 
-Destructive car deletion is flushed to Google Drive immediately when an account
-is connected; it does not wait for the normal debounce timer. Other edits
-persist a pending-sync marker, so an interrupted debounce is reviewed on the
-next startup instead of being hidden by an unchanged cloud timestamp.
+After interactive authorization, local data is preserved and uploaded rather
+than overwritten. Every local mutation persists a pending-sync marker before the
+write and uploads the newest snapshot silently; failed uploads remain pending
+for a later retry.
 
 The Windows `build.ps1` script retries a failed split-ABI APK build after
 running `flutter clean`, stopping Gradle daemons, clearing the project

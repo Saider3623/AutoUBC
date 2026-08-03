@@ -21,10 +21,10 @@ class AppProvider extends ChangeNotifier {
   bool _isLoading = false;
   Future<bool> Function()?
       onDataSaved; // Изменено: теперь возвращает результат синхронизации
-  Timer? _backupTimer;
   DateTime? _lastBackupTime;
   bool _needsSync =
       false; // Флаг: нужна ли синхронизация (если предыдущая не удалась)
+  int _pendingRevision = 0;
   static const _pendingSyncKey = 'autoubc_pending_sync';
   bool _disposed = false;
   Future<void> _syncQueue = Future<void>.value();
@@ -43,6 +43,13 @@ class AppProvider extends ChangeNotifier {
   List<Note> get notes => _notes;
   bool get isLoading => _isLoading;
   bool get hasPendingSync => _needsSync;
+
+  void _setPendingSync(bool pending) {
+    if (_needsSync == pending) return;
+    // Pending state is durable sync bookkeeping, not display state. Do not
+    // notify the widget tree when a background upload starts or finishes.
+    _needsSync = pending;
+  }
 
   AppProvider() {
     _initialization = _loadPendingSync().then((_) => loadCars());
@@ -64,20 +71,28 @@ class AppProvider extends ChangeNotifier {
   }
 
   Future<void> markSyncCompleted() async {
-    _needsSync = false;
+    _setPendingSync(false);
     await _persistPendingSync();
   }
 
-  // Метод с debounce для запуска бэкапа и синхронизации
-  void _scheduleBackupAndSync() {
-    _needsSync = true;
-    unawaited(_persistPendingSync());
-    // Отменяем предыдущий таймер, если он был
-    _backupTimer?.cancel();
-    // Запускаем новый таймер на 3 секунды (быстрый debounce)
-    _backupTimer = Timer(const Duration(seconds: 3), () {
-      unawaited(_performBackupAndSync());
-    });
+  /// Persists the durable marker before a local mutation starts. If the
+  /// process is killed during the database transaction, the next launch still
+  /// knows that the local database must be considered for upload.
+  Future<void> _markLocalMutationPending() async {
+    _pendingRevision++;
+    _setPendingSync(true);
+    await _persistPendingSync();
+  }
+
+  // Запуск бэкапа и синхронизации після локального запису.
+  Future<void> _scheduleBackupAndSync() async {
+    // The marker is normally written before the mutation. Keep this fallback
+    // for any future mutation path that only schedules a sync.
+    if (!_needsSync) {
+      await _markLocalMutationPending();
+    }
+    // Start the serialized upload immediately after the local write.
+    unawaited(_performBackupAndSync());
   }
 
   @override
@@ -85,17 +100,16 @@ class AppProvider extends ChangeNotifier {
     // `dispose` не может надёжно дождаться сетевого запроса. Асинхронный
     // flush здесь также мог обратиться к уже уничтоженному notifier.
     _disposed = true;
-    _backupTimer?.cancel();
-    _backupTimer = null;
     onDataSaved = null;
     super.dispose();
   }
 
   /// Immediately flushes the latest local state to Google Drive when possible.
-  /// This is used for destructive actions that must not wait for the debounce.
+  /// This is used for destructive actions and lifecycle transitions.
   Future<bool> flushPendingSync() async {
-    _backupTimer?.cancel();
-    _backupTimer = null;
+    _pendingRevision++;
+    _setPendingSync(true);
+    await _persistPendingSync();
     await _performBackupAndSync(force: true);
     return !_needsSync;
   }
@@ -135,20 +149,22 @@ class AppProvider extends ChangeNotifier {
     }
 
     if (shouldSync) {
-      // Синхронизация с Google Drive
+      // Синхронізація з Google Drive
+      final revisionAtStart = _pendingRevision;
       if (onDataSaved != null) {
         try {
           final syncSuccess = await onDataSaved!();
-          _needsSync = !syncSuccess;
+          final hasNewerLocalChanges = revisionAtStart != _pendingRevision;
+          _setPendingSync(!syncSuccess || hasNewerLocalChanges);
           await _persistPendingSync();
         } catch (error, stackTrace) {
-          _needsSync = true;
-          unawaited(_persistPendingSync());
+          _setPendingSync(true);
+          await _persistPendingSync();
           debugPrint('Помилка синхронізації після зміни даних: $error');
           debugPrint('$stackTrace');
         }
       } else {
-        _needsSync = true;
+        _setPendingSync(true);
         await _persistPendingSync();
       }
     }
@@ -179,8 +195,8 @@ class AppProvider extends ChangeNotifier {
         _notes = [];
       } else {
         final selectedId = _selectedCar?.id;
-        final selectedStillExists = selectedId != null &&
-            _cars.any((car) => car.id == selectedId);
+        final selectedStillExists =
+            selectedId != null && _cars.any((car) => car.id == selectedId);
         if (!selectedStillExists) {
           final prefs = await SharedPreferences.getInstance();
           final savedCarId = prefs.getInt('lastSelectedCarId');
@@ -232,13 +248,15 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> addCar(String name) async {
     try {
+      await _markLocalMutationPending();
       final car = Car()..name = name;
       final savedCar = await _db.addCar(car);
       await loadCars();
       // Select by the persisted Isar id, not by a non-unique name.
-      final newCar = _cars.firstWhere((candidate) => candidate.id == savedCar.id);
+      final newCar =
+          _cars.firstWhere((candidate) => candidate.id == savedCar.id);
       await selectCar(newCar);
-      _scheduleBackupAndSync();
+      await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка додавання машини: $e');
       rethrow;
@@ -247,13 +265,14 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> deleteCar(Car car) async {
     try {
+      await _markLocalMutationPending();
       await _db.deleteCar(car);
       if (_selectedCar?.id == car.id) {
         _selectedCar = null;
       }
       await loadCars();
-      // A deleted car must be uploaded immediately. Waiting for the debounce
-      // can leave the old car in Google Drive if the app is removed at once.
+      // A deleted car must be uploaded immediately so the old car cannot
+      // remain in Google Drive if the app is removed at once.
       final synced = await flushPendingSync();
       if (!synced) {
         debugPrint(
@@ -268,9 +287,10 @@ class AppProvider extends ChangeNotifier {
   Future<void> saveOdometerLog(String dateString, int odometer) async {
     try {
       if (_selectedCar == null) return;
+      await _markLocalMutationPending();
       await _db.saveOdometerLog(_selectedCar!.id, dateString, odometer);
       await loadLogsForCar(_selectedCar!.id);
-      _scheduleBackupAndSync();
+      await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка збереження логу пробігу: $e');
       rethrow;
@@ -279,10 +299,11 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> deleteOdometerLog(OdometerLog log) async {
     try {
+      await _markLocalMutationPending();
       await _db.deleteOdometerLog(log);
       if (_selectedCar != null) {
         await loadLogsForCar(_selectedCar!.id);
-        _scheduleBackupAndSync();
+        await _scheduleBackupAndSync();
       }
     } catch (e) {
       debugPrint('Помилка видалення логу пробігу: $e');
@@ -294,10 +315,11 @@ class AppProvider extends ChangeNotifier {
       double liters) async {
     try {
       if (_selectedCar == null) return;
+      await _markLocalMutationPending();
       await _db.addFuelLog(
           _selectedCar!.id, dateString, timeString, fuelType, liters);
       await loadLogsForCar(_selectedCar!.id);
-      _scheduleBackupAndSync();
+      await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка додавання логу заправки: $e');
       rethrow;
@@ -306,10 +328,11 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> deleteFuelLog(FuelLog log) async {
     try {
+      await _markLocalMutationPending();
       await _db.deleteFuelLog(log);
       if (_selectedCar != null) {
         await loadLogsForCar(_selectedCar!.id);
-        _scheduleBackupAndSync();
+        await _scheduleBackupAndSync();
       }
     } catch (e) {
       debugPrint('Помилка видалення логу заправки: $e');
@@ -320,9 +343,10 @@ class AppProvider extends ChangeNotifier {
   Future<void> addReminder(Reminder reminder) async {
     try {
       if (_selectedCar == null) return;
+      await _markLocalMutationPending();
       await _db.addReminder(reminder);
       await loadLogsForCar(_selectedCar!.id);
-      _scheduleBackupAndSync();
+      await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка додавання нагадування: $e');
       rethrow;
@@ -331,10 +355,11 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> updateReminder(Reminder reminder) async {
     try {
+      await _markLocalMutationPending();
       await _db.updateReminder(reminder);
       if (_selectedCar != null) {
         await loadLogsForCar(_selectedCar!.id);
-        _scheduleBackupAndSync();
+        await _scheduleBackupAndSync();
       }
     } catch (e) {
       debugPrint('Помилка оновлення нагадування: $e');
@@ -344,10 +369,11 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> deleteReminder(Reminder reminder) async {
     try {
+      await _markLocalMutationPending();
       await _db.deleteReminder(reminder);
       if (_selectedCar != null) {
         await loadLogsForCar(_selectedCar!.id);
-        _scheduleBackupAndSync();
+        await _scheduleBackupAndSync();
       }
     } catch (e) {
       debugPrint('Помилка видалення нагадування: $e');
@@ -357,10 +383,11 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> completeReminder(Reminder reminder) async {
     try {
+      await _markLocalMutationPending();
       await _db.completeReminder(reminder);
       if (_selectedCar != null) {
         await loadLogsForCar(_selectedCar!.id);
-        _scheduleBackupAndSync();
+        await _scheduleBackupAndSync();
       }
     } catch (e) {
       debugPrint('Помилка завершення нагадування: $e');
@@ -370,12 +397,13 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> updateCar(Car car) async {
     try {
+      await _markLocalMutationPending();
       if (car.fuelTypes == null || car.fuelTypes!.isEmpty) {
         car.fuelTypes = ['ГАЗ', '95'];
       }
       await _db.updateCar(car);
       await loadCars();
-      _scheduleBackupAndSync();
+      await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка оновлення машини: $e');
       rethrow;
@@ -384,11 +412,12 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> addServiceLog(ServiceLog log) async {
     try {
+      await _markLocalMutationPending();
       await _db.addServiceLog(log);
       if (_selectedCar != null) {
         await loadLogsForCar(_selectedCar!.id);
       }
-      _scheduleBackupAndSync();
+      await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка додавання логу обслуговування: $e');
       rethrow;
@@ -397,11 +426,12 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> deleteServiceLog(ServiceLog log) async {
     try {
+      await _markLocalMutationPending();
       await _db.deleteServiceLog(log);
       if (_selectedCar != null) {
         await loadLogsForCar(_selectedCar!.id);
       }
-      _scheduleBackupAndSync();
+      await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка видалення логу обслуговування: $e');
       rethrow;
@@ -411,9 +441,10 @@ class AppProvider extends ChangeNotifier {
   Future<void> addNote(Note note) async {
     try {
       if (_selectedCar == null) return;
+      await _markLocalMutationPending();
       await _db.addNote(note);
       await loadLogsForCar(_selectedCar!.id);
-      _scheduleBackupAndSync();
+      await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка додавання нотатки: $e');
       rethrow;
@@ -422,11 +453,12 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> updateNote(Note note) async {
     try {
+      await _markLocalMutationPending();
       await _db.updateNote(note);
       if (_selectedCar != null) {
         await loadLogsForCar(_selectedCar!.id);
       }
-      _scheduleBackupAndSync();
+      await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка оновлення нотатки: $e');
       rethrow;
@@ -435,11 +467,12 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> deleteNote(Note note) async {
     try {
+      await _markLocalMutationPending();
       await _db.deleteNote(note);
       if (_selectedCar != null) {
         await loadLogsForCar(_selectedCar!.id);
       }
-      _scheduleBackupAndSync();
+      await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка видалення нотатки: $e');
       rethrow;
