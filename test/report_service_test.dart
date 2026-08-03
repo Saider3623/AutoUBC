@@ -88,6 +88,13 @@ void main() {
           (type: 'ГАЗ', count: 2, liters: 42.0),
         ],
       );
+      expect(
+        summaries.fold<int>(
+          0,
+          (total, summary) => total + summary.refuelCount,
+        ),
+        3,
+      );
     });
 
     test('ignores blank fuel types while grouping refuels', () {

@@ -104,10 +104,7 @@ class _PdfTranslations {
   final String odometerEnd;
   final String mileage;
   final String refuelCount;
-  final String refueledFuel;
   final String noMileage;
-  final String noActivity;
-  final String fuelTypeLabel;
   final String pcs;
   final String km;
   final String l;
@@ -120,10 +117,7 @@ class _PdfTranslations {
     required this.odometerEnd,
     required this.mileage,
     required this.refuelCount,
-    required this.refueledFuel,
     required this.noMileage,
-    required this.noActivity,
-    required this.fuelTypeLabel,
     required this.pcs,
     required this.km,
     required this.l,
@@ -136,14 +130,11 @@ class _PdfTranslations {
         return _PdfTranslations(
           reportTitle: 'Отчет по автомобилю {carName}',
           weekLabel: 'Неделя:  {dateRange}',
-          odometerStart: 'Одометр начало недели',
-          odometerEnd: 'Одометр конец недели',
+          odometerStart: 'Начало недели',
+          odometerEnd: 'Конец недели',
           mileage: 'Пробег за неделю',
-          refuelCount: 'Заправки (количество чеков)',
-          refueledFuel: 'Заправлено топлива',
+          refuelCount: 'Заправки',
           noMileage: 'Без пробега',
-          noActivity: 'Пробег за этот период не зафиксирован',
-          fuelTypeLabel: 'Топливо: {fuelType}',
           pcs: 'шт.',
           km: 'км',
           l: 'л',
@@ -153,14 +144,11 @@ class _PdfTranslations {
         return _PdfTranslations(
           reportTitle: 'Report for car {carName}',
           weekLabel: 'Week:  {dateRange}',
-          odometerStart: 'Odometer week start',
-          odometerEnd: 'Odometer week end',
+          odometerStart: 'Week start',
+          odometerEnd: 'Week end',
           mileage: 'Weekly mileage',
-          refuelCount: 'Refuels (number of receipts)',
-          refueledFuel: 'Fuel filled',
+          refuelCount: 'Refuels',
           noMileage: 'No mileage',
-          noActivity: 'No mileage recorded during this period',
-          fuelTypeLabel: 'Fuel: {fuelType}',
           pcs: 'pcs',
           km: 'km',
           l: 'L',
@@ -171,14 +159,11 @@ class _PdfTranslations {
         return _PdfTranslations(
           reportTitle: 'Звіт по автомобілю {carName}',
           weekLabel: 'Тиждень:  {dateRange}',
-          odometerStart: 'Одометр початок тижня',
-          odometerEnd: 'Одометр кінець тижня',
+          odometerStart: 'Початок тижня',
+          odometerEnd: 'Кінець тижня',
           mileage: 'Пробіг за тиждень',
-          refuelCount: 'Заправки (кількість чеків)',
-          refueledFuel: 'Заправлено пального',
+          refuelCount: 'Заправки',
           noMileage: 'Без пробігу',
-          noActivity: 'Пробіг за цей період не зафіксований',
-          fuelTypeLabel: 'Пальне: {fuelType}',
           pcs: 'шт.',
           km: 'км',
           l: 'л',
@@ -349,6 +334,10 @@ class ReportService {
         week.odometerEnd != null ? '${week.odometerEnd} ${t.km}' : '—';
     final mileageStr =
         week.odometerStart != null ? '${week.mileage} ${t.km}' : '—';
+    final totalRefuelCount = week.fuelSummaries.fold<int>(
+      0,
+      (sum, summary) => sum + summary.refuelCount,
+    );
 
     return pw.Column(
       mainAxisSize: pw.MainAxisSize.min,
@@ -369,36 +358,22 @@ class ReportService {
         if (isNoMileage)
           pw.Container(
             width: double.infinity,
-            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: pw.BoxDecoration(
               color: PdfColors.blueGrey50,
               border: pw.Border.all(color: PdfColors.blueGrey200, width: 0.5),
             ),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  t.noMileage,
-                  style: pw.TextStyle(
-                    font: ttfBold,
-                    fontSize: 12,
-                    color: PdfColors.blueGrey800,
-                  ),
-                ),
-                pw.SizedBox(height: 3),
-                pw.Text(
-                  t.noActivity,
-                  style: pw.TextStyle(
-                    font: ttf,
-                    fontSize: 10,
-                    color: PdfColors.blueGrey700,
-                  ),
-                ),
-              ],
+            child: pw.Text(
+              t.noMileage,
+              style: pw.TextStyle(
+                font: ttf,
+                fontSize: 11,
+                color: PdfColors.blueGrey700,
+              ),
             ),
           )
-        else ...[
-          // Таблиця показань одометра
+        else
+          // Одна таблиця: одометр, кількість чеків і літри за типами пального.
           pw.Table(
             border:
                 pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.5),
@@ -416,97 +391,24 @@ class ReportService {
               ),
               _tableRow(t.odometerEnd, odoEndStr, ttf, ttfBold),
               _tableRow(t.mileage, mileageStr, ttf, ttfBold),
+              _tableRow(
+                t.refuelCount,
+                '$totalRefuelCount ${t.pcs}',
+                ttf,
+                ttfBold,
+              ),
+              ...week.fuelSummaries.map(
+                (summary) => _tableRow(
+                  summary.fuelType,
+                  _formatLiters(summary.totalLiters, t),
+                  ttf,
+                  ttfBold,
+                ),
+              ),
             ],
           ),
-          pw.SizedBox(height: 8),
-          ...(_buildFuelSummarySections(
-            week.fuelSummaries,
-            t,
-            ttf,
-            ttfBold,
-          )),
-        ],
 
         pw.SizedBox(height: 20),
-      ],
-    );
-  }
-
-  List<pw.Widget> _buildFuelSummarySections(
-    List<FuelTypeSummary> summaries,
-    _PdfTranslations t,
-    pw.Font ttf,
-    pw.Font ttfBold,
-  ) {
-    if (summaries.isEmpty) {
-      return [_buildEmptyFuelSummaryTable(t, ttf, ttfBold)];
-    }
-
-    return summaries
-        .map((summary) => _buildFuelSummarySection(summary, t, ttf, ttfBold))
-        .toList();
-  }
-
-  pw.Widget _buildEmptyFuelSummaryTable(
-    _PdfTranslations t,
-    pw.Font ttf,
-    pw.Font ttfBold,
-  ) {
-    return pw.Table(
-      border: pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.5),
-      columnWidths: {
-        0: const pw.FlexColumnWidth(2.5),
-        1: const pw.FlexColumnWidth(2),
-      },
-      children: [
-        _tableRow(t.refuelCount, '—', ttf, ttfBold),
-        _tableRow(t.refueledFuel, '—', ttf, ttfBold),
-      ],
-    );
-  }
-
-  pw.Widget _buildFuelSummarySection(
-    FuelTypeSummary? summary,
-    _PdfTranslations t,
-    pw.Font ttf,
-    pw.Font ttfBold,
-  ) {
-    final fuelTypeTitle = summary == null
-        ? t.fuelTypeLabel.replaceFirst('{fuelType}', '—')
-        : t.fuelTypeLabel.replaceFirst('{fuelType}', summary.fuelType);
-    final count = summary == null ? '—' : '${summary.refuelCount} ${t.pcs}';
-    final liters =
-        summary == null ? '—' : _formatLiters(summary.totalLiters, t);
-
-    return pw.Column(
-      mainAxisSize: pw.MainAxisSize.min,
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          decoration: const pw.BoxDecoration(color: PdfColors.blueGrey100),
-          child: pw.Text(
-            fuelTypeTitle,
-            style: pw.TextStyle(
-              font: ttfBold,
-              fontSize: 11,
-              color: PdfColors.blueGrey800,
-            ),
-          ),
-        ),
-        pw.Table(
-          border: pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.5),
-          columnWidths: {
-            0: const pw.FlexColumnWidth(2.5),
-            1: const pw.FlexColumnWidth(2),
-          },
-          children: [
-            _tableRow(t.refuelCount, count, ttf, ttfBold),
-            _tableRow(t.refueledFuel, liters, ttf, ttfBold),
-          ],
-        ),
-        pw.SizedBox(height: 6),
       ],
     );
   }
