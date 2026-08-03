@@ -11,6 +11,72 @@ import '../models/fuel_log.dart';
 import '../db/database_service.dart';
 import '../utils/report_status.dart';
 
+/// Builds the localized PDF filename for a selected report month.
+String buildReportFileName(
+  String carName,
+  DateTime reportMonth,
+  String languageCode,
+) {
+  final sanitizedCarName = _sanitizeFileNamePart(carName);
+  final monthName = _capitalizeFirstLetter(
+    DateFormat.MMMM(languageCode).format(reportMonth),
+  );
+  final sanitizedMonthName = _sanitizeFileNamePart(monthName);
+  return '${sanitizedCarName}_$sanitizedMonthName.pdf';
+}
+
+String _sanitizeFileNamePart(String value) {
+  return value.trim().replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
+}
+
+String _capitalizeFirstLetter(String value) {
+  if (value.isEmpty) return value;
+  final firstRune = value.runes.first;
+  final firstLetter = String.fromCharCode(firstRune);
+  return '${firstLetter.toUpperCase()}${value.substring(firstLetter.length)}';
+}
+
+/// Aggregated fuel data for one fuel type within a report week.
+class FuelTypeSummary {
+  final String fuelType;
+  final int refuelCount;
+  final double totalLiters;
+
+  const FuelTypeSummary({
+    required this.fuelType,
+    required this.refuelCount,
+    required this.totalLiters,
+  });
+}
+
+/// Groups refueling logs by their stored fuel type.
+List<FuelTypeSummary> summarizeFuelLogsByType(Iterable<FuelLog> logs) {
+  final grouped = <String, ({int refuelCount, double totalLiters})>{};
+
+  for (final log in logs) {
+    final fuelType = log.fuelType.trim();
+    if (fuelType.isEmpty) continue;
+
+    final current = grouped[fuelType];
+    grouped[fuelType] = (
+      refuelCount: (current?.refuelCount ?? 0) + 1,
+      totalLiters: (current?.totalLiters ?? 0) + log.liters,
+    );
+  }
+
+  final summaries = grouped.entries
+      .map(
+        (entry) => FuelTypeSummary(
+          fuelType: entry.key,
+          refuelCount: entry.value.refuelCount,
+          totalLiters: entry.value.totalLiters,
+        ),
+      )
+      .toList();
+  summaries.sort((a, b) => a.fuelType.compareTo(b.fuelType));
+  return summaries;
+}
+
 /// Дані по одному тижню для звіту
 class _WeekData {
   final DateTime weekStart;
@@ -19,8 +85,7 @@ class _WeekData {
       odometerStart; // показання на початок тижня (перша запис в тижні або ближня до нього)
   final int? odometerEnd; // показання на кінець тижня
   final int mileage; // пробіг за тиждень
-  final int fuelCount; // кількість заправок (чеків)
-  final double totalLiters; // загальний обсяг л
+  final List<FuelTypeSummary> fuelSummaries;
 
   _WeekData({
     required this.weekStart,
@@ -28,8 +93,7 @@ class _WeekData {
     required this.odometerStart,
     required this.odometerEnd,
     required this.mileage,
-    required this.fuelCount,
-    required this.totalLiters,
+    required this.fuelSummaries,
   });
 }
 
@@ -43,6 +107,7 @@ class _PdfTranslations {
   final String refueledFuel;
   final String noMileage;
   final String noActivity;
+  final String fuelTypeLabel;
   final String pcs;
   final String km;
   final String l;
@@ -58,6 +123,7 @@ class _PdfTranslations {
     required this.refueledFuel,
     required this.noMileage,
     required this.noActivity,
+    required this.fuelTypeLabel,
     required this.pcs,
     required this.km,
     required this.l,
@@ -77,6 +143,7 @@ class _PdfTranslations {
           refueledFuel: 'Заправлено топлива',
           noMileage: 'Без пробега',
           noActivity: 'Пробег за этот период не зафиксирован',
+          fuelTypeLabel: 'Топливо: {fuelType}',
           pcs: 'шт.',
           km: 'км',
           l: 'л',
@@ -93,6 +160,7 @@ class _PdfTranslations {
           refueledFuel: 'Fuel filled',
           noMileage: 'No mileage',
           noActivity: 'No mileage recorded during this period',
+          fuelTypeLabel: 'Fuel: {fuelType}',
           pcs: 'pcs',
           km: 'km',
           l: 'L',
@@ -110,6 +178,7 @@ class _PdfTranslations {
           refueledFuel: 'Заправлено пального',
           noMileage: 'Без пробігу',
           noActivity: 'Пробіг за цей період не зафіксований',
+          fuelTypeLabel: 'Пальне: {fuelType}',
           pcs: 'шт.',
           km: 'км',
           l: 'л',
@@ -185,10 +254,8 @@ class ReportService {
     );
 
     final tempDir = await getTemporaryDirectory();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final sanitizedCarName = car.name.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
-    final file =
-        File('${tempDir.path}/${sanitizedCarName}_report_$timestamp.pdf');
+    final fileName = buildReportFileName(car.name, startDate, languageCode);
+    final file = File('${tempDir.path}/$fileName');
     await file.writeAsBytes(await pdf.save());
     return file;
   }
@@ -247,8 +314,7 @@ class ReportService {
         mileage = 0;
       }
 
-      final totalLiters =
-          weekFuelLogs.fold<double>(0, (sum, log) => sum + log.liters);
+      final fuelSummaries = summarizeFuelLogsByType(weekFuelLogs);
 
       weeks.add(_WeekData(
         weekStart: current,
@@ -256,8 +322,7 @@ class ReportService {
         odometerStart: odoStart,
         odometerEnd: odoEnd,
         mileage: mileage,
-        fuelCount: weekFuelLogs.length,
-        totalLiters: totalLiters,
+        fuelSummaries: fuelSummaries,
       ));
 
       current = weekEnd.add(const Duration(days: 1));
@@ -284,11 +349,6 @@ class ReportService {
         week.odometerEnd != null ? '${week.odometerEnd} ${t.km}' : '—';
     final mileageStr =
         week.odometerStart != null ? '${week.mileage} ${t.km}' : '—';
-    final litersStr = week.fuelCount > 0
-        ? week.totalLiters % 1 == 0
-            ? '${week.totalLiters.toInt()} ${t.l}'
-            : '${week.totalLiters.toStringAsFixed(2)} ${t.l}'
-        : '—';
 
     return pw.Column(
       mainAxisSize: pw.MainAxisSize.min,
@@ -296,21 +356,19 @@ class ReportService {
       children: [
         // Заголовок тижня
         pw.Container(
+          width: double.infinity,
           padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: const pw.BoxDecoration(color: PdfColors.blueGrey800),
-          child: pw.Row(
-            children: [
-              pw.Text(
-                t.weekLabel.replaceFirst('{dateRange}', dateRange),
-                style: pw.TextStyle(
-                    font: ttfBold, fontSize: 13, color: PdfColors.white),
-              ),
-            ],
+          child: pw.Text(
+            t.weekLabel.replaceFirst('{dateRange}', dateRange),
+            style: pw.TextStyle(
+                font: ttfBold, fontSize: 13, color: PdfColors.white),
           ),
         ),
 
         if (isNoMileage)
           pw.Container(
+            width: double.infinity,
             padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 9),
             decoration: pw.BoxDecoration(
               color: PdfColors.blueGrey50,
@@ -339,8 +397,8 @@ class ReportService {
               ],
             ),
           )
-        else
-          // Таблиця даних для тижнів із пробігом
+        else ...[
+          // Таблиця показань одометра
           pw.Table(
             border:
                 pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.5),
@@ -358,19 +416,105 @@ class ReportService {
               ),
               _tableRow(t.odometerEnd, odoEndStr, ttf, ttfBold),
               _tableRow(t.mileage, mileageStr, ttf, ttfBold),
-              _tableRow(
-                t.refuelCount,
-                week.fuelCount > 0 ? '${week.fuelCount} ${t.pcs}' : '—',
-                ttf,
-                ttfBold,
-              ),
-              _tableRow(t.refueledFuel, litersStr, ttf, ttfBold),
             ],
           ),
+          pw.SizedBox(height: 8),
+          ...(_buildFuelSummarySections(
+            week.fuelSummaries,
+            t,
+            ttf,
+            ttfBold,
+          )),
+        ],
 
         pw.SizedBox(height: 20),
       ],
     );
+  }
+
+  List<pw.Widget> _buildFuelSummarySections(
+    List<FuelTypeSummary> summaries,
+    _PdfTranslations t,
+    pw.Font ttf,
+    pw.Font ttfBold,
+  ) {
+    if (summaries.isEmpty) {
+      return [_buildEmptyFuelSummaryTable(t, ttf, ttfBold)];
+    }
+
+    return summaries
+        .map((summary) => _buildFuelSummarySection(summary, t, ttf, ttfBold))
+        .toList();
+  }
+
+  pw.Widget _buildEmptyFuelSummaryTable(
+    _PdfTranslations t,
+    pw.Font ttf,
+    pw.Font ttfBold,
+  ) {
+    return pw.Table(
+      border: pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.5),
+      columnWidths: {
+        0: const pw.FlexColumnWidth(2.5),
+        1: const pw.FlexColumnWidth(2),
+      },
+      children: [
+        _tableRow(t.refuelCount, '—', ttf, ttfBold),
+        _tableRow(t.refueledFuel, '—', ttf, ttfBold),
+      ],
+    );
+  }
+
+  pw.Widget _buildFuelSummarySection(
+    FuelTypeSummary? summary,
+    _PdfTranslations t,
+    pw.Font ttf,
+    pw.Font ttfBold,
+  ) {
+    final fuelTypeTitle = summary == null
+        ? t.fuelTypeLabel.replaceFirst('{fuelType}', '—')
+        : t.fuelTypeLabel.replaceFirst('{fuelType}', summary.fuelType);
+    final count = summary == null ? '—' : '${summary.refuelCount} ${t.pcs}';
+    final liters =
+        summary == null ? '—' : _formatLiters(summary.totalLiters, t);
+
+    return pw.Column(
+      mainAxisSize: pw.MainAxisSize.min,
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Container(
+          width: double.infinity,
+          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          decoration: const pw.BoxDecoration(color: PdfColors.blueGrey100),
+          child: pw.Text(
+            fuelTypeTitle,
+            style: pw.TextStyle(
+              font: ttfBold,
+              fontSize: 11,
+              color: PdfColors.blueGrey800,
+            ),
+          ),
+        ),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.5),
+          columnWidths: {
+            0: const pw.FlexColumnWidth(2.5),
+            1: const pw.FlexColumnWidth(2),
+          },
+          children: [
+            _tableRow(t.refuelCount, count, ttf, ttfBold),
+            _tableRow(t.refueledFuel, liters, ttf, ttfBold),
+          ],
+        ),
+        pw.SizedBox(height: 6),
+      ],
+    );
+  }
+
+  String _formatLiters(double liters, _PdfTranslations t) {
+    final value =
+        liters % 1 == 0 ? liters.toInt().toString() : liters.toStringAsFixed(2);
+    return '$value ${t.l}';
   }
 
   pw.TableRow _tableRow(
@@ -399,6 +543,10 @@ class ReportService {
 
   Future<void> shareReport(File file, {String languageCode = 'uk'}) async {
     final t = _PdfTranslations.of(languageCode);
-    await Share.shareXFiles([XFile(file.path)], text: t.shareText);
+    final fileName = file.path.split(Platform.pathSeparator).last;
+    await Share.shareXFiles(
+      [XFile(file.path, name: fileName)],
+      text: t.shareText,
+    );
   }
 }
