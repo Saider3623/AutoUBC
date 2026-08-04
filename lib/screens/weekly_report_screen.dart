@@ -17,6 +17,8 @@ class WeeklyReportScreen extends StatefulWidget {
 class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
   static const _noMileageBackground = Color(0xFFFFFBF2);
   static const _noMileageForeground = Color(0xFF8D6E63);
+  static const _secondaryTextColor = Color(0xFF607D8B);
+  static const _dividerColor = Color(0xFFD8DEE5);
 
   DateTime _selectedMonth = DateTime.now();
   final DatabaseService _db = DatabaseService();
@@ -79,44 +81,10 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                   final isFutureWeek = week['start']!.isAfter(today);
 
                   if (isFutureWeek) {
-                    // Отображаем будущие недели в сером и полупрозрачном виде
-                    return Opacity(
-                      opacity: 0.5,
-                      child: Card(
-                        elevation: 0,
-                        color: Colors.grey[100],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 6),
-                        child: Padding(
-                          padding: const EdgeInsets.all(14.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${DateFormat.d(languageCode).format(week['start']!)} - ${DateFormat.d(languageCode).format(week['end']!)} ${DateFormat.MMMM(languageCode).format(week['start']!)}',
-                                style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey),
-                              ),
-                              const SizedBox(height: 10),
-                              const Divider(
-                                  height: 1,
-                                  thickness: 0.5,
-                                  color: Colors.grey),
-                              const SizedBox(height: 10),
-                              Text(
-                                loc.noRefuels,
-                                style: const TextStyle(
-                                    fontSize: 13, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    return _buildFutureWeekCard(
+                      week,
+                      languageCode: languageCode,
+                      noRefuelsLabel: loc.noRefuels,
                     );
                   }
 
@@ -141,221 +109,13 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                       final data = snapshot.data!;
                       final status = classifyWeeklyReportStatus(data.distance);
                       final isNoMileage = status.isNoMileage;
-                      return Card(
-                        elevation: isNoMileage ? 0 : 1.5,
-                        color: isNoMileage ? _noMileageBackground : null,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 6),
-                        child: Padding(
-                          padding: const EdgeInsets.all(14.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      '${DateFormat.d(languageCode).format(week['start']!)} - ${DateFormat.d(languageCode).format(week['end']!)} ${DateFormat.MMMM(languageCode).format(week['start']!)}',
-                                      style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Semantics(
-                                    label: isNoMileage
-                                        ? loc.weeklyReportNoActivity
-                                        : loc.weeklyReportDistance(
-                                            data.distance),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: isNoMileage
-                                            ? _noMileageForeground
-                                                .withOpacity(0.12)
-                                            : Colors.blue.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        isNoMileage
-                                            ? loc.weeklyReportNoMileage
-                                            : loc.weeklyReportDistance(
-                                                data.distance),
-                                        style: TextStyle(
-                                          color: isNoMileage
-                                              ? _noMileageForeground
-                                              : Colors.blue,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              const Divider(height: 1, thickness: 0.5),
-                              if (isNoMileage) ...[
-                                const SizedBox(height: 10),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.weekend_outlined,
-                                      size: 18,
-                                      color: _noMileageForeground,
-                                      semanticLabel: loc.weeklyReportNoMileage,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        loc.weeklyReportNoActivity,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: _noMileageForeground,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                              const SizedBox(height: 10),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          loc.odometerSection,
-                                          style: const TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.grey,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${loc.startLabel}: ${data.odometerStart != null ? "${data.odometerStart} ${loc.kilometers}" : "-"}',
-                                          style: const TextStyle(fontSize: 13),
-                                        ),
-                                        Text(
-                                          '${loc.endLabel}: ${data.odometerEnd != null ? "${data.odometerEnd} ${loc.kilometers}" : "-"}',
-                                          style: const TextStyle(fontSize: 13),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          loc.fuelSection,
-                                          style: const TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.grey,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        if (data.liters95 == 0 &&
-                                            data.litersGas == 0)
-                                          Text(
-                                            loc.noRefuels,
-                                            style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey),
-                                          ),
-                                        if (data.liters95 > 0) ...[
-                                          Row(
-                                            children: [
-                                              Container(
-                                                width: 8,
-                                                height: 8,
-                                                decoration: const BoxDecoration(
-                                                  color: Colors.orange,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Expanded(
-                                                child: Text(
-                                                  '95: ${((data.liters95 * 100).round() / 100)} ${loc.litersShort}',
-                                                  style: const TextStyle(
-                                                      fontSize: 13,
-                                                      color: Colors.orange,
-                                                      fontWeight:
-                                                          FontWeight.bold),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                        if (data.litersGas > 0) ...[
-                                          const SizedBox(height: 2),
-                                          Row(
-                                            children: [
-                                              Container(
-                                                width: 8,
-                                                height: 8,
-                                                decoration: const BoxDecoration(
-                                                  color: Colors.green,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Expanded(
-                                                child: Text(
-                                                  'ГАЗ: ${((data.litersGas * 100).round() / 100)} ${loc.litersShort}',
-                                                  style: const TextStyle(
-                                                      fontSize: 13,
-                                                      color: Colors.green,
-                                                      fontWeight:
-                                                          FontWeight.bold),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                        if (data.consumption95 != null ||
-                                            data.consumptionGas != null) ...[
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            [
-                                              if (data.consumption95 != null)
-                                                loc.averageFuelConsumptionFor(
-                                                  '95',
-                                                  data.consumption95!
-                                                      .toStringAsFixed(2),
-                                                ),
-                                              if (data.consumptionGas != null)
-                                                loc.averageFuelConsumptionFor(
-                                                  'ГАЗ',
-                                                  data.consumptionGas!
-                                                      .toStringAsFixed(2),
-                                                ),
-                                            ].join('\n'),
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.blueGrey,
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+                      return _buildWeeklyReportCard(
+                        context,
+                        week,
+                        data,
+                        languageCode: languageCode,
+                        loc: loc,
+                        isNoMileage: isNoMileage,
                       );
                     },
                   );
@@ -366,6 +126,426 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
         );
       },
     );
+  }
+
+  Widget _buildWeeklyReportCard(
+    BuildContext context,
+    Map<String, DateTime> week,
+    WeeklyReportData data, {
+    required String languageCode,
+    required AppLocalizations loc,
+    required bool isNoMileage,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final weekTitle =
+        '${DateFormat.d(languageCode).format(week['start']!)} - ${DateFormat.d(languageCode).format(week['end']!)} ${DateFormat.MMMM(languageCode).format(week['start']!)}';
+
+    return Card(
+      elevation: isNoMileage ? 0 : 1.5,
+      color: isNoMileage ? _noMileageBackground : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: isNoMileage
+            ? BorderSide(color: _noMileageForeground.withOpacity(0.08))
+            : BorderSide.none,
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildWeekHeader(
+              weekTitle,
+              isNoMileage
+                  ? loc.weeklyReportNoMileage
+                  : loc.weeklyReportDistance(data.distance),
+              isNoMileage: isNoMileage,
+              colorScheme: colorScheme,
+              statusLabel: isNoMileage
+                  ? loc.weeklyReportNoActivity
+                  : loc.weeklyReportDistance(data.distance),
+            ),
+            const SizedBox(height: 14),
+            const Divider(height: 1, thickness: 1, color: _dividerColor),
+            const SizedBox(height: 16),
+            if (isNoMileage)
+              _buildNoMileagePanel(loc)
+            else
+              _buildReportGrid(data, loc, colorScheme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFutureWeekCard(
+    Map<String, DateTime> week, {
+    required String languageCode,
+    required String noRefuelsLabel,
+  }) {
+    final weekTitle =
+        '${DateFormat.d(languageCode).format(week['start']!)} - ${DateFormat.d(languageCode).format(week['end']!)} ${DateFormat.MMMM(languageCode).format(week['start']!)}';
+    const futureTextColor = Color(0xFF667685);
+    const futureBorderColor = Color(0xFFDCE3EA);
+
+    return Card(
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: futureBorderColor),
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              weekTitle,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: futureTextColor,
+              ),
+            ),
+            const SizedBox(height: 14),
+            const Divider(height: 1, thickness: 1, color: _dividerColor),
+            const SizedBox(height: 14),
+            Text(
+              noRefuelsLabel,
+              style: const TextStyle(
+                fontSize: 13,
+                color: futureTextColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeekHeader(
+    String title,
+    String badgeText, {
+    required bool isNoMileage,
+    required ColorScheme colorScheme,
+    required String statusLabel,
+  }) {
+    final badgeBackground = isNoMileage
+        ? _noMileageForeground.withOpacity(0.12)
+        : const Color(0xFFEAF4FF);
+    final badgeForeground =
+        isNoMileage ? _noMileageForeground : colorScheme.primary;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.2,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Semantics(
+          label: statusLabel,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 176),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: badgeBackground,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              badgeText,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: badgeForeground,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                height: 1.1,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoMileagePanel(AppLocalizations loc) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: _noMileageForeground.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.route_outlined,
+            size: 19,
+            color: _noMileageForeground,
+            semanticLabel: loc.weeklyReportNoMileage,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              loc.weeklyReportNoActivity,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.35,
+                color: _noMileageForeground,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReportGrid(
+    WeeklyReportData data,
+    AppLocalizations loc,
+    ColorScheme colorScheme,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: _buildOdometerColumn(data, loc),
+        ),
+        const SizedBox(width: 18),
+        Expanded(
+          child: _buildFuelColumn(data, loc, colorScheme),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOdometerColumn(WeeklyReportData data, AppLocalizations loc) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionLabel(loc.odometerSection),
+        const SizedBox(height: 10),
+        _buildMetricRow(
+          loc.startLabel,
+          data.odometerStart != null
+              ? '${data.odometerStart} ${loc.kilometers}'
+              : '-',
+        ),
+        const SizedBox(height: 8),
+        _buildMetricRow(
+          loc.endLabel,
+          data.odometerEnd != null
+              ? '${data.odometerEnd} ${loc.kilometers}'
+              : '-',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFuelColumn(
+    WeeklyReportData data,
+    AppLocalizations loc,
+    ColorScheme colorScheme,
+  ) {
+    final hasFuel = data.liters95 > 0 || data.litersGas > 0;
+    final hasConsumption =
+        data.consumption95 != null || data.consumptionGas != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionLabel(loc.fuelSection),
+        const SizedBox(height: 10),
+        if (!hasFuel)
+          Text(
+            loc.noRefuels,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.35,
+              color: _secondaryTextColor,
+            ),
+          )
+        else ...[
+          if (data.liters95 > 0)
+            _buildFuelAmountRow(
+              '95',
+              data.liters95,
+              Colors.orange,
+              loc.litersShort,
+            ),
+          if (data.litersGas > 0) ...[
+            if (data.liters95 > 0) const SizedBox(height: 8),
+            _buildFuelAmountRow(
+              'ГАЗ',
+              data.litersGas,
+              Colors.green,
+              loc.litersShort,
+            ),
+          ],
+        ],
+        if (hasConsumption) ...[
+          const SizedBox(height: 16),
+          _buildConsumptionLabel(loc.averageFuelConsumption),
+          const SizedBox(height: 7),
+          if (data.consumption95 != null)
+            _buildConsumptionRow(
+              '95',
+              data.consumption95!,
+              loc,
+              colorScheme,
+            ),
+          if (data.consumptionGas != null) ...[
+            if (data.consumption95 != null) const SizedBox(height: 5),
+            _buildConsumptionRow(
+              'ГАЗ',
+              data.consumptionGas!,
+              loc,
+              colorScheme,
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSectionLabel(String label) {
+    return Text(
+      label,
+      style: const TextStyle(
+        fontSize: 11,
+        height: 1.2,
+        letterSpacing: 0.2,
+        color: _secondaryTextColor,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  Widget _buildMetricRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        SizedBox(
+          width: 66,
+          child: Text(
+            '$label:',
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.25,
+              color: Color(0xFF42464D),
+            ),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.25,
+              color: Color(0xFF202124),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFuelAmountRow(
+    String fuelType,
+    double liters,
+    Color color,
+    String unit,
+  ) {
+    return Row(
+      children: [
+        Container(
+          width: 9,
+          height: 9,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            fuelType,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.25,
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Text(
+          '${_formatLiters(liters)} $unit',
+          textAlign: TextAlign.end,
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.25,
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConsumptionLabel(String label) {
+    return Text(
+      label,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        fontSize: 11,
+        height: 1.25,
+        color: _secondaryTextColor,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  Widget _buildConsumptionRow(
+    String fuelType,
+    double consumption,
+    AppLocalizations loc,
+    ColorScheme colorScheme,
+  ) {
+    return Text(
+      loc.averageFuelConsumptionFor(
+        fuelType,
+        consumption.toStringAsFixed(2),
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: 12,
+        height: 1.35,
+        color: colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  String _formatLiters(double liters) {
+    if (liters % 1 == 0) return liters.toInt().toString();
+    return liters.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '');
   }
 
   List<Map<String, DateTime>> _getWeeksInMonth(DateTime month) {
