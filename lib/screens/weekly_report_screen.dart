@@ -361,8 +361,6 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     ColorScheme colorScheme,
   ) {
     final hasFuel = data.liters95 > 0 || data.litersGas > 0;
-    final hasConsumption =
-        data.consumption95 != null || data.consumptionGas != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,27 +391,6 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
               data.litersGas,
               Colors.green,
               loc.litersShort,
-            ),
-          ],
-        ],
-        if (hasConsumption) ...[
-          const SizedBox(height: 16),
-          _buildConsumptionLabel(loc.averageFuelConsumption),
-          const SizedBox(height: 7),
-          if (data.consumption95 != null)
-            _buildConsumptionRow(
-              '95',
-              data.consumption95!,
-              loc,
-              colorScheme,
-            ),
-          if (data.consumptionGas != null) ...[
-            if (data.consumption95 != null) const SizedBox(height: 5),
-            _buildConsumptionRow(
-              'ГАЗ',
-              data.consumptionGas!,
-              loc,
-              colorScheme,
             ),
           ],
         ],
@@ -507,42 +484,6 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     );
   }
 
-  Widget _buildConsumptionLabel(String label) {
-    return Text(
-      label,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-      style: const TextStyle(
-        fontSize: 11,
-        height: 1.25,
-        color: _secondaryTextColor,
-        fontWeight: FontWeight.w700,
-      ),
-    );
-  }
-
-  Widget _buildConsumptionRow(
-    String fuelType,
-    double consumption,
-    AppLocalizations loc,
-    ColorScheme colorScheme,
-  ) {
-    return Text(
-      loc.averageFuelConsumptionFor(
-        fuelType,
-        consumption.toStringAsFixed(2),
-      ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        fontSize: 12,
-        height: 1.35,
-        color: colorScheme.onSurfaceVariant,
-        fontWeight: FontWeight.w500,
-      ),
-    );
-  }
-
   String _formatLiters(double liters) {
     if (liters % 1 == 0) return liters.toInt().toString();
     return liters.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '');
@@ -615,23 +556,10 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
       }
     }
 
-    double? consumption95;
-    double? consumptionGas;
-    if (distance > 0) {
-      if (liters95 > 0) {
-        consumption95 = (liters95 / distance) * 100;
-      }
-      if (litersGas > 0) {
-        consumptionGas = (litersGas / distance) * 100;
-      }
-    }
-
     return WeeklyReportData(
       distance: distance,
       liters95: liters95,
       litersGas: litersGas,
-      consumption95: consumption95,
-      consumptionGas: consumptionGas,
       odometerStart: odometerStart,
       odometerEnd: odometerEnd,
     );
@@ -642,8 +570,6 @@ class WeeklyReportData {
   final int distance;
   final double liters95;
   final double litersGas;
-  final double? consumption95;
-  final double? consumptionGas;
   final int? odometerStart;
   final int? odometerEnd;
 
@@ -651,8 +577,6 @@ class WeeklyReportData {
     required this.distance,
     required this.liters95,
     required this.litersGas,
-    this.consumption95,
-    this.consumptionGas,
     this.odometerStart,
     this.odometerEnd,
   });
