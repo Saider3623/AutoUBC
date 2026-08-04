@@ -204,9 +204,9 @@ class GoogleDriveSyncService extends ChangeNotifier {
     return _DriveSession(drive.DriveApi(client), client);
   }
 
-  /// Знайти найсвіжіший файл бекапу в appDataFolder (якщо він існує).
-  /// Помилки API навмисно пробрасываются викликачу: невідомий стан хмари
-  /// не можна трактувати як відсутній файл і замінювати локальним backup.
+  /// Find the latest backup file in appDataFolder, when one exists.
+  /// API errors are intentionally propagated to the caller: an unknown cloud
+  /// state must not be treated as a missing file and replaced by local data.
   Future<drive.File?> _findBackupFile(drive.DriveApi api) async {
     final list = await api.files.list(
       spaces: 'appDataFolder',

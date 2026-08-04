@@ -43,7 +43,8 @@ void main() {
 
   test('child records are queryable by canonical carId', () async {
     if (db == null) {
-      markTestSkipped('Isar native library is unavailable in this test runner.');
+      markTestSkipped(
+          'Isar native library is unavailable in this test runner.');
       return;
     }
     final isar = db!;
@@ -67,10 +68,8 @@ void main() {
       await isar.odometerLogs.putAll([log, otherLog]);
     });
 
-    final logs = await isar.odometerLogs
-        .filter()
-        .carIdEqualTo(car.id)
-        .findAll();
+    final logs =
+        await isar.odometerLogs.filter().carIdEqualTo(car.id).findAll();
     expect(logs, hasLength(1));
     expect(logs.single.odometer, 100);
   });

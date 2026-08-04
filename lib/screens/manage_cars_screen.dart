@@ -80,7 +80,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Выпадающий список с автомобилями, плюс и корзина
+              // Car selector with add and delete actions.
               Row(
                 children: [
                   Expanded(
@@ -108,13 +108,13 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Плюс для добавления авто
+                  // Add-car action.
                   IconButton(
                     onPressed: () => _showAddCarDialog(appProvider, loc),
                     icon: const Icon(Icons.add_circle, color: Colors.green),
                     iconSize: 36,
                   ),
-                  // Корзина для удаления
+                  // Delete-car action.
                   if (appProvider.selectedCar != null) ...[
                     IconButton(
                       onPressed: () => _showDeleteCarDialog(appProvider, loc),
@@ -126,7 +126,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
               ),
               const SizedBox(height: 24),
               if (appProvider.selectedCar != null) ...[
-                // Типы топлива
+                // Fuel types.
                 Text(
                   loc.fuelTypesForCar(appProvider.selectedCar!.name),
                   style: const TextStyle(
@@ -159,7 +159,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                // Список типов топлива
+                // Fuel type list.
                 ..._localFuelTypes.map((fuelType) {
                   return Card(
                     child: ListTile(
@@ -183,7 +183,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
     );
   }
 
-  // Метод добавления нового типа топлива
+  // Add a new fuel type.
   void _addFuelType() {
     if (_newFuelController.text.trim().isNotEmpty) {
       final newFuel = _newFuelController.text.trim();
@@ -196,7 +196,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
     }
   }
 
-  // Диалог добавления автомобиля
+  // Show the add-car dialog.
   Future<void> _showAddCarDialog(
       AppProvider appProvider, AppLocalizations loc) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -247,7 +247,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
     }
   }
 
-  // Диалог удаления автомобиля
+  // Show the delete-car confirmation dialog.
   Future<void> _showDeleteCarDialog(
       AppProvider appProvider, AppLocalizations loc) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);

@@ -54,7 +54,9 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
     }
     final dateString = DateFormat('yyyy-MM-dd').format(_selectedDate);
     final log = await _db.getOdometerLog(carId, dateString);
-    if (!mounted || Provider.of<AppProvider>(context, listen: false).selectedCar?.id != carId) {
+    if (!mounted ||
+        Provider.of<AppProvider>(context, listen: false).selectedCar?.id !=
+            carId) {
       return;
     }
     _loadedCarId = carId;
@@ -81,7 +83,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Вибір дати
+                  // Date selection.
                   Card(
                     child: InkWell(
                       onTap: () async {
@@ -113,7 +115,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Одометр
+                  // Odometer.
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -177,14 +179,14 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Паливо
+                  // Fuel.
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
                       child: Column(
                         children: [
-                          // Тип пального
+                          // Fuel type.
                           Consumer<AppProvider>(
                             builder: (context, provider, child) {
                               final fuelTypes =
@@ -248,7 +250,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                             },
                           ),
                           const SizedBox(height: 8),
-                          // Літри + кнопка додати
+                          // Liters and add action.
                           Row(
                             children: [
                               Expanded(
@@ -331,7 +333,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                   const SizedBox(height: 16),
                   const Divider(thickness: 1),
                   const SizedBox(height: 16),
-                  // Заметки
+                  // Notes
                   Consumer<AppProvider>(
                     builder: (context, provider, child) {
                       final notes = provider.notes;

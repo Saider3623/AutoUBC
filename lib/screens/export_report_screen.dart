@@ -39,7 +39,9 @@ class _ExportReportScreenState extends State<ExportReportScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.exportError(e.toString()))),
+          SnackBar(
+              content: Text(
+                  AppLocalizations.of(context)!.exportError(e.toString()))),
         );
       }
     } finally {

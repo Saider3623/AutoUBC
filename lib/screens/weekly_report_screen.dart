@@ -88,7 +88,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                     );
                   }
 
-                  // Для прошедших и текущих недель показываем обычную карточку
+                  // Show a regular card for past and current weeks.
                   return FutureBuilder<WeeklyReportData>(
                     future: _calculateWeeklyReport(
                       provider.selectedCar!.id,
@@ -583,7 +583,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     final fuelLogs =
         await _db.getFuelLogsInRange(carId, startString, endString);
 
-    // Получаем последнюю запись до начала недели
+    // Get the latest odometer entry before the week.
     final previousWeekLog =
         await _db.getLastOdometerLogBeforeDate(carId, startString);
 
@@ -593,13 +593,13 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
 
     if (odometerLogs.isNotEmpty) {
       odometerLogs.sort((a, b) => a.dateString.compareTo(b.dateString));
-      // Если есть запись из предыдущей недели - берем её, иначе первую запись текущей недели
+      // Use the previous reading when available; otherwise use the first reading in the current week.
       odometerStart = previousWeekLog?.odometer ?? odometerLogs.first.odometer;
       odometerEnd = odometerLogs.last.odometer;
       distance = odometerEnd - odometerStart;
       if (distance < 0) distance = 0;
     } else if (previousWeekLog != null) {
-      // Если нет записей за текущую неделю, но есть из предыдущей - используем её для начала
+      // If the current week has no entries, reuse the previous reading as the start.
       odometerStart = previousWeekLog.odometer;
       odometerEnd = previousWeekLog.odometer;
       distance = 0;

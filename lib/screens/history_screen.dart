@@ -22,7 +22,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final loc = AppLocalizations.of(context)!;
     final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
     final languageCode = localeProvider.locale?.languageCode ?? 'uk';
-    
+
     return Consumer<AppProvider>(
       builder: (context, provider, child) {
         if (provider.selectedCar == null) {
@@ -38,22 +38,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
           allLogs.add(log);
         }
         allLogs.sort((a, b) {
-          final dateA = a is OdometerLog ? a.dateString : (a as FuelLog).dateString;
-          final dateB = b is OdometerLog ? b.dateString : (b as FuelLog).dateString;
+          final dateA =
+              a is OdometerLog ? a.dateString : (a as FuelLog).dateString;
+          final dateB =
+              b is OdometerLog ? b.dateString : (b as FuelLog).dateString;
           return dateB.compareTo(dateA);
         });
 
         // Фільтруємо за вибраним місяцем
         final filteredLogs = allLogs.where((log) {
-          final dateString = log is OdometerLog ? log.dateString : (log as FuelLog).dateString;
+          final dateString =
+              log is OdometerLog ? log.dateString : (log as FuelLog).dateString;
           final logDate = DateTime.parse(dateString);
-          return logDate.year == _selectedMonth.year && logDate.month == _selectedMonth.month;
+          return logDate.year == _selectedMonth.year &&
+              logDate.month == _selectedMonth.month;
         }).toList();
 
         // Групуємо за датою
         final groupedLogs = <String, List<dynamic>>{};
         for (final log in filteredLogs) {
-          final date = log is OdometerLog ? log.dateString : (log as FuelLog).dateString;
+          final date =
+              log is OdometerLog ? log.dateString : (log as FuelLog).dateString;
           if (!groupedLogs.containsKey(date)) {
             groupedLogs[date] = [];
           }
@@ -103,48 +108,63 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         final date = groupedLogs.keys.elementAt(index);
                         final logs = groupedLogs[date]!;
                         final dateTime = DateTime.parse(date);
-                        final formattedDate = DateFormat.yMMMd(languageCode).format(dateTime);
+                        final formattedDate =
+                            DateFormat.yMMMd(languageCode).format(dateTime);
 
                         return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 3),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   formattedDate,
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 6),
                                 ...logs.map((log) {
                                   if (log is OdometerLog) {
                                     return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 2),
                                       child: Row(
                                         children: [
-                                          const Icon(Icons.speed, size: 16, color: Colors.grey),
+                                          const Icon(Icons.speed,
+                                              size: 16, color: Colors.grey),
                                           const SizedBox(width: 6),
-                                          Text('${loc.odometerLabel}: ${log.odometer} ${loc.kilometers}'),
+                                          Text(
+                                              '${loc.odometerLabel}: ${log.odometer} ${loc.kilometers}'),
                                           const Spacer(),
                                           InkWell(
-                                            onTap: () => _confirmDeleteOdometer(log),
-                                            borderRadius: BorderRadius.circular(16),
+                                            onTap: () =>
+                                                _confirmDeleteOdometer(log),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
                                             child: const Padding(
                                               padding: EdgeInsets.all(4),
-                                              child: Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                              child: Icon(Icons.delete_outline,
+                                                  size: 18, color: Colors.red),
                                             ),
                                           ),
                                         ],
                                       ),
                                     );
                                   } else if (log is FuelLog) {
-                                    final color = log.fuelType == '95' ? Colors.orange : Colors.green;
+                                    final color = log.fuelType == '95'
+                                        ? Colors.orange
+                                        : Colors.green;
                                     return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 2),
                                       child: Row(
                                         children: [
-                                          Icon(Icons.local_gas_station, size: 16, color: color),
+                                          Icon(Icons.local_gas_station,
+                                              size: 16, color: color),
                                           const SizedBox(width: 6),
                                           Text(
                                             '${log.fuelType}: ${log.liters} ${loc.litersShort}',
@@ -153,15 +173,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                           const SizedBox(width: 8),
                                           Text(
                                             log.timeString,
-                                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                            style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey),
                                           ),
                                           const Spacer(),
                                           InkWell(
-                                            onTap: () => _confirmDeleteFuel(log),
-                                            borderRadius: BorderRadius.circular(16),
+                                            onTap: () =>
+                                                _confirmDeleteFuel(log),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
                                             child: const Padding(
                                               padding: EdgeInsets.all(4),
-                                              child: Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                              child: Icon(Icons.delete_outline,
+                                                  size: 18, color: Colors.red),
                                             ),
                                           ),
                                         ],
@@ -204,7 +229,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
 
     if (confirmed == true && mounted) {
-      await Provider.of<AppProvider>(context, listen: false).deleteOdometerLog(log);
+      await Provider.of<AppProvider>(context, listen: false)
+          .deleteOdometerLog(log);
     }
   }
 

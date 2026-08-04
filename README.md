@@ -52,3 +52,11 @@ running `flutter clean`, stopping Gradle daemons, clearing the project
 `.gradle` directory and only the global `transforms-*` caches, then regenerating
 Isar code. This handles stale intermediate resources such as
 `fragment_fast_out_extra_slow_in` without changing application runtime behavior.
+
+## Code conventions
+
+- Write code comments and documentation comments in Ukrainian or English only.
+- Do not add comments in Russian. This applies to inline comments, `///` docs,
+  TODO/FIXME notes, and block comments; localized product text and domain data
+  are not comments and should remain in their intended language.
+- See [AGENTS.md](AGENTS.md) for instructions intended for AI coding agents.

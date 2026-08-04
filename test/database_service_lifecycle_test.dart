@@ -23,12 +23,16 @@ void main() {
         database.reopen(),
         database.reopen(),
       ]);
-      expect(identical(concurrentReopens.first, concurrentReopens.last), isTrue);
+      expect(
+          identical(concurrentReopens.first, concurrentReopens.last), isTrue);
     } on ArgumentError {
-      markTestSkipped('Isar native library is unavailable in this test runner.');
+      markTestSkipped(
+          'Isar native library is unavailable in this test runner.');
     } on StateError catch (error) {
-      if (error.message == 'Could not find a writable directory for the database') {
-        markTestSkipped('Application storage is unavailable in this test runner.');
+      if (error.message ==
+          'Could not find a writable directory for the database') {
+        markTestSkipped(
+            'Application storage is unavailable in this test runner.');
       } else {
         rethrow;
       }

@@ -13,11 +13,11 @@ class FuelLog {
   @Index()
   int? carId; // Canonical relationship key; kept nullable for old backups.
 
-  late String dateString; // формат "YYYY-MM-DD"
+  late String dateString; // Date in "YYYY-MM-DD" format.
 
-  late String timeString; // точное время, например "HH:mm"
+  late String timeString; // Exact time, for example "HH:mm".
 
-  late String fuelType; // "95" или "ГАЗ"
+  late String fuelType; // "95" or "ГАЗ".
 
   late double liters;
 }

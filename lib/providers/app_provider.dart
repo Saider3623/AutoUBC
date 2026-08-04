@@ -19,11 +19,9 @@ class AppProvider extends ChangeNotifier {
   List<ServiceLog> _serviceLogs = [];
   List<Note> _notes = [];
   bool _isLoading = false;
-  Future<bool> Function()?
-      onDataSaved; // Изменено: теперь возвращает результат синхронизации
+  Future<bool> Function()? onDataSaved;
   DateTime? _lastBackupTime;
-  bool _needsSync =
-      false; // Флаг: нужна ли синхронизация (если предыдущая не удалась)
+  bool _needsSync = false;
   int _pendingRevision = 0;
   static const _pendingSyncKey = 'autoubc_pending_sync';
   bool _disposed = false;
@@ -84,7 +82,7 @@ class AppProvider extends ChangeNotifier {
     await _persistPendingSync();
   }
 
-  // Запуск бэкапа и синхронизации після локального запису.
+  // Start backup and synchronization after a local write.
   Future<void> _scheduleBackupAndSync() async {
     // The marker is normally written before the mutation. Keep this fallback
     // for any future mutation path that only schedules a sync.
@@ -97,8 +95,8 @@ class AppProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    // `dispose` не может надёжно дождаться сетевого запроса. Асинхронный
-    // flush здесь также мог обратиться к уже уничтоженному notifier.
+    // `dispose` cannot reliably await a network request. An async flush here
+    // could also access an already disposed notifier.
     _disposed = true;
     onDataSaved = null;
     super.dispose();
@@ -114,7 +112,7 @@ class AppProvider extends ChangeNotifier {
     return !_needsSync;
   }
 
-  // Основной метод для выполнения бэкапа и синхронизации
+  // Main entry point for backup and synchronization.
   Future<void> _performBackupAndSync({bool force = false}) {
     final operation = _syncQueue.then(
       (_) => _performBackupAndSyncInternal(force: force),
@@ -129,27 +127,27 @@ class AppProvider extends ChangeNotifier {
     bool shouldBackup = force;
     bool shouldSync = force;
 
-    // Проверка: нужно ли запускать локальный бэкап
+    // Check whether a local backup should run.
     if (_lastBackupTime == null ||
         now.difference(_lastBackupTime!).inMinutes >= 5) {
       shouldBackup = true;
     }
 
-    // Проверка: нужно ли запускать синхронизацию
+    // Check whether synchronization should run.
     if (_needsSync) {
       shouldSync = true;
     } else if (shouldBackup) {
-      shouldSync = true; // Если делаем бэкап, то и синхронизацию тоже
+      shouldSync = true; // A backup also requires synchronization.
     }
 
     if (shouldBackup) {
-      // Локальный бэкап
+      // Local backup.
       await _db.createAutoLocalBackup();
       _lastBackupTime = DateTime.now();
     }
 
     if (shouldSync) {
-      // Синхронізація з Google Drive
+      // Synchronization with Google Drive.
       final revisionAtStart = _pendingRevision;
       if (onDataSaved != null) {
         try {
@@ -479,7 +477,7 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
-  // Методы для обновления данных при восстановлении из бэкапа
+  // Refresh all in-memory data after restoring a backup.
   Future<void> refreshAll() async {
     await loadCars();
   }

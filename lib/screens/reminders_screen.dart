@@ -148,7 +148,7 @@ class _ReminderCard extends StatelessWidget {
     bool isUpcoming = false;
     bool isOverdue = false;
 
-    // Подзаголовок в зависимости от типа
+    // Build the subtitle according to the reminder type.
     String subtitleText = '';
     if (reminder.type == ReminderType.maintenance ||
         (reminder.type == ReminderType.custom && reminder.repeatKm != null)) {
@@ -157,7 +157,7 @@ class _ReminderCard extends StatelessWidget {
           odometerLogs.isNotEmpty ? odometerLogs.first.odometer : 0;
       final dueKm = (reminder.startKm ?? 0) + (reminder.repeatKm ?? 0);
       subtitleText = loc.mileage(currentKm, dueKm);
-      // Проверка на просрочку и скоро (если осталось меньше 1000 км)
+      // Check overdue and upcoming states (when less than 1000 km remain).
       isUpcoming = currentKm >= dueKm - 1000 &&
           currentKm < dueKm &&
           !reminder.isCompleted;
@@ -284,7 +284,8 @@ class _ReminderDialogState extends State<_ReminderDialog> {
       _titleController.text = widget.reminder!.title ?? '';
       _useKmForCustom = widget.reminder!.repeatKm != null;
       _repeatMonthsEnabled = _repeatMonths > 0;
-      _repeatMonthsController.text = _repeatMonthsEnabled ? _repeatMonths.toString() : '';
+      _repeatMonthsController.text =
+          _repeatMonthsEnabled ? _repeatMonths.toString() : '';
       _repeatKmController.text = _repeatKm.toString();
     } else {
       _type = ReminderType.insurance;
@@ -506,8 +507,10 @@ class _ReminderDialogState extends State<_ReminderDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            final parsedRepeatMonths = int.tryParse(_repeatMonthsController.text);
-            final repeatMonths = _repeatMonthsEnabled ? (parsedRepeatMonths ?? 0) : 0;
+            final parsedRepeatMonths =
+                int.tryParse(_repeatMonthsController.text);
+            final repeatMonths =
+                _repeatMonthsEnabled ? (parsedRepeatMonths ?? 0) : 0;
             final reminder = Reminder()
               ..carId = widget.carId
               ..type = _type

@@ -130,7 +130,7 @@ class DatabaseService {
     });
   }
 
-  // Методы для работы с Car
+  // Car data operations.
   Future<List<Car>> getAllCars() async {
     final db = await isar;
     return db.cars.where().findAll();
@@ -222,18 +222,18 @@ class DatabaseService {
   Future<void> deleteCar(Car car) async {
     final db = await isar;
     await db.writeTxn(() async {
-      // Удаляем все связанные записи сразу по фильтру, без извлечения
+      // Delete all related records through filters without loading them first.
       await db.odometerLogs.filter().carIdEqualTo(car.id).deleteAll();
       await db.fuelLogs.filter().carIdEqualTo(car.id).deleteAll();
       await db.reminders.filter().carIdEqualTo(car.id).deleteAll();
       await db.serviceLogs.filter().carIdEqualTo(car.id).deleteAll();
       await db.notes.filter().carIdEqualTo(car.id).deleteAll();
-      // Удаляем саму машину
+      // Delete the car itself.
       await db.cars.delete(car.id);
     });
   }
 
-  // Методы для работы с OdometerLog
+  // Odometer log operations.
   Future<OdometerLog?> getOdometerLog(int carId, String dateString) async {
     final db = await isar;
     return db.odometerLogs
@@ -306,7 +306,7 @@ class DatabaseService {
         .findAll();
   }
 
-  // Методы для работы с FuelLog
+  // Fuel log operations.
   Future<void> addFuelLog(int carId, String dateString, String timeString,
       String fuelType, double liters) async {
     final db = await isar;
@@ -352,7 +352,7 @@ class DatabaseService {
     return car;
   }
 
-  // Методы для отчетов
+  // Report data operations.
   Future<List<OdometerLog>> getOdometerLogsInRange(
       int carId, String startDate, String endDate) async {
     final db = await isar;
@@ -406,7 +406,7 @@ class DatabaseService {
         .findAll();
   }
 
-  // Методы для работы с Reminder
+  // Reminder operations.
   Future<List<Reminder>> getRemindersForCar(int carId) async {
     final db = await isar;
     return db.reminders
@@ -486,7 +486,7 @@ class DatabaseService {
       ..isCompleted = false;
 
     if (hasKmRepeat) {
-      // Для пробігових беремо останній пробіг та додаємо repeatKm
+      // For mileage-based reminders, use the latest reading and add repeatKm.
       final odometerLogs = await db.odometerLogs
           .filter()
           .carIdEqualTo(carId)
@@ -494,9 +494,10 @@ class DatabaseService {
           .findFirst();
       final currentKm = odometerLogs?.odometer ?? 0;
       newReminder.startKm = currentKm;
-      newReminder.dueDate = DateTime.now(); // Для ТО дата менш важлива
+      newReminder.dueDate =
+          DateTime.now(); // The date is less important for maintenance.
     } else {
-      // Для страхування та техогляду - додаємо місяці
+      // For insurance and inspection reminders, add the configured months.
       newReminder.dueDate = addMonthsClamped(
         reminder.dueDate,
         reminder.repeatMonths,
@@ -511,7 +512,7 @@ class DatabaseService {
     });
   }
 
-  // Методы для работы с ServiceLog
+  // Service log operations.
   Future<List<ServiceLog>> getServiceLogsForCar(int carId) async {
     final db = await isar;
     return db.serviceLogs
@@ -542,7 +543,7 @@ class DatabaseService {
     await db.writeTxn(() => db.serviceLogs.delete(log.id));
   }
 
-  // Методы для работы с Note
+  // Note operations.
   Future<List<Note>> getNotesForCar(int carId) async {
     final db = await isar;
     final notes = await db.notes
@@ -606,7 +607,7 @@ class DatabaseService {
     await db.writeTxn(() => db.notes.delete(note.id));
   }
 
-  // Методы для бэкапа и восстановления
+  // Backup and restore operations.
   Future<String> getDatabasePath() async {
     final db = await isar;
     return db.path!;
@@ -668,7 +669,7 @@ class DatabaseService {
 
   Future<void> _createAutoLocalBackup(Isar db) async {
     try {
-      // Получаем директорию для сохранения бэкапов
+      // Resolve the directory used for local backups.
       Directory directory;
       if (Platform.isAndroid) {
         directory = await getExternalStorageDirectory() ??
@@ -682,7 +683,7 @@ class DatabaseService {
         await backupDir.create(recursive: true);
       }
 
-      // Создаем имя файла бэкапа с датой и временем
+      // Create a timestamped backup filename.
       final now = DateTime.now();
       final backupFileName =
           'autoubc_backup_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}.isar';
@@ -699,7 +700,7 @@ class DatabaseService {
       if (await backupFile.exists()) await backupFile.delete();
       await tempBackupFile.rename(backupFile.path);
 
-      // Удаляем старые бэкапы, оставляем последние 7
+      // Remove old backups and keep only the seven newest files.
       await _cleanOldBackups(backupDir);
     } catch (e) {
       debugPrint('Помилка створення автобэкапу: $e');
@@ -715,7 +716,7 @@ class DatabaseService {
           .toList()
         ..sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
 
-      // Удаляем все бэкапы, кроме последних 7
+      // Remove every backup except the seven newest files.
       if (backupFiles.length > 7) {
         for (int i = 7; i < backupFiles.length; i++) {
           await backupFiles[i].delete();

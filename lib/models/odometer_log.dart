@@ -13,7 +13,7 @@ class OdometerLog {
   @Index()
   int? carId; // Canonical relationship key; kept nullable for old backups.
 
-  late String dateString; // формат "YYYY-MM-DD"
+  late String dateString; // Date in "YYYY-MM-DD" format.
 
   late int odometer;
 

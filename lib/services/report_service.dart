@@ -277,7 +277,7 @@ class ReportService {
         return !d.isBefore(current) && !d.isAfter(weekEnd);
       }).toList();
 
-      // Получаем последнюю запись до начала текущей недели
+      // Get the latest odometer entry before the current week.
       final startString = DateFormat('yyyy-MM-dd').format(current);
       final previousWeekLog =
           await _db.getLastOdometerLogBeforeDate(carId, startString);
@@ -287,13 +287,13 @@ class ReportService {
       int mileage = 0;
 
       if (weekOdoLogs.isNotEmpty) {
-        // Если есть запись из предыдущей недели - берем её, иначе первую запись текущей недели
+        // Use the previous week's reading when available; otherwise use the first reading in the current week.
         odoStart = previousWeekLog?.odometer ?? weekOdoLogs.first.odometer;
         odoEnd = weekOdoLogs.last.odometer;
         mileage = odoEnd - odoStart;
         if (mileage < 0) mileage = 0;
       } else if (previousWeekLog != null) {
-        // Если нет записей за текущую неделю, но есть из предыдущей - используем её
+        // If the current week has no entries, reuse the previous reading.
         odoStart = previousWeekLog.odometer;
         odoEnd = previousWeekLog.odometer;
         mileage = 0;

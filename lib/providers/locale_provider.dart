@@ -16,7 +16,7 @@ class LocaleProvider extends ChangeNotifier {
       _locale = Locale(languageCode);
       Intl.defaultLocale = languageCode;
     } else {
-      // По умолчанию украинский
+      // Ukrainian is the default locale.
       _locale = const Locale('uk');
       Intl.defaultLocale = 'uk';
     }
