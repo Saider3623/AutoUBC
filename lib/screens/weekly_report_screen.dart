@@ -6,6 +6,7 @@ import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
 import '../db/database_service.dart';
 import '../utils/report_status.dart';
+import '../utils/weekly_report_utils.dart';
 
 class WeeklyReportScreen extends StatefulWidget {
   const WeeklyReportScreen({super.key});
@@ -35,9 +36,11 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
           return Center(child: Text(loc.selectCarGeneric));
         }
 
-        // Get all weeks in the selected month
-        final weeks = _getWeeksInMonth(_selectedMonth);
         final today = DateTime.now();
+        final weeks = prioritizeCurrentReportWeek(
+          _getWeeksInMonth(_selectedMonth),
+          today,
+        );
 
         return Column(
           children: [
@@ -78,6 +81,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                 itemCount: weeks.length,
                 itemBuilder: (context, index) {
                   final week = weeks[index];
+                  final isCurrentWeek = isDateInReportWeek(week, today);
                   final isFutureWeek = week['start']!.isAfter(today);
 
                   if (isFutureWeek) {
@@ -97,12 +101,10 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                     ),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Card(
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          child: ListTile(
-                            title: Text(loc.loading),
-                          ),
+                        return _buildLoadingWeekCard(
+                          loc.loading,
+                          isCurrentWeek: isCurrentWeek,
+                          colorScheme: Theme.of(context).colorScheme,
                         );
                       }
 
@@ -116,6 +118,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                         languageCode: languageCode,
                         loc: loc,
                         isNoMileage: isNoMileage,
+                        isCurrentWeek: isCurrentWeek,
                       );
                     },
                   );
@@ -128,6 +131,24 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     );
   }
 
+  Widget _buildLoadingWeekCard(
+    String loadingLabel, {
+    required bool isCurrentWeek,
+    required ColorScheme colorScheme,
+  }) {
+    return Card(
+      elevation: isCurrentWeek ? 4 : 1.5,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: isCurrentWeek
+            ? BorderSide(color: colorScheme.primary, width: 2)
+            : BorderSide.none,
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: ListTile(title: Text(loadingLabel)),
+    );
+  }
+
   Widget _buildWeeklyReportCard(
     BuildContext context,
     Map<String, DateTime> week,
@@ -135,19 +156,23 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     required String languageCode,
     required AppLocalizations loc,
     required bool isNoMileage,
+    required bool isCurrentWeek,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final weekTitle =
         '${DateFormat.d(languageCode).format(week['start']!)} - ${DateFormat.d(languageCode).format(week['end']!)} ${DateFormat.MMMM(languageCode).format(week['start']!)}';
 
     return Card(
-      elevation: isNoMileage ? 0 : 1.5,
+      elevation: isCurrentWeek ? 4 : (isNoMileage ? 0 : 1.5),
       color: isNoMileage ? _noMileageBackground : null,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: isNoMileage
-            ? BorderSide(color: _noMileageForeground.withValues(alpha: 0.08))
-            : BorderSide.none,
+        side: isCurrentWeek
+            ? BorderSide(color: colorScheme.primary, width: 2)
+            : isNoMileage
+                ? BorderSide(
+                    color: _noMileageForeground.withValues(alpha: 0.08))
+                : BorderSide.none,
       ),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Padding(
