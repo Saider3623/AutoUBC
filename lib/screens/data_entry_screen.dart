@@ -468,69 +468,73 @@ class _NoteDialogState extends State<_NoteDialog> {
     final languageCode = localeProvider.locale?.languageCode ?? 'uk';
 
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       title: Text(
         widget.noteToEdit != null ? loc.editNote : loc.addNote,
       ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                _dateTime != null
-                    ? DateFormat.yMMMd(languageCode).format(_dateTime!)
-                    : loc.chooseDate,
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_dateTime != null)
-                    IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        setState(() {
-                          _dateTime = null;
-                        });
-                      },
-                    ),
-                  const Icon(Icons.calendar_today),
-                ],
-              ),
-              onTap: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                final noteDateSelectedText = loc.noteDateSelected;
-                final pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: _dateTime ?? DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                  locale: localeProvider.locale,
-                );
-                if (!mounted) return;
-                if (pickedDate != null) {
-                  setState(() {
-                    _dateTime = pickedDate;
-                  });
-                  messenger.showSnackBar(
-                    SnackBar(content: Text(noteDateSelectedText)),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  _dateTime != null
+                      ? DateFormat.yMMMd(languageCode).format(_dateTime!)
+                      : loc.chooseDate,
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_dateTime != null)
+                      IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _dateTime = null;
+                          });
+                        },
+                      ),
+                    const Icon(Icons.calendar_today),
+                  ],
+                ),
+                onTap: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  final noteDateSelectedText = loc.noteDateSelected;
+                  final pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: _dateTime ?? DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                    locale: localeProvider.locale,
                   );
-                }
-              },
-            ),
-            TextField(
-              controller: _descriptionController,
-              minLines: 3,
-              maxLines: 10,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                labelText: loc.noteDescription,
-                border: const OutlineInputBorder(),
-                isDense: true,
+                  if (!mounted) return;
+                  if (pickedDate != null) {
+                    setState(() {
+                      _dateTime = pickedDate;
+                    });
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(noteDateSelectedText)),
+                    );
+                  }
+                },
               ),
-            ),
-          ],
+              TextField(
+                controller: _descriptionController,
+                minLines: 3,
+                maxLines: 10,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  labelText: loc.noteDescription,
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [

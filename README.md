@@ -47,10 +47,11 @@ than overwritten. Every local mutation persists a pending-sync marker before the
 write and uploads the newest snapshot silently; failed uploads remain pending
 for a later retry.
 
-The Windows `build.ps1` script retries a failed split-ABI APK build after
-running `flutter clean`, stopping Gradle daemons, clearing the project
-`.gradle` directory and only the global `transforms-*` caches, then regenerating
-Isar code. This handles stale intermediate resources such as
+The Windows `build.ps1` script builds one universal release APK for all
+supported Android ABIs. If the build fails, it retries after running
+`flutter clean`, stopping Gradle daemons, clearing the project `.gradle`
+directory and only the global `transforms-*` caches, then regenerating Isar
+code. This handles stale intermediate resources such as
 `fragment_fast_out_extra_slow_in` without changing application runtime behavior.
 
 ## Code conventions

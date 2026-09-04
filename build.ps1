@@ -85,7 +85,7 @@ function Clear-StaleGradleArtifacts {
 }
 
 function Invoke-ApkBuild {
-    flutter build apk --release --split-per-abi --android-skip-build-dependency-validation | Out-Host
+    flutter build apk --release --android-skip-build-dependency-validation | Out-Host
     $buildExitCode = [int]$LASTEXITCODE
     return $buildExitCode
 }
@@ -101,15 +101,15 @@ if ($buildExitCode -ne 0) {
 }
 
 Write-Host ""
-Write-Host "Step 4: Copying APKs..." -ForegroundColor Yellow
-Copy-Item "build\app\outputs\flutter-apk\app-arm64-v8a-release.apk" -Destination "AutoUBC.apk" -Force
-Write-Host "OK: AutoUBC.apk - main file (for most phones)" -ForegroundColor Green
+Write-Host "Step 4: Copying APK..." -ForegroundColor Yellow
+Copy-Item "build\app\outputs\flutter-apk\app-release.apk" -Destination "AutoUBC.apk" -Force
+Write-Host "OK: AutoUBC.apk - universal APK for supported Android ABIs" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "==============================================" -ForegroundColor Green
 Write-Host "  DONE!" -ForegroundColor Green
 Write-Host "==============================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Use AutoUBC.apk for your friend!" -ForegroundColor Cyan
+Write-Host "Use AutoUBC.apk for installation on supported Android phones!" -ForegroundColor Cyan
 Write-Host ""
 Read-Host "Press Enter to exit"
