@@ -9,6 +9,9 @@
 .history
 .svn/
 migrate_working_dir/
+# AI assistant / local scratch artifacts
+.kombai/
+pic/
 
 # IntelliJ related
 *.iml

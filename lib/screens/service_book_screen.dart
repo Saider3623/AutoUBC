@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/service_log.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 class ServiceBookScreen extends StatefulWidget {
   const ServiceBookScreen({super.key});
@@ -345,7 +345,9 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
         ElevatedButton(
           onPressed: () {
             if (_odometerController.text.isEmpty ||
-                _descController.text.isEmpty) return;
+                _descController.text.isEmpty) {
+              return;
+            }
             final odometer = int.tryParse(_odometerController.text);
             if (odometer == null) return;
 

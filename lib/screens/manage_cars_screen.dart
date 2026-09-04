@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/app_provider.dart';
 
 class ManageCarsScreen extends StatefulWidget {
-  const ManageCarsScreen({super.key});
+  final bool autoOpenAddCar;
+
+  const ManageCarsScreen({super.key, this.autoOpenAddCar = false});
 
   @override
   State<ManageCarsScreen> createState() => _ManageCarsScreenState();
 }
 
 class _ManageCarsScreenState extends State<ManageCarsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoOpenAddCar) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final appProvider = Provider.of<AppProvider>(context, listen: false);
+        if (appProvider.cars.isEmpty) {
+          _showAddCarDialog(appProvider, AppLocalizations.of(context)!);
+        }
+      });
+    }
+  }
+
   final TextEditingController _addCarController = TextEditingController();
   final TextEditingController _newFuelController = TextEditingController();
   List<String> _localFuelTypes = [];
@@ -86,7 +102,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                   Expanded(
                     child: DropdownButtonFormField<int>(
                       isExpanded: true,
-                      value: appProvider.selectedCar?.id,
+                      initialValue: appProvider.selectedCar?.id,
                       decoration: InputDecoration(
                         labelText: loc.selectCar,
                         border: const OutlineInputBorder(),

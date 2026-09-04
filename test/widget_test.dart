@@ -9,7 +9,7 @@ import 'package:autoubc/models/car.dart';
 import 'package:autoubc/providers/app_provider.dart';
 import 'package:autoubc/providers/locale_provider.dart';
 import 'package:autoubc/services/google_drive_sync_service.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:autoubc/l10n/app_localizations.dart';
 
 class _EmptyAppProvider extends AppProvider {
   @override
@@ -44,7 +44,7 @@ void main() {
         ],
         child: MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          localizationsDelegates: const [
+          localizationsDelegates: [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/reminder.dart';
@@ -236,9 +236,9 @@ class _ReminderCard extends StatelessWidget {
           );
         },
         tileColor: isUpcoming && !isOverdue
-            ? Colors.yellow.withOpacity(0.1)
+            ? Colors.yellow.withValues(alpha: 0.1)
             : isOverdue
-                ? Colors.red.withOpacity(0.1)
+                ? Colors.red.withValues(alpha: 0.1)
                 : null,
       ),
     );
@@ -325,7 +325,7 @@ class _ReminderDialogState extends State<_ReminderDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<ReminderType>(
-                value: _type,
+                initialValue: _type,
                 decoration: InputDecoration(
                   labelText: 'Тип',
                   contentPadding:
@@ -374,7 +374,7 @@ class _ReminderDialogState extends State<_ReminderDialog> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<bool>(
-                  value: _useKmForCustom,
+                  initialValue: _useKmForCustom,
                   decoration: InputDecoration(
                     labelText: loc.reminderCondition,
                     contentPadding: const EdgeInsets.symmetric(

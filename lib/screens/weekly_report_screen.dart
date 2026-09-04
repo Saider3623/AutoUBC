@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
 import '../db/database_service.dart';
@@ -146,7 +146,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: isNoMileage
-            ? BorderSide(color: _noMileageForeground.withOpacity(0.08))
+            ? BorderSide(color: _noMileageForeground.withValues(alpha: 0.08))
             : BorderSide.none,
       ),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -235,7 +235,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     required String statusLabel,
   }) {
     final badgeBackground = isNoMileage
-        ? _noMileageForeground.withOpacity(0.12)
+        ? _noMileageForeground.withValues(alpha: 0.12)
         : const Color(0xFFEAF4FF);
     final badgeForeground =
         isNoMileage ? _noMileageForeground : colorScheme.primary;
@@ -284,7 +284,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
-        color: _noMileageForeground.withOpacity(0.08),
+        color: _noMileageForeground.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

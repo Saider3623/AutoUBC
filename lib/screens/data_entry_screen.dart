@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 import '../db/database_service.dart';
 import '../models/note.dart';
 
@@ -79,7 +79,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
         return Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -346,7 +346,6 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                           else
                             ...notes
                                 .map((note) => _buildNoteCard(context, note)),
-                          const SizedBox(height: 80),
                         ],
                       );
                     },

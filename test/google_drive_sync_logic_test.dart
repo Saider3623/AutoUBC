@@ -69,6 +69,63 @@ void main() {
     });
   });
 
+  group('first-car setup prompt', () {
+    test('prompts after a connected empty startup with no sync action', () {
+      expect(
+        shouldPromptForFirstCarSetup(
+          isConnected: true,
+          hasCars: false,
+          syncAction: SyncStartupAction.none,
+        ),
+        isTrue,
+      );
+    });
+
+    test('does not prompt when a car already exists', () {
+      expect(
+        shouldPromptForFirstCarSetup(
+          isConnected: true,
+          hasCars: true,
+          syncAction: SyncStartupAction.none,
+        ),
+        isFalse,
+      );
+    });
+
+    test('prompts after restoring an empty cloud database', () {
+      expect(
+        shouldPromptForFirstCarSetup(
+          isConnected: true,
+          hasCars: false,
+          syncAction: SyncStartupAction.download,
+        ),
+        isTrue,
+      );
+    });
+
+    test('does not prompt when cloud synchronization fails', () {
+      expect(
+        shouldPromptForFirstCarSetup(
+          isConnected: true,
+          hasCars: false,
+          syncAction: SyncStartupAction.error,
+        ),
+        isFalse,
+      );
+    });
+
+    test('does not prompt when the account is disconnected', () {
+      expect(
+        shouldPromptForFirstCarSetup(
+          isConnected: false,
+          hasCars: false,
+          syncAction: SyncStartupAction.none,
+        ),
+        isFalse,
+      );
+    });
+  });
+
   test('selects the newest valid backup when Drive returns duplicates', () {
     final older = drive.File()
       ..id = 'older'

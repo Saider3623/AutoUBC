@@ -190,5 +190,8 @@
   "deleteNoteConfirmation": "Ви впевнені, що хочете видалити цю нотатку?",
   "noNotes": "Нотаток ще немає",
   "chooseDate": "Вибрати дату",
-  "noteDateSelected": "Дату встановлено"
+  "noteDateSelected": "Дату встановлено",
+  "syncInProgress": "Синхронізація…",
+  "syncError": "Помилка синхронізації",
+  "syncOk": "Синхронізовано"
 }

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'providers/app_provider.dart';
 import 'providers/locale_provider.dart';
 import 'screens/data_entry_screen.dart';
@@ -24,13 +24,13 @@ Future<void> _deleteFileIfExists(String path) async {
   } catch (_) {}
 }
 
-Future<void> _initializeCloudSync({
+Future<SyncStartupAction> _initializeCloudSync({
   required GoogleDriveSyncService sync,
   required AppProvider appProvider,
   required DatabaseService dbService,
   required bool restoreIfEmpty,
 }) async {
-  if (!sync.isConnected) return;
+  if (!sync.isConnected) return SyncStartupAction.none;
 
   // AppProvider starts loading immediately in its constructor. Await that
   // exact operation before deciding whether the local database is usable.
@@ -76,6 +76,8 @@ Future<void> _initializeCloudSync({
       // the next local mutation, lifecycle flush, or application launch.
       break;
   }
+
+  return action;
 }
 
 void main() async {
@@ -122,7 +124,7 @@ class MyApp extends StatelessWidget {
                 elevation: 0,
                 centerTitle: true,
               ),
-              cardTheme: CardTheme(
+              cardTheme: CardThemeData(
                 color: Colors.white,
                 surfaceTintColor: Colors.transparent,
                 elevation: 2,
@@ -142,7 +144,7 @@ class MyApp extends StatelessWidget {
                 ),
               ),
             ),
-            localizationsDelegates: const [
+            localizationsDelegates: [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
@@ -208,14 +210,36 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
       await sync.signInSilently();
       if (mounted) {
-        await _initializeCloudSync(
+        final syncAction = await _initializeCloudSync(
           sync: sync,
           appProvider: appProvider,
           dbService: dbService,
           restoreIfEmpty: !dbService.hadDatabaseAtStartup,
         );
+        await _promptForFirstCarIfNeeded(
+          sync: sync,
+          appProvider: appProvider,
+          syncAction: syncAction,
+        );
       }
     });
+  }
+
+  Future<void> _promptForFirstCarIfNeeded({
+    required GoogleDriveSyncService sync,
+    required AppProvider appProvider,
+    required SyncStartupAction syncAction,
+  }) async {
+    if (!mounted ||
+        !shouldPromptForFirstCarSetup(
+          isConnected: sync.isConnected,
+          hasCars: appProvider.cars.isNotEmpty,
+          syncAction: syncAction,
+        )) {
+      return;
+    }
+
+    await _openManageCars(autoOpenAddCar: true);
   }
 
   @override
@@ -262,8 +286,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         if (currentKm >= dueKm) hasOverdue = true;
       } else {
         if (reminder.dueDate.isBefore(now.add(const Duration(days: 7))) &&
-            !reminder.dueDate.isBefore(now)) hasUpcoming = true;
-        if (reminder.dueDate.isBefore(now)) hasOverdue = true;
+            !reminder.dueDate.isBefore(now)) {
+          hasUpcoming = true;
+        }
+        if (reminder.dueDate.isBefore(now)) {
+          hasOverdue = true;
+        }
       }
     }
     return (hasOverdue, hasUpcoming);
@@ -276,9 +304,23 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
     return Scaffold(
       appBar: AppBar(
-        title: Consumer<AppProvider>(
-          builder: (context, provider, child) {
-            return Text(provider.selectedCar?.name ?? 'AutoUBC');
+        title: Consumer2<AppProvider, GoogleDriveSyncService>(
+          builder: (context, provider, sync, child) {
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    provider.selectedCar?.name ?? 'AutoUBC',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (sync.isConnected) ...[
+                  const SizedBox(width: 10),
+                  _SyncStatusDot(sync: sync),
+                ],
+              ],
+            );
           },
         ),
         actions: [
@@ -459,7 +501,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? colorScheme.primary
-                            : colorScheme.primary.withOpacity(0.3),
+                            : colorScheme.primary.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(4.0),
                       ),
                     );
@@ -476,6 +518,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   Widget _buildEmptyState(AppLocalizations loc) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final sync = Provider.of<GoogleDriveSyncService>(context);
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -493,7 +536,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     Align(
                       child: CircleAvatar(
                         radius: 32,
-                        backgroundColor: colorScheme.primary.withOpacity(0.1),
+                        backgroundColor:
+                            colorScheme.primary.withValues(alpha: 0.1),
                         child: Icon(
                           Icons.directions_car_filled,
                           size: 34,
@@ -511,33 +555,47 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      loc.firstLaunchDescription,
+                      sync.isConnected
+                          ? loc.addACarToGetStarted
+                          : loc.firstLaunchDescription,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 24),
-                    FilledButton.icon(
-                      onPressed: _isInteractiveSignIn ? null : _signInToGoogle,
-                      icon: _isInteractiveSignIn
-                          ? SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: colorScheme.onPrimary,
-                              ),
-                            )
-                          : const Icon(Icons.cloud_download_outlined),
-                      label: Text(_isInteractiveSignIn
-                          ? loc.connectingToGoogleDrive
-                          : loc.restoreFromGoogleDrive),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: _isInteractiveSignIn ? null : _openManageCars,
-                      icon: const Icon(Icons.add_circle_outline),
-                      label: Text(loc.createCarLocally),
-                    ),
+                    if (sync.isConnected)
+                      FilledButton.icon(
+                        onPressed: _isInteractiveSignIn
+                            ? null
+                            : () => _openManageCars(autoOpenAddCar: true),
+                        icon: const Icon(Icons.add_circle_outline),
+                        label: Text(loc.addCar),
+                      )
+                    else ...[
+                      FilledButton.icon(
+                        onPressed:
+                            _isInteractiveSignIn ? null : _signInToGoogle,
+                        icon: _isInteractiveSignIn
+                            ? SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colorScheme.onPrimary,
+                                ),
+                              )
+                            : const Icon(Icons.cloud_download_outlined),
+                        label: Text(_isInteractiveSignIn
+                            ? loc.connectingToGoogleDrive
+                            : loc.restoreFromGoogleDrive),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed:
+                            _isInteractiveSignIn ? null : _openManageCars,
+                        icon: const Icon(Icons.add_circle_outline),
+                        label: Text(loc.createCarLocally),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -560,11 +618,16 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       if (!mounted) return;
 
       if (success) {
-        await _initializeCloudSync(
+        final syncAction = await _initializeCloudSync(
           sync: sync,
           appProvider: appProvider,
           dbService: _db,
           restoreIfEmpty: true,
+        );
+        await _promptForFirstCarIfNeeded(
+          sync: sync,
+          appProvider: appProvider,
+          syncAction: syncAction,
         );
       }
     } finally {
@@ -574,10 +637,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _openManageCars() async {
+  Future<void> _openManageCars({bool autoOpenAddCar = false}) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const ManageCarsScreen()),
+      MaterialPageRoute(
+        builder: (context) => ManageCarsScreen(autoOpenAddCar: autoOpenAddCar),
+      ),
     );
   }
 
@@ -667,6 +732,47 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SyncStatusDot extends StatelessWidget {
+  final GoogleDriveSyncService sync;
+
+  const _SyncStatusDot({required this.sync});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+
+    if (sync.isSyncing) {
+      color = Colors.blue;
+    } else if (sync.hasSyncError) {
+      color = Colors.amber;
+    } else {
+      color = Colors.green;
+    }
+
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.4),
+            blurRadius: sync.isSyncing ? 6 : 2,
+            spreadRadius: sync.isSyncing ? 1.5 : 0,
+          ),
+        ],
+      ),
+      child: sync.isSyncing
+          ? const CircularProgressIndicator(
+              strokeWidth: 1.5,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            )
+          : null,
     );
   }
 }

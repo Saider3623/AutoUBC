@@ -446,9 +446,12 @@ class ReportService {
   Future<void> shareReport(File file, {String languageCode = 'uk'}) async {
     final t = _PdfTranslations.of(languageCode);
     final fileName = file.path.split(Platform.pathSeparator).last;
-    await Share.shareXFiles(
-      [XFile(file.path, name: fileName)],
-      text: t.shareText,
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path, name: fileName)],
+        fileNameOverrides: [fileName],
+        text: t.shareText,
+      ),
     );
   }
 }

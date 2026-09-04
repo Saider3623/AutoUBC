@@ -8,6 +8,15 @@ import 'package:http/http.dart' as http;
 /// The action selected during startup or after the first authorization.
 enum SyncStartupAction { none, download, upload, error }
 
+/// Returns whether the app should ask for the first car after synchronization.
+bool shouldPromptForFirstCarSetup({
+  required bool isConnected,
+  required bool hasCars,
+  required SyncStartupAction syncAction,
+}) {
+  return isConnected && !hasCars && syncAction != SyncStartupAction.error;
+}
+
 /// Resolves the local-first startup policy.
 ///
 /// Existing local data is authoritative on normal launches. A remote backup is
@@ -43,6 +52,8 @@ drive.File? selectNewestBackupFile(Iterable<drive.File> files) {
 /// Ім'я файлу бекапу на Google Диску.
 const _kBackupFileName = 'autoubc_backup.isar';
 const _kDriveScope = 'https://www.googleapis.com/auth/drive.appdata';
+const _kGoogleWebClientId =
+    '495555935730-cha6pi6dq22t131cn5ufspsjevfa8b1v.apps.googleusercontent.com';
 
 /// HTTP-клієнт, що автоматично додає токен авторизації Google.
 class _AuthenticatedClient extends http.BaseClient {
@@ -79,17 +90,37 @@ class GoogleDriveSyncService extends ChangeNotifier {
   GoogleDriveSyncService._internal();
 
   final _googleSignIn = GoogleSignIn(
+    serverClientId: _kGoogleWebClientId,
     scopes: [_kDriveScope],
   );
 
   GoogleSignInAccount? _currentUser;
   Future<void> _operationQueue = Future<void>.value();
+  int _activeOperations = 0;
+  bool _lastSyncFailed = false;
 
   /// Поточний Google-акаунт (null = не авторизований).
   GoogleSignInAccount? get currentUser => _currentUser;
 
   /// Чи підключений акаунт.
   bool get isConnected => _currentUser != null;
+
+  /// Чи виконується зараз синхронізація (upload/download).
+  bool get isSyncing => _activeOperations > 0;
+
+  /// Чи була помилка під час останньої спроби синхронізації.
+  bool get hasSyncError => _lastSyncFailed;
+
+  void _beginOperation() {
+    _activeOperations++;
+    notifyListeners();
+  }
+
+  void _endOperation({required bool success}) {
+    _activeOperations = (_activeOperations > 0) ? _activeOperations - 1 : 0;
+    _lastSyncFailed = !success;
+    notifyListeners();
+  }
 
   Future<T> _enqueue<T>(Future<T> Function() operation) {
     final result = _operationQueue.then((_) => operation());
@@ -226,7 +257,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
 
   Future<bool> _uploadBackup(String dbFilePath) async {
     if (_currentUser == null) return false;
-
+    _beginOperation();
     _DriveSession? session;
     try {
       session = await _getDriveSession();
@@ -248,7 +279,6 @@ class GoogleDriveSyncService extends ChangeNotifier {
       );
 
       if (existingFile?.id != null) {
-        // Файл вже є — оновлюємо вміст (PATCH без зміни батьківської папки).
         await api.files.update(
           drive.File(),
           existingFile!.id!,
@@ -257,7 +287,6 @@ class GoogleDriveSyncService extends ChangeNotifier {
         debugPrint(
             '[GoogleDrive] Бекап оновлено (PATCH). ID: ${existingFile.id}');
       } else {
-        // Файлу ще немає — створюємо.
         final driveFile = drive.File()
           ..name = _kBackupFileName
           ..parents = ['appDataFolder'];
@@ -265,10 +294,12 @@ class GoogleDriveSyncService extends ChangeNotifier {
         debugPrint('[GoogleDrive] Бекап створено (POST).');
       }
 
+      _endOperation(success: true);
       return true;
     } catch (e, stackTrace) {
       debugPrint('[GoogleDrive] Помилка вивантаження: $e');
       debugPrint('$stackTrace');
+      _endOperation(success: false);
       return false;
     } finally {
       session?.close();
@@ -290,6 +321,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
     Future<bool> Function(String path)? validateFile,
   }) async {
     if (_currentUser == null) return false;
+    _beginOperation();
 
     _DriveSession? session;
     File? tempFile;
@@ -303,6 +335,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
       final remoteFile = await _findBackupFile(api);
       if (remoteFile == null || remoteFile.id == null) {
         debugPrint('[GoogleDrive] Бекап на Диску не знайдено.');
+        _endOperation(success: true);
         return false;
       }
 
@@ -351,6 +384,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
       }
 
       debugPrint('[GoogleDrive] Бекап завантажено в $targetFilePath.');
+      _endOperation(success: true);
       return true;
     } catch (e, stackTrace) {
       if (tempFile != null && await tempFile.exists()) {
@@ -360,6 +394,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
       }
       debugPrint('[GoogleDrive] Помилка завантаження: $e');
       debugPrint('$stackTrace');
+      _endOperation(success: false);
       return false;
     } finally {
       session?.close();

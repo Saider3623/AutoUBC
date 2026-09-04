@@ -190,5 +190,8 @@
   "deleteNoteConfirmation": "Вы уверены, что хотите удалить эту заметку?",
   "noNotes": "Заметок пока нет",
   "chooseDate": "Выбрать дату",
-  "noteDateSelected": "Дата установлена"
+  "noteDateSelected": "Дата установлена",
+  "syncInProgress": "Синхронизация…",
+  "syncError": "Ошибка синхронизации",
+  "syncOk": "Синхронизировано"
 }

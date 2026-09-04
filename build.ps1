@@ -85,7 +85,7 @@ function Clear-StaleGradleArtifacts {
 }
 
 function Invoke-ApkBuild {
-    flutter build apk --split-per-abi | Out-Host
+    flutter build apk --release --split-per-abi --android-skip-build-dependency-validation | Out-Host
     $buildExitCode = [int]$LASTEXITCODE
     return $buildExitCode
 }
@@ -93,36 +93,9 @@ function Invoke-ApkBuild {
 $buildExitCode = Invoke-ApkBuild
 if ($buildExitCode -ne 0) {
     Write-Host ""
-    Write-Host "The first build failed. Cleaning generated Android resources and retrying..." -ForegroundColor Yellow
-    flutter clean
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "ERROR: Flutter clean failed!" -ForegroundColor Red
-        Read-Host "Press Enter to exit"
-        exit 1
-    }
-
-    Clear-StaleGradleArtifacts
-
-    flutter pub get
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "ERROR: Failed to restore dependencies after clean!" -ForegroundColor Red
-        Read-Host "Press Enter to exit"
-        exit 1
-    }
-
-    flutter pub run build_runner build --delete-conflicting-outputs
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "ERROR: Failed to regenerate Isar code after clean!" -ForegroundColor Red
-        Read-Host "Press Enter to exit"
-        exit 1
-    }
-
-    $buildExitCode = Invoke-ApkBuild
-}
-
-if ($buildExitCode -ne 0) {
-    Write-Host ""
-    Write-Host "ERROR: Failed to build APKs after clean retry!" -ForegroundColor Red
+    Write-Host "ERROR: APK build failed!" -ForegroundColor Red
+    Write-Host "TIP: Make sure you ran 'flutter pub get' in a regular PowerShell (not Trae sandbox)" -ForegroundColor Yellow
+    Write-Host "     after editing pubspec.yaml, then retry this build script." -ForegroundColor Yellow
     Read-Host "Press Enter to exit"
     exit 1
 }
