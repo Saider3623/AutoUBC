@@ -181,6 +181,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   static const int _initialPage = 1000; // Велике число для кругової прокрутки
   int _currentDisplayPage = 0;
   bool _isInteractiveSignIn = false;
+  bool _isLifecycleSyncInProgress = false;
 
   @override
   void initState() {
@@ -244,12 +245,26 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.detached) {
-      final appProvider = _appProvider;
-      if (_syncService?.isConnected == true && appProvider != null) {
-        unawaited(appProvider.flushPendingSync());
-      }
+    if (state != AppLifecycleState.paused &&
+        state != AppLifecycleState.detached) {
+      return;
+    }
+
+    final appProvider = _appProvider;
+    if (_syncService?.isConnected == true &&
+        appProvider != null &&
+        appProvider.hasPendingSync &&
+        !_isLifecycleSyncInProgress) {
+      unawaited(_flushPendingSyncOnLifecycle(appProvider));
+    }
+  }
+
+  Future<void> _flushPendingSyncOnLifecycle(AppProvider appProvider) async {
+    _isLifecycleSyncInProgress = true;
+    try {
+      await appProvider.flushPendingSync();
+    } finally {
+      _isLifecycleSyncInProgress = false;
     }
   }
 

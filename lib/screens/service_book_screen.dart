@@ -280,10 +280,13 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
     final languageCode = localeProvider.locale?.languageCode ?? 'uk';
 
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       title: Text(
           widget.logToEdit != null ? loc.editServiceLog : loc.addServiceLog),
-      content: SingleChildScrollView(
-        child: Column(
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -336,6 +339,7 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
             ),
           ],
         ),
+      ),
       ),
       actions: [
         TextButton(

@@ -102,11 +102,14 @@ class AppProvider extends ChangeNotifier {
     super.dispose();
   }
 
-  /// Immediately flushes the latest local state to Google Drive when possible.
+  /// Immediately flushes pending local changes to Google Drive when possible.
   /// This is used for destructive actions and lifecycle transitions.
   Future<bool> flushPendingSync() async {
+    // A lifecycle transition is not itself a data change. Avoid creating and
+    // uploading a snapshot when the local state is already synchronized.
+    if (!_needsSync) return true;
+
     _pendingRevision++;
-    _setPendingSync(true);
     await _persistPendingSync();
     await _performBackupAndSync(force: true);
     return !_needsSync;

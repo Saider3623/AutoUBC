@@ -311,14 +311,16 @@ class _ReminderDialogState extends State<_ReminderDialog> {
         : 0;
 
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       title: Text(widget.reminder != null ? loc.edit : loc.addReminder),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      content: SingleChildScrollView(
-        child: Container(
-          width: MediaQuery.of(context).size.width,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-          ),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -491,6 +493,7 @@ class _ReminderDialogState extends State<_ReminderDialog> {
             ],
           ),
         ),
+      ),
       ),
       actions: [
         if (widget.onDelete != null)

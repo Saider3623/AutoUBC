@@ -24,4 +24,25 @@ void main() {
     expect(provider.hasPendingSync, isFalse);
     expect(notifications, 0);
   });
+
+  test('lifecycle flush skips uploads when there are no pending changes', () async {
+    SharedPreferences.setMockInitialValues({
+      'autoubc_pending_sync': false,
+    });
+    final provider = _TestAppProvider();
+    addTearDown(provider.dispose);
+
+    var uploadCalls = 0;
+    provider.onDataSaved = () async {
+      uploadCalls++;
+      return true;
+    };
+    await provider.initialization;
+
+    final synced = await provider.flushPendingSync();
+
+    expect(synced, isTrue);
+    expect(uploadCalls, 0);
+    expect(provider.hasPendingSync, isFalse);
+  });
 }
