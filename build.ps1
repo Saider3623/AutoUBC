@@ -85,7 +85,7 @@ function Clear-StaleGradleArtifacts {
 }
 
 function Invoke-ApkBuild {
-    flutter build apk --release --android-skip-build-dependency-validation | Out-Host
+    flutter build apk --release --split-per-abi --android-skip-build-dependency-validation | Out-Host
     $buildExitCode = [int]$LASTEXITCODE
     return $buildExitCode
 }
@@ -101,15 +101,37 @@ if ($buildExitCode -ne 0) {
 }
 
 Write-Host ""
-Write-Host "Step 4: Copying APK..." -ForegroundColor Yellow
-Copy-Item "build\app\outputs\flutter-apk\app-release.apk" -Destination "AutoUBC.apk" -Force
-Write-Host "OK: AutoUBC.apk - universal APK for supported Android ABIs" -ForegroundColor Green
+Write-Host "Step 4: Copying ABI-specific APKs..." -ForegroundColor Yellow
+$apkOutputDir = Join-Path $PSScriptRoot "build\app\outputs\flutter-apk"
+$releaseDir = Join-Path $PSScriptRoot "release"
+$abiFiles = @{
+    "arm64-v8a" = "app-arm64-v8a-release.apk"
+    "armeabi-v7a" = "app-armeabi-v7a-release.apk"
+    "x86_64" = "app-x86_64-release.apk"
+}
+
+foreach ($abiFile in $abiFiles.Values) {
+    $sourcePath = Join-Path $apkOutputDir $abiFile
+    if (-not (Test-Path -LiteralPath $sourcePath)) {
+        Write-Host "ERROR: Missing ABI APK: $sourcePath" -ForegroundColor Red
+        exit 1
+    }
+}
+
+New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
+
+foreach ($abi in $abiFiles.Keys) {
+    $sourcePath = Join-Path $apkOutputDir $abiFiles[$abi]
+    $destinationPath = Join-Path $releaseDir "AutoUBC-$abi.apk"
+    Copy-Item $sourcePath -Destination $destinationPath -Force
+    Write-Host "OK: release\AutoUBC-$abi.apk" -ForegroundColor Green
+}
 
 Write-Host ""
 Write-Host "==============================================" -ForegroundColor Green
 Write-Host "  DONE!" -ForegroundColor Green
 Write-Host "==============================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Use AutoUBC.apk for installation on supported Android phones!" -ForegroundColor Cyan
+Write-Host "Use the APK from release\ and choose the ABI matching the phone." -ForegroundColor Cyan
 Write-Host ""
 Read-Host "Press Enter to exit"

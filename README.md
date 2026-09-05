@@ -47,12 +47,30 @@ than overwritten. Every local mutation persists a pending-sync marker before the
 write and uploads the newest snapshot silently; failed uploads remain pending
 for a later retry.
 
-The Windows `build.ps1` script builds one universal release APK for all
-supported Android ABIs. If the build fails, it retries after running
-`flutter clean`, stopping Gradle daemons, clearing the project `.gradle`
-directory and only the global `transforms-*` caches, then regenerating Isar
-code. This handles stale intermediate resources such as
-`fragment_fast_out_extra_slow_in` without changing application runtime behavior.
+The Windows `build.ps1` script builds separate release APKs for each Android
+ABI and copies them directly into the root `release` directory:
+
+- `release/AutoUBC-arm64-v8a.apk` — primary APK for Armor X8i and Xiaomi 12;
+- `release/AutoUBC-armeabi-v7a.apk` — 32-bit fallback for compatible phones;
+- `release/AutoUBC-x86_64.apk` — x86_64 emulator/phone variant.
+
+The ABI is included in each filename so the correct APK can be selected without
+confusing it with an older universal `AutoUBC.apk` from the Downloads folder.
+
+If the build fails, it can be retried after running `flutter clean`, stopping
+Gradle daemons, clearing the project `.gradle` directory and only the global
+`transforms-*` caches, then regenerating Isar code. This handles stale
+intermediate resources such as `fragment_fast_out_extra_slow_in` without
+changing application runtime behavior.
+
+Both requested phones are expected to use ARM ABIs. Start with
+`release/AutoUBC-arm64-v8a.apk`. If the Armor X8i rejects it, try
+`release/AutoUBC-armeabi-v7a.apk`. When USB debugging is available, the device
+ABI can be checked with:
+
+```text
+adb shell getprop ro.product.cpu.abilist
+```
 
 ## Code conventions
 
