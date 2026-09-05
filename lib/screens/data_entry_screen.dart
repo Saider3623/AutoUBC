@@ -330,22 +330,31 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Divider(thickness: 1),
-                  const SizedBox(height: 16),
                   // Notes
                   Consumer<AppProvider>(
                     builder: (context, provider, child) {
                       final notes = provider.notes;
+                      if (notes.isEmpty) return const SizedBox.shrink();
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          if (notes.isEmpty)
-                            const SizedBox.shrink()
-                          else
-                            ...notes
-                                .map((note) => _buildNoteCard(context, note)),
+                          const SizedBox(height: 16),
+                          const Divider(thickness: 1),
+                          const SizedBox(height: 12),
+                          Text(
+                            loc.notes,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelLarge
+                                ?.copyWith(
+                                  color: Colors.grey.shade700,
+                                  letterSpacing: 0.4,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          ...notes
+                              .map((note) => _buildNoteCard(context, note)),
                         ],
                       );
                     },
@@ -469,6 +478,9 @@ class _NoteDialogState extends State<_NoteDialog> {
 
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       title: Text(
         widget.noteToEdit != null ? loc.editNote : loc.addNote,
       ),
@@ -529,8 +541,7 @@ class _NoteDialogState extends State<_NoteDialog> {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   labelText: loc.noteDescription,
-                  border: const OutlineInputBorder(),
-                  isDense: true,
+                  alignLabelWithHint: true,
                 ),
               ),
             ],

@@ -197,6 +197,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loading => 'Loading…';
 
   @override
+  String get reportLoadError => 'Could not load report';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
   String get english => 'English';
 
   @override
@@ -221,7 +227,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mileageKm => 'Mileage (km)';
 
   @override
-  String get whatWasDone => 'What was done (new line = new item)';
+  String get whatWasDone => 'What was done';
+
+  @override
+  String get whatWasDoneHint => 'New line — new item';
 
   @override
   String get confirmDelete => 'Confirm deletion';

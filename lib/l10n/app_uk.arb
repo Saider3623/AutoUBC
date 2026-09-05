@@ -108,6 +108,8 @@
     }
   },
   "loading": "Завантаження…",
+  "reportLoadError": "Не вдалося завантажити звіт",
+  "retry": "Повторити",
   "english": "Англійська",
   "russian": "Російська",
   "ukrainian": "Українська",
@@ -116,7 +118,8 @@
   "addServiceLog": "Додати запис ТО",
   "editServiceLog": "Редагувати запис ТО",
   "mileageKm": "Пробіг (км)",
-  "whatWasDone": "Що зроблено (новий рядок = новий пункт)",
+  "whatWasDone": "Що зроблено",
+  "whatWasDoneHint": "Новий рядок — новий пункт",
   "confirmDelete": "Підтвердіть видалення",
   "deleteServiceLogConfirmation": "Ви впевнені, що хочете видалити цей запис?",
   "history": "Історія",

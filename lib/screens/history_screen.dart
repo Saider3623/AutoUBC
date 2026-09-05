@@ -6,6 +6,7 @@ import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/odometer_log.dart';
 import '../models/fuel_log.dart';
+import '../widgets/app_empty_state.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -26,7 +27,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Consumer<AppProvider>(
       builder: (context, provider, child) {
         if (provider.selectedCar == null) {
-          return Center(child: Text(loc.selectCarGeneric));
+          return AppEmptyState(
+            icon: Icons.directions_car_outlined,
+            title: loc.selectCarGeneric,
+          );
         }
 
         // Об'єднуємо та сортуємо всі записи за датою
@@ -101,7 +105,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             Expanded(
               child: groupedLogs.isEmpty
-                  ? Center(child: Text(loc.noRecords))
+                  ? AppEmptyState(
+                      icon: Icons.history,
+                      title: loc.noRecords,
+                    )
                   : ListView.builder(
                       itemCount: groupedLogs.keys.length,
                       itemBuilder: (context, index) {
@@ -140,17 +147,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                           Text(
                                               '${loc.odometerLabel}: ${log.odometer} ${loc.kilometers}'),
                                           const Spacer(),
-                                          InkWell(
-                                            onTap: () =>
-                                                _confirmDeleteOdometer(log),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                            child: const Padding(
-                                              padding: EdgeInsets.all(4),
-                                              child: Icon(Icons.delete_outline,
-                                                  size: 18, color: Colors.red),
-                                            ),
-                                          ),
+                                           IconButton(
+                                             tooltip: loc.delete,
+                                             icon: const Icon(Icons.delete_outline,
+                                                 size: 20, color: Colors.red),
+                                             onPressed: () =>
+                                                 _confirmDeleteOdometer(log),
+                                           ),
                                         ],
                                       ),
                                     );
@@ -178,17 +181,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                                 color: Colors.grey),
                                           ),
                                           const Spacer(),
-                                          InkWell(
-                                            onTap: () =>
-                                                _confirmDeleteFuel(log),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                            child: const Padding(
-                                              padding: EdgeInsets.all(4),
-                                              child: Icon(Icons.delete_outline,
-                                                  size: 18, color: Colors.red),
-                                            ),
-                                          ),
+                                           IconButton(
+                                             tooltip: loc.delete,
+                                             icon: const Icon(Icons.delete_outline,
+                                                 size: 20, color: Colors.red),
+                                             onPressed: () =>
+                                                 _confirmDeleteFuel(log),
+                                           ),
                                         ],
                                       ),
                                     );

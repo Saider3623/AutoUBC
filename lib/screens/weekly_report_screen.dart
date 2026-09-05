@@ -7,6 +7,7 @@ import '../providers/locale_provider.dart';
 import '../db/database_service.dart';
 import '../utils/report_status.dart';
 import '../utils/weekly_report_utils.dart';
+import '../widgets/app_empty_state.dart';
 
 class WeeklyReportScreen extends StatefulWidget {
   const WeeklyReportScreen({super.key});
@@ -33,7 +34,10 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     return Consumer<AppProvider>(
       builder: (context, provider, child) {
         if (provider.selectedCar == null) {
-          return Center(child: Text(loc.selectCarGeneric));
+          return AppEmptyState(
+            icon: Icons.directions_car_outlined,
+            title: loc.selectCarGeneric,
+          );
         }
 
         final today = DateTime.now();
@@ -88,7 +92,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                     return _buildFutureWeekCard(
                       week,
                       languageCode: languageCode,
-                      noRefuelsLabel: loc.noRefuels,
+                      noRefuelsLabel: loc.upcoming,
                     );
                   }
 
@@ -100,9 +104,18 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                       week['end']!,
                     ),
                     builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return _buildErrorWeekCard(
+                          loc.reportLoadError,
+                          loc.retry,
+                          isCurrentWeek: isCurrentWeek,
+                          colorScheme: Theme.of(context).colorScheme,
+                          onRetry: () => setState(() {}),
+                        );
+                      }
+
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return _buildLoadingWeekCard(
-                          loc.loading,
                           isCurrentWeek: isCurrentWeek,
                           colorScheme: Theme.of(context).colorScheme,
                         );
@@ -131,21 +144,106 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     );
   }
 
-  Widget _buildLoadingWeekCard(
-    String loadingLabel, {
+  Widget _buildLoadingWeekCard({
     required bool isCurrentWeek,
     required ColorScheme colorScheme,
   }) {
+    final placeholderColor =
+        colorScheme.outlineVariant.withValues(alpha: 0.45);
+
     return Card(
-      elevation: isCurrentWeek ? 4 : 1.5,
+      elevation: isCurrentWeek ? 3 : 1,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         side: isCurrentWeek
             ? BorderSide(color: colorScheme.primary, width: 2)
             : BorderSide.none,
       ),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: ListTile(title: Text(loadingLabel)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPlaceholderBar(140, 15, placeholderColor),
+                      const SizedBox(height: 8),
+                      _buildPlaceholderBar(92, 12, placeholderColor),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                _buildPlaceholderBar(104, 30, placeholderColor),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Divider(height: 1, color: placeholderColor),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _buildPlaceholderBar(double.infinity, 12, placeholderColor)),
+                const SizedBox(width: 18),
+                Expanded(child: _buildPlaceholderBar(double.infinity, 12, placeholderColor)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorWeekCard(
+    String message,
+    String retryLabel, {
+    required bool isCurrentWeek,
+    required ColorScheme colorScheme,
+    required VoidCallback onRetry,
+  }) {
+    return Card(
+      elevation: isCurrentWeek ? 3 : 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: isCurrentWeek
+            ? BorderSide(color: colorScheme.primary, width: 2)
+            : BorderSide(color: colorScheme.outlineVariant),
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+        child: Row(
+          children: [
+            Icon(Icons.cloud_off_outlined, color: colorScheme.error),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            TextButton(onPressed: onRetry, child: Text(retryLabel)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderBar(
+    double width,
+    double height,
+    Color color,
+  ) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(6),
+      ),
     );
   }
 

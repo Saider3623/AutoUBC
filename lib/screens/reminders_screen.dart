@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/reminder.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
+import '../widgets/app_empty_state.dart';
 
 class RemindersScreen extends StatelessWidget {
   const RemindersScreen({super.key});
@@ -25,8 +26,9 @@ class RemindersScreen extends StatelessWidget {
       body: Consumer<AppProvider>(
         builder: (context, provider, child) {
           if (provider.cars.isEmpty) {
-            return Center(
-              child: Text(loc.addCarFirst),
+            return AppEmptyState(
+              icon: Icons.directions_car_outlined,
+              title: loc.addCarFirst,
             );
           }
 
@@ -36,8 +38,9 @@ class RemindersScreen extends StatelessWidget {
               provider.reminders.where((r) => r.isCompleted).toList();
 
           if (activeReminders.isEmpty && completedReminders.isEmpty) {
-            return Center(
-              child: Text(loc.noReminders),
+            return AppEmptyState(
+              icon: Icons.notifications_none,
+              title: loc.noReminders,
             );
           }
 
@@ -171,9 +174,9 @@ class _ReminderCard extends StatelessWidget {
     }
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 1,
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: _getReminderTypeColor(reminder.type),
@@ -312,8 +315,11 @@ class _ReminderDialogState extends State<_ReminderDialog> {
 
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       title: Text(widget.reminder != null ? loc.edit : loc.addReminder),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       content: SizedBox(
         width: double.maxFinite,
         child: SingleChildScrollView(
@@ -321,7 +327,7 @@ class _ReminderDialogState extends State<_ReminderDialog> {
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.7,
             ),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: EdgeInsets.zero,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,

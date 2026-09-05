@@ -17,6 +17,7 @@ import 'screens/manage_cars_screen.dart';
 import 'db/database_service.dart';
 import 'models/reminder.dart';
 import 'services/google_drive_sync_service.dart';
+import 'theme/app_theme.dart';
 
 Future<void> _deleteFileIfExists(String path) async {
   try {
@@ -108,42 +109,7 @@ class MyApp extends StatelessWidget {
         builder: (context, localeProvider, child) {
           return MaterialApp(
             title: 'AutoUBC',
-            theme: ThemeData(
-              useMaterial3: true,
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: const Color(0xFF0D47A1), // Deep corporate blue
-                primary: const Color(0xFF1565C0),
-                surface: const Color(
-                    0xFFF8FAFC), // Light greyish blue for app background
-              ),
-              scaffoldBackgroundColor:
-                  const Color(0xFFF8FAFC), // background color
-              appBarTheme: const AppBarTheme(
-                backgroundColor: Color(0xFF1565C0),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                centerTitle: true,
-              ),
-              cardTheme: CardThemeData(
-                color: Colors.white,
-                surfaceTintColor: Colors.transparent,
-                elevation: 2,
-                shadowColor: Colors.black12,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              elevatedButtonTheme: ElevatedButtonThemeData(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1565C0),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ),
+            theme: AppTheme.light(),
             localizationsDelegates: [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,

@@ -454,6 +454,18 @@ abstract class AppLocalizations {
   /// **'Loading…'**
   String get loading;
 
+  /// No description provided for @reportLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load report'**
+  String get reportLoadError;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
   /// No description provided for @english.
   ///
   /// In en, this message translates to:
@@ -505,8 +517,14 @@ abstract class AppLocalizations {
   /// No description provided for @whatWasDone.
   ///
   /// In en, this message translates to:
-  /// **'What was done (new line = new item)'**
+  /// **'What was done'**
   String get whatWasDone;
+
+  /// No description provided for @whatWasDoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'New line — new item'**
+  String get whatWasDoneHint;
 
   /// No description provided for @confirmDelete.
   ///

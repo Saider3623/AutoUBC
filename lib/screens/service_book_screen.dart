@@ -5,6 +5,7 @@ import '../models/service_log.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/app_empty_state.dart';
 
 class ServiceBookScreen extends StatefulWidget {
   const ServiceBookScreen({super.key});
@@ -99,7 +100,10 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
       body: Consumer<AppProvider>(
         builder: (context, provider, child) {
           if (provider.selectedCar == null) {
-            return Center(child: Text(loc.selectACar));
+            return AppEmptyState(
+              icon: Icons.directions_car_outlined,
+              title: loc.selectACar,
+            );
           }
 
           final logs = _searchQuery.isEmpty
@@ -111,8 +115,9 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
                   .toList();
 
           if (logs.isEmpty) {
-            return Center(
-              child: Text(loc.noServiceLogs),
+            return AppEmptyState(
+              icon: Icons.build_outlined,
+              title: loc.noServiceLogs,
             );
           }
 
@@ -123,9 +128,9 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
               final log = logs[index];
               return InkWell(
                 onTap: () => _showAddServiceDialog(context, log),
-                child: Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: Padding(
+                  child: Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     child: Column(
@@ -145,15 +150,18 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
                               children: [
                                 Text(
                                   '${log.odometer} ${loc.km}',
-                                  style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.bold),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 4),
                                 IconButton(
-                                  constraints: const BoxConstraints(),
-                                  padding: EdgeInsets.zero,
-                                  icon: const Icon(Icons.delete,
+                                  tooltip: loc.delete,
+                                  icon: const Icon(Icons.delete_outline,
                                       color: Colors.red, size: 20),
                                   onPressed: () => _confirmDelete(context, log),
                                 ),
@@ -281,8 +289,12 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
 
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       title: Text(
           widget.logToEdit != null ? loc.editServiceLog : loc.addServiceLog),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       content: SizedBox(
         width: double.maxFinite,
         child: SingleChildScrollView(
@@ -292,7 +304,20 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
           children: [
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(DateFormat.yMMMd(languageCode).format(_date)),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    loc.date,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat.yMMMd(languageCode).format(_date),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
+              ),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final picked = await showDatePicker(
@@ -324,8 +349,8 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
                 labelText: loc.whatWasDone,
-                border: const OutlineInputBorder(),
-                isDense: true,
+                helperText: loc.whatWasDoneHint,
+                alignLabelWithHint: true,
               ),
               onChanged: (value) {
                 // Якщо користувач натиснув Enter, автоматично додаємо тире

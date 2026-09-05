@@ -197,6 +197,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get loading => 'Загрузка…';
 
   @override
+  String get reportLoadError => 'Не удалось загрузить отчет';
+
+  @override
+  String get retry => 'Повторить';
+
+  @override
   String get english => 'Английский';
 
   @override
@@ -221,7 +227,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mileageKm => 'Пробег (км)';
 
   @override
-  String get whatWasDone => 'Что сделано (новая строка = новый пункт)';
+  String get whatWasDone => 'Что сделано';
+
+  @override
+  String get whatWasDoneHint => 'Новая строка — новый пункт';
 
   @override
   String get confirmDelete => 'Подтвердить удаление';
