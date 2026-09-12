@@ -49,6 +49,7 @@
   "inspectionReminder": "Inspection",
   "reminderTitle": "Reminder Title",
   "reminderCondition": "Condition",
+  "reminderType": "Type",
   "byDate": "By Date",
   "byMileage": "By Mileage",
   "repeatEvery": "Repeat every",
@@ -108,6 +109,10 @@
     }
   },
   "loading": "Loading…",
+  "fieldRequired": "This field is required",
+  "invalidWholeNumber": "Enter a whole number",
+  "invalidNumber": "Enter a valid number",
+  "numberMustBeNonNegative": "Number cannot be negative",
   "reportLoadError": "Could not load report",
   "retry": "Retry",
   "english": "English",
@@ -195,6 +200,8 @@
   "chooseDate": "Choose Date",
   "noteDateSelected": "Date saved",
   "syncInProgress": "Synchronizing…",
+  "syncUnknown": "Not synchronized yet",
+  "syncIdle": "Synchronized",
   "syncError": "Synchronization error",
   "syncOk": "Synchronized"
 }

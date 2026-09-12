@@ -97,6 +97,35 @@ void main() {
       );
     });
 
+    test('keeps arbitrary fuel types separate', () {
+      final diesel = FuelLog()
+        ..fuelType = 'Diesel'
+        ..liters = 31.2;
+      final electric = FuelLog()
+        ..fuelType = 'Electric'
+        ..liters = 18.4;
+      final secondDiesel = FuelLog()
+        ..fuelType = 'Diesel'
+        ..liters = 9.8;
+
+      final summaries =
+          summarizeFuelLogsByType([secondDiesel, electric, diesel]);
+
+      expect(
+        summaries
+            .map((summary) => (
+                  type: summary.fuelType,
+                  count: summary.refuelCount,
+                  liters: summary.totalLiters,
+                ))
+            .toList(),
+        [
+          (type: 'Diesel', count: 2, liters: 41.0),
+          (type: 'Electric', count: 1, liters: 18.4),
+        ],
+      );
+    });
+
     test('ignores blank fuel types while grouping refuels', () {
       final blank = FuelLog()
         ..fuelType = '  '

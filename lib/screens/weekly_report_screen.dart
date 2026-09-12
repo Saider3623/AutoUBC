@@ -7,6 +7,7 @@ import '../providers/locale_provider.dart';
 import '../db/database_service.dart';
 import '../utils/report_status.dart';
 import '../utils/weekly_report_utils.dart';
+import '../utils/fuel_summary.dart';
 import '../widgets/app_empty_state.dart';
 
 class WeeklyReportScreen extends StatefulWidget {
@@ -148,8 +149,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     required bool isCurrentWeek,
     required ColorScheme colorScheme,
   }) {
-    final placeholderColor =
-        colorScheme.outlineVariant.withValues(alpha: 0.45);
+    final placeholderColor = colorScheme.outlineVariant.withValues(alpha: 0.45);
 
     return Card(
       elevation: isCurrentWeek ? 3 : 1,
@@ -186,9 +186,13 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildPlaceholderBar(double.infinity, 12, placeholderColor)),
+                Expanded(
+                    child: _buildPlaceholderBar(
+                        double.infinity, 12, placeholderColor)),
                 const SizedBox(width: 18),
-                Expanded(child: _buildPlaceholderBar(double.infinity, 12, placeholderColor)),
+                Expanded(
+                    child: _buildPlaceholderBar(
+                        double.infinity, 12, placeholderColor)),
               ],
             ),
           ],
@@ -483,7 +487,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     AppLocalizations loc,
     ColorScheme colorScheme,
   ) {
-    final hasFuel = data.liters95 > 0 || data.litersGas > 0;
+    final hasFuel = data.fuelSummaries.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,24 +503,19 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
               color: _secondaryTextColor,
             ),
           )
-        else ...[
-          if (data.liters95 > 0)
-            _buildFuelAmountRow(
-              '95',
-              data.liters95,
-              Colors.orange,
-              loc.litersShort,
-            ),
-          if (data.litersGas > 0) ...[
-            if (data.liters95 > 0) const SizedBox(height: 8),
-            _buildFuelAmountRow(
-              'ГАЗ',
-              data.litersGas,
-              Colors.green,
-              loc.litersShort,
-            ),
-          ],
-        ],
+        else
+          ...data.fuelSummaries.asMap().entries.map((entry) {
+            final summary = entry.value;
+            return Padding(
+              padding: EdgeInsets.only(top: entry.key == 0 ? 0 : 8),
+              child: _buildFuelAmountRow(
+                summary.fuelType,
+                summary.totalLiters,
+                _fuelTypeColor(summary.fuelType, colorScheme),
+                loc.litersShort,
+              ),
+            );
+          }),
       ],
     );
   }
@@ -566,6 +565,13 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
         ),
       ],
     );
+  }
+
+  Color _fuelTypeColor(String fuelType, ColorScheme colorScheme) {
+    final normalized = fuelType.trim().toUpperCase();
+    if (normalized == '95') return Colors.orange;
+    if (normalized == 'ГАЗ') return Colors.green;
+    return colorScheme.primary;
   }
 
   Widget _buildFuelAmountRow(
@@ -669,20 +675,9 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
       distance = 0;
     }
 
-    double liters95 = 0;
-    double litersGas = 0;
-    for (final log in fuelLogs) {
-      if (log.fuelType == '95') {
-        liters95 += log.liters;
-      } else {
-        litersGas += log.liters;
-      }
-    }
-
     return WeeklyReportData(
       distance: distance,
-      liters95: liters95,
-      litersGas: litersGas,
+      fuelSummaries: summarizeFuelLogsByType(fuelLogs),
       odometerStart: odometerStart,
       odometerEnd: odometerEnd,
     );
@@ -691,15 +686,13 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
 
 class WeeklyReportData {
   final int distance;
-  final double liters95;
-  final double litersGas;
+  final List<FuelTypeSummary> fuelSummaries;
   final int? odometerStart;
   final int? odometerEnd;
 
   WeeklyReportData({
     required this.distance,
-    required this.liters95,
-    required this.litersGas,
+    required this.fuelSummaries,
     this.odometerStart,
     this.odometerEnd,
   });

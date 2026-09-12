@@ -6,6 +6,8 @@ import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../db/database_service.dart';
 import '../models/note.dart';
+import '../utils/form_validators.dart';
+import '../widgets/inline_form_error.dart';
 
 class DataEntryScreen extends StatefulWidget {
   const DataEntryScreen({super.key});
@@ -20,7 +22,13 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
   final _litersController = TextEditingController();
   String _selectedFuelType = 'ГАЗ';
   final DatabaseService _db = DatabaseService();
+  final _odometerFormKey = GlobalKey<FormState>();
+  final _fuelFormKey = GlobalKey<FormState>();
   int? _loadedCarId;
+  bool _isSavingOdometer = false;
+  bool _isSavingFuel = false;
+  String? _odometerSaveError;
+  String? _fuelSaveError;
 
   @override
   void initState() {
@@ -120,61 +128,99 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _odometerController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: loc.odometer,
-                                border: const OutlineInputBorder(),
-                                suffixText: loc.km,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
+                      child: Form(
+                        key: _odometerFormKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _odometerController,
+                                    keyboardType: TextInputType.number,
+                                    autovalidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                    validator: (value) => validateWholeNumber(
+                                      value,
+                                      requiredMessage: loc.fieldRequired,
+                                      invalidMessage: loc.invalidWholeNumber,
+                                      nonNegativeMessage:
+                                          loc.numberMustBeNonNegative,
+                                    ),
+                                    decoration: InputDecoration(
+                                      labelText: loc.odometer,
+                                      suffixText: loc.km,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  onPressed: _isSavingOdometer
+                                      ? null
+                                      : () async {
+                                          if (!(_odometerFormKey.currentState
+                                                  ?.validate() ??
+                                              false)) {
+                                            return;
+                                          }
+
+                                          setState(() {
+                                            _isSavingOdometer = true;
+                                            _odometerSaveError = null;
+                                          });
+                                          final provider =
+                                              Provider.of<AppProvider>(context,
+                                                  listen: false);
+                                          final messenger =
+                                              ScaffoldMessenger.of(context);
+                                          final successMessage =
+                                              loc.saveOdometerSuccess;
+                                          final dateString =
+                                              DateFormat('yyyy-MM-dd')
+                                                  .format(_selectedDate);
+                                          try {
+                                            await provider.saveOdometerLog(
+                                              dateString,
+                                              int.parse(_odometerController.text
+                                                  .trim()),
+                                            );
+                                            if (!mounted) return;
+                                            setState(() {
+                                              _isSavingOdometer = false;
+                                            });
+                                            messenger.showSnackBar(
+                                              SnackBar(
+                                                content: Text(successMessage),
+                                              ),
+                                            );
+                                          } catch (e) {
+                                            if (!mounted) return;
+                                            setState(() {
+                                              _isSavingOdometer = false;
+                                              _odometerSaveError =
+                                                  loc.saveError(e.toString());
+                                            });
+                                          }
+                                        },
+                                  icon: _isSavingOdometer
+                                      ? const SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2),
+                                        )
+                                      : const Icon(Icons.check_circle,
+                                          color: Colors.green),
+                                  iconSize: 36,
+                                  tooltip: loc.save,
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            onPressed: () async {
-                              if (_odometerController.text.isEmpty) return;
-                              final odometer =
-                                  int.tryParse(_odometerController.text);
-                              if (odometer == null) return;
-                              final provider = Provider.of<AppProvider>(context,
-                                  listen: false);
-                              final scaffoldMessenger =
-                                  ScaffoldMessenger.of(context);
-                              final dateString = DateFormat('yyyy-MM-dd')
-                                  .format(_selectedDate);
-                              try {
-                                await provider.saveOdometerLog(
-                                    dateString, odometer);
-                                if (mounted) {
-                                  scaffoldMessenger.showSnackBar(
-                                    SnackBar(
-                                        content: Text(loc.saveOdometerSuccess)),
-                                  );
-                                }
-                              } catch (e) {
-                                if (mounted) {
-                                  scaffoldMessenger.showSnackBar(
-                                    SnackBar(
-                                        content:
-                                            Text(loc.saveError(e.toString()))),
-                                  );
-                                }
-                              }
-                            },
-                            icon: const Icon(Icons.check_circle,
-                                color: Colors.green),
-                            iconSize: 36,
-                            tooltip: loc.save,
-                          ),
-                        ],
+                            InlineFormError(message: _odometerSaveError),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -184,149 +230,189 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
-                      child: Column(
-                        children: [
-                          // Fuel type.
-                          Consumer<AppProvider>(
-                            builder: (context, provider, child) {
-                              final fuelTypes =
-                                  provider.selectedCar?.fuelTypes ??
-                                      ['ГАЗ', '95'];
-                              if (!fuelTypes.contains(_selectedFuelType) &&
-                                  fuelTypes.isNotEmpty) {
-                                WidgetsBinding.instance
-                                    .addPostFrameCallback((_) {
-                                  if (mounted) {
-                                    setState(() =>
-                                        _selectedFuelType = fuelTypes.first);
-                                  }
-                                });
-                              }
-                              return Wrap(
-                                spacing: 8.0,
-                                runSpacing: 4.0,
-                                children: fuelTypes.map((type) {
-                                  final isSelected = _selectedFuelType == type;
-                                  Color color = Colors.blue;
-                                  if (type.toUpperCase() == 'ГАЗ') {
-                                    color = Colors.green;
-                                  }
-                                  if (type == '95') {
-                                    color = Colors.orange;
-                                  }
-                                  if (type.toUpperCase() == 'ДИЗЕЛЬ') {
-                                    color = Colors.brown;
-                                  }
-                                  if (type.toUpperCase() == 'ЕЛЕКТРИКА') {
-                                    color = Colors.teal;
-                                  }
-
-                                  return OutlinedButton(
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 10),
-                                      side: BorderSide(
-                                        width: isSelected ? 2.0 : 1.0,
-                                        color: isSelected ? color : Colors.grey,
-                                      ),
-                                      foregroundColor:
-                                          isSelected ? color : null,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedFuelType = type;
-                                      });
-                                    },
-                                    child: Text(
-                                      type,
-                                      style: TextStyle(
-                                          fontWeight: isSelected
-                                              ? FontWeight.bold
-                                              : FontWeight.normal),
-                                    ),
-                                  );
-                                }).toList(),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 8),
-                          // Liters and add action.
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _litersController,
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                          decimal: true),
-                                  onChanged: (value) {
-                                    if (value.contains(',')) {
-                                      _litersController.text =
-                                          value.replaceAll(',', '.');
-                                      _litersController.selection =
-                                          TextSelection.fromPosition(
-                                        TextPosition(
-                                            offset:
-                                                _litersController.text.length),
-                                      );
+                      child: Form(
+                        key: _fuelFormKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Fuel type.
+                            Consumer<AppProvider>(
+                              builder: (context, provider, child) {
+                                final fuelTypes =
+                                    provider.selectedCar?.fuelTypes ??
+                                        ['ГАЗ', '95'];
+                                if (!fuelTypes.contains(_selectedFuelType) &&
+                                    fuelTypes.isNotEmpty) {
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                    if (mounted) {
+                                      setState(() =>
+                                          _selectedFuelType = fuelTypes.first);
                                     }
-                                  },
-                                  decoration: InputDecoration(
-                                    labelText: loc.liters,
-                                    border: const OutlineInputBorder(),
-                                    suffixText: loc.litersShort,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 10,
+                                  });
+                                }
+                                return Wrap(
+                                  spacing: 8.0,
+                                  runSpacing: 4.0,
+                                  children: fuelTypes.map((type) {
+                                    final isSelected =
+                                        _selectedFuelType == type;
+                                    Color color = Colors.blue;
+                                    if (type.toUpperCase() == 'ГАЗ') {
+                                      color = Colors.green;
+                                    }
+                                    if (type == '95') {
+                                      color = Colors.orange;
+                                    }
+                                    if (type.toUpperCase() == 'ДИЗЕЛЬ') {
+                                      color = Colors.brown;
+                                    }
+                                    if (type.toUpperCase() == 'ЕЛЕКТРИКА') {
+                                      color = Colors.teal;
+                                    }
+
+                                    return OutlinedButton(
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 10),
+                                        side: BorderSide(
+                                          width: isSelected ? 2.0 : 1.0,
+                                          color:
+                                              isSelected ? color : Colors.grey,
+                                        ),
+                                        foregroundColor:
+                                            isSelected ? color : null,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _selectedFuelType = type;
+                                        });
+                                      },
+                                      child: Text(
+                                        type,
+                                        style: TextStyle(
+                                            fontWeight: isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal),
+                                      ),
+                                    );
+                                  }).toList(),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            // Liters and add action.
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _litersController,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
+                                    autovalidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                    validator: (value) =>
+                                        validateNonNegativeDecimal(
+                                      value,
+                                      requiredMessage: loc.fieldRequired,
+                                      invalidMessage: loc.invalidNumber,
+                                      nonNegativeMessage:
+                                          loc.numberMustBeNonNegative,
+                                    ),
+                                    onChanged: (value) {
+                                      if (value.contains(',')) {
+                                        final normalized =
+                                            normalizeDecimalInput(value);
+                                        _litersController.value =
+                                            _litersController.value.copyWith(
+                                          text: normalized,
+                                          selection: TextSelection.collapsed(
+                                            offset: normalized.length,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: loc.liters,
+                                      suffixText: loc.litersShort,
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                onPressed: () async {
-                                  if (_litersController.text.isEmpty) return;
-                                  final liters = double.tryParse(
-                                      _litersController.text
-                                          .replaceAll(',', '.'));
-                                  if (liters == null) return;
-                                  final provider = Provider.of<AppProvider>(
-                                      context,
-                                      listen: false);
-                                  final scaffoldMessenger =
-                                      ScaffoldMessenger.of(context);
-                                  final dateString = DateFormat('yyyy-MM-dd')
-                                      .format(_selectedDate);
-                                  final timeString = DateFormat('HH:mm')
-                                      .format(DateTime.now());
-                                  try {
-                                    await provider.addFuelLog(dateString,
-                                        timeString, _selectedFuelType, liters);
-                                    _litersController.clear();
-                                    if (mounted) {
-                                      scaffoldMessenger.showSnackBar(
-                                        SnackBar(
-                                            content: Text(loc.refuelingAdded)),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    if (mounted) {
-                                      scaffoldMessenger.showSnackBar(
-                                        SnackBar(
-                                            content: Text(
-                                                loc.saveError(e.toString()))),
-                                      );
-                                    }
-                                  }
-                                },
-                                icon: const Icon(Icons.add_circle,
-                                    color: Colors.blue),
-                                iconSize: 36,
-                                tooltip: loc.addRefueling,
-                              ),
-                            ],
-                          ),
-                        ],
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  onPressed: _isSavingFuel
+                                      ? null
+                                      : () async {
+                                          if (!(_fuelFormKey.currentState
+                                                  ?.validate() ??
+                                              false)) {
+                                            return;
+                                          }
+
+                                          setState(() {
+                                            _isSavingFuel = true;
+                                            _fuelSaveError = null;
+                                          });
+                                          final provider =
+                                              Provider.of<AppProvider>(context,
+                                                  listen: false);
+                                          final messenger =
+                                              ScaffoldMessenger.of(context);
+                                          final successMessage =
+                                              loc.refuelingAdded;
+                                          final dateString =
+                                              DateFormat('yyyy-MM-dd')
+                                                  .format(_selectedDate);
+                                          final timeString = DateFormat('HH:mm')
+                                              .format(DateTime.now());
+                                          try {
+                                            await provider.addFuelLog(
+                                              dateString,
+                                              timeString,
+                                              _selectedFuelType,
+                                              double.parse(
+                                                normalizeDecimalInput(
+                                                    _litersController.text
+                                                        .trim()),
+                                              ),
+                                            );
+                                            if (!mounted) return;
+                                            _litersController.clear();
+                                            setState(() {
+                                              _isSavingFuel = false;
+                                            });
+                                            messenger.showSnackBar(
+                                              SnackBar(
+                                                  content:
+                                                      Text(successMessage)),
+                                            );
+                                          } catch (e) {
+                                            if (!mounted) return;
+                                            setState(() {
+                                              _isSavingFuel = false;
+                                              _fuelSaveError =
+                                                  loc.saveError(e.toString());
+                                            });
+                                          }
+                                        },
+                                  icon: _isSavingFuel
+                                      ? const SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2),
+                                        )
+                                      : const Icon(Icons.add_circle,
+                                          color: Colors.blue),
+                                  iconSize: 36,
+                                  tooltip: loc.addRefueling,
+                                ),
+                              ],
+                            ),
+                            InlineFormError(message: _fuelSaveError),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -353,8 +439,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                 ),
                           ),
                           const SizedBox(height: 8),
-                          ...notes
-                              .map((note) => _buildNoteCard(context, note)),
+                          ...notes.map((note) => _buildNoteCard(context, note)),
                         ],
                       );
                     },
@@ -422,12 +507,12 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
       builder: (context) => _NoteDialog(
         carId: provider.selectedCar!.id,
         noteToEdit: noteToEdit,
-        onSave: (note) {
+        onSave: (note) async {
           if (noteToEdit != null) {
             note.id = noteToEdit.id;
-            provider.updateNote(note);
+            await provider.updateNote(note);
           } else {
-            provider.addNote(note);
+            await provider.addNote(note);
           }
         },
       ),
@@ -444,7 +529,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
 
 class _NoteDialog extends StatefulWidget {
   final int carId;
-  final Function(Note) onSave;
+  final Future<void> Function(Note) onSave;
   final Note? noteToEdit;
 
   const _NoteDialog({
@@ -459,7 +544,10 @@ class _NoteDialog extends StatefulWidget {
 
 class _NoteDialogState extends State<_NoteDialog> {
   DateTime? _dateTime;
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _descriptionController = TextEditingController();
+  bool _isSaving = false;
+  String? _saveError;
 
   @override
   void initState() {
@@ -487,64 +575,73 @@ class _NoteDialogState extends State<_NoteDialog> {
       content: SizedBox(
         width: double.maxFinite,
         child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  _dateTime != null
-                      ? DateFormat.yMMMd(languageCode).format(_dateTime!)
-                      : loc.chooseDate,
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_dateTime != null)
-                      IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            _dateTime = null;
-                          });
-                        },
-                      ),
-                    const Icon(Icons.calendar_today),
-                  ],
-                ),
-                onTap: () async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  final noteDateSelectedText = loc.noteDateSelected;
-                  final pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: _dateTime ?? DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                    locale: localeProvider.locale,
-                  );
-                  if (!mounted) return;
-                  if (pickedDate != null) {
-                    setState(() {
-                      _dateTime = pickedDate;
-                    });
-                    messenger.showSnackBar(
-                      SnackBar(content: Text(noteDateSelectedText)),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    _dateTime != null
+                        ? DateFormat.yMMMd(languageCode).format(_dateTime!)
+                        : loc.chooseDate,
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_dateTime != null)
+                        IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            setState(() {
+                              _dateTime = null;
+                            });
+                          },
+                        ),
+                      const Icon(Icons.calendar_today),
+                    ],
+                  ),
+                  onTap: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final noteDateSelectedText = loc.noteDateSelected;
+                    final pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: _dateTime ?? DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                      locale: localeProvider.locale,
                     );
-                  }
-                },
-              ),
-              TextField(
-                controller: _descriptionController,
-                minLines: 3,
-                maxLines: 10,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: InputDecoration(
-                  labelText: loc.noteDescription,
-                  alignLabelWithHint: true,
+                    if (!mounted) return;
+                    if (pickedDate != null) {
+                      setState(() {
+                        _dateTime = pickedDate;
+                      });
+                      messenger.showSnackBar(
+                        SnackBar(content: Text(noteDateSelectedText)),
+                      );
+                    }
+                  },
                 ),
-              ),
-            ],
+                TextFormField(
+                  controller: _descriptionController,
+                  minLines: 3,
+                  maxLines: 10,
+                  textCapitalization: TextCapitalization.sentences,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: (value) => validateRequiredText(
+                    value,
+                    message: loc.fieldRequired,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: loc.noteDescription,
+                    alignLabelWithHint: true,
+                  ),
+                ),
+                InlineFormError(message: _saveError),
+              ],
+            ),
           ),
         ),
       ),
@@ -588,18 +685,41 @@ class _NoteDialogState extends State<_NoteDialog> {
           child: Text(loc.cancel),
         ),
         ElevatedButton(
-          onPressed: () {
-            if (_descriptionController.text.isEmpty) return;
+          onPressed: _isSaving
+              ? null
+              : () async {
+                  if (!(_formKey.currentState?.validate() ?? false)) {
+                    return;
+                  }
 
-            final note = Note()
-              ..carId = widget.carId
-              ..dateTime = _dateTime
-              ..description = _descriptionController.text;
+                  setState(() {
+                    _isSaving = true;
+                    _saveError = null;
+                  });
+                  final note = Note()
+                    ..carId = widget.carId
+                    ..dateTime = _dateTime
+                    ..description = _descriptionController.text.trim();
 
-            widget.onSave(note);
-            Navigator.pop(context);
-          },
-          child: Text(loc.save),
+                  final navigator = Navigator.of(context);
+                  try {
+                    await widget.onSave(note);
+                    if (mounted) navigator.pop();
+                  } catch (error) {
+                    if (!mounted) return;
+                    setState(() {
+                      _isSaving = false;
+                      _saveError = loc.saveError(error.toString());
+                    });
+                  }
+                },
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(loc.save),
         ),
       ],
     );

@@ -286,6 +286,12 @@ abstract class AppLocalizations {
   /// **'Condition'**
   String get reminderCondition;
 
+  /// No description provided for @reminderType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get reminderType;
+
   /// No description provided for @byDate.
   ///
   /// In en, this message translates to:
@@ -453,6 +459,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loading…'**
   String get loading;
+
+  /// No description provided for @fieldRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required'**
+  String get fieldRequired;
+
+  /// No description provided for @invalidWholeNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number'**
+  String get invalidWholeNumber;
+
+  /// No description provided for @invalidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid number'**
+  String get invalidNumber;
+
+  /// No description provided for @numberMustBeNonNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Number cannot be negative'**
+  String get numberMustBeNonNegative;
 
   /// No description provided for @reportLoadError.
   ///
@@ -789,6 +819,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Synchronizing…'**
   String get syncInProgress;
+
+  /// No description provided for @syncUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synchronized yet'**
+  String get syncUnknown;
+
+  /// No description provided for @syncIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronized'**
+  String get syncIdle;
 
   /// No description provided for @syncError.
   ///

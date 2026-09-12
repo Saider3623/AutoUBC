@@ -106,6 +106,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reminderCondition => 'Условие';
 
   @override
+  String get reminderType => 'Тип';
+
+  @override
   String get byDate => 'По дате';
 
   @override
@@ -195,6 +198,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get loading => 'Загрузка…';
+
+  @override
+  String get fieldRequired => 'Заполните поле';
+
+  @override
+  String get invalidWholeNumber => 'Введите целое число';
+
+  @override
+  String get invalidNumber => 'Введите корректное число';
+
+  @override
+  String get numberMustBeNonNegative => 'Число не может быть отрицательным';
 
   @override
   String get reportLoadError => 'Не удалось загрузить отчет';
@@ -375,6 +390,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncInProgress => 'Синхронизация…';
+
+  @override
+  String get syncUnknown => 'Синхронизация еще не выполнена';
+
+  @override
+  String get syncIdle => 'Синхронизировано';
 
   @override
   String get syncError => 'Ошибка синхронизации';

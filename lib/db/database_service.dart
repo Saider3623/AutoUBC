@@ -524,18 +524,32 @@ class DatabaseService {
 
   Future<void> addServiceLog(ServiceLog log) async {
     final db = await isar;
+    await _validateServiceLog(db, log);
+    await db.writeTxn(() => db.serviceLogs.put(log));
+  }
+
+  Future<void> updateServiceLog(ServiceLog log) async {
+    final db = await isar;
+    await _validateServiceLog(db, log);
+    final existing = await db.serviceLogs.get(log.id);
+    if (existing == null) {
+      throw const DataValidationException('Service entry no longer exists.');
+    }
+    await db.writeTxn(() => db.serviceLogs.put(log));
+  }
+
+  Future<void> _validateServiceLog(Isar db, ServiceLog log) async {
     final carId = log.carId;
     if (carId == null) {
       throw const DataValidationException('Service entry must have a car.');
     }
     await _requireCar(db, carId);
     validateNonNegativeNumber(log.odometer, 'Service odometer');
-    if (log.description.trim().isEmpty) {
+    log.description = log.description.trim();
+    if (log.description.isEmpty) {
       throw const DataValidationException(
           'Service description cannot be empty.');
     }
-
-    await db.writeTxn(() => db.serviceLogs.put(log));
   }
 
   Future<void> deleteServiceLog(ServiceLog log) async {

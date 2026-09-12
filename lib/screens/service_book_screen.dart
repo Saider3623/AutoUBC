@@ -5,7 +5,9 @@ import '../models/service_log.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/form_validators.dart';
 import '../widgets/app_empty_state.dart';
+import '../widgets/inline_form_error.dart';
 
 class ServiceBookScreen extends StatefulWidget {
   const ServiceBookScreen({super.key});
@@ -128,9 +130,9 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
               final log = logs[index];
               return InkWell(
                 onTap: () => _showAddServiceDialog(context, log),
-                  child: Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: Padding(
+                child: Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     child: Column(
@@ -195,8 +197,12 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
       builder: (context) => _ServiceLogDialog(
         carId: provider.selectedCar!.id,
         logToEdit: logToEdit,
-        onSave: (log) {
-          provider.addServiceLog(log);
+        onSave: (log) async {
+          if (logToEdit != null) {
+            await provider.updateServiceLog(log);
+          } else {
+            await provider.addServiceLog(log);
+          }
         },
       ),
     );
@@ -231,7 +237,7 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
 
 class _ServiceLogDialog extends StatefulWidget {
   final int carId;
-  final Function(ServiceLog) onSave;
+  final Future<void> Function(ServiceLog) onSave;
   final ServiceLog? logToEdit;
 
   const _ServiceLogDialog({
@@ -245,6 +251,9 @@ class _ServiceLogDialog extends StatefulWidget {
 }
 
 class _ServiceLogDialogState extends State<_ServiceLogDialog> {
+  final _formKey = GlobalKey<FormState>();
+  bool _isSaving = false;
+  String? _saveError;
   DateTime _date = DateTime.now();
   final TextEditingController _odometerController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
@@ -298,73 +307,89 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
       content: SizedBox(
         width: double.maxFinite,
         child: SingleChildScrollView(
-          child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    loc.date,
-                    style: Theme.of(context).textTheme.bodySmall,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        loc.date,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        DateFormat.yMMMd(languageCode).format(_date),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    DateFormat.yMMMd(languageCode).format(_date),
-                    style: Theme.of(context).textTheme.titleMedium,
+                  trailing: const Icon(Icons.calendar_today),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _date,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime.now(),
+                      locale: localeProvider.locale,
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _date = picked;
+                      });
+                    }
+                  },
+                ),
+                TextFormField(
+                  controller: _odometerController,
+                  keyboardType: TextInputType.number,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: (value) => validateWholeNumber(
+                    value,
+                    requiredMessage: loc.fieldRequired,
+                    invalidMessage: loc.invalidWholeNumber,
+                    nonNegativeMessage: loc.numberMustBeNonNegative,
                   ),
-                ],
-              ),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: _date,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime.now(),
-                  locale: localeProvider.locale,
-                );
-                if (picked != null) {
-                  setState(() {
-                    _date = picked;
-                  });
-                }
-              },
+                  decoration: InputDecoration(
+                    labelText: loc.mileageKm,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _descController,
+                  minLines: 2,
+                  maxLines: 6,
+                  textCapitalization: TextCapitalization.sentences,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: (value) => validateRequiredText(
+                    value,
+                    message: loc.fieldRequired,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: loc.whatWasDone,
+                    helperText: loc.whatWasDoneHint,
+                    alignLabelWithHint: true,
+                  ),
+                  onChanged: (value) {
+                    // Якщо користувач натиснув Enter, автоматично додаємо тире
+                    if (value.endsWith('\n')) {
+                      _descController.text = '$value- ';
+                      _descController.selection = TextSelection.fromPosition(
+                        TextPosition(offset: _descController.text.length),
+                      );
+                    }
+                  },
+                ),
+                InlineFormError(message: _saveError),
+              ],
             ),
-            TextField(
-              controller: _odometerController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: loc.mileageKm,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _descController,
-              minLines: 2,
-              maxLines: 6,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                labelText: loc.whatWasDone,
-                helperText: loc.whatWasDoneHint,
-                alignLabelWithHint: true,
-              ),
-              onChanged: (value) {
-                // Якщо користувач натиснув Enter, автоматично додаємо тире
-                if (value.endsWith('\n')) {
-                  _descController.text = '$value- ';
-                  _descController.selection = TextSelection.fromPosition(
-                    TextPosition(offset: _descController.text.length),
-                  );
-                }
-              },
-            ),
-          ],
+          ),
         ),
-      ),
       ),
       actions: [
         TextButton(
@@ -372,24 +397,42 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
           child: Text(loc.cancel),
         ),
         ElevatedButton(
-          onPressed: () {
-            if (_odometerController.text.isEmpty ||
-                _descController.text.isEmpty) {
-              return;
-            }
-            final odometer = int.tryParse(_odometerController.text);
-            if (odometer == null) return;
+          onPressed: _isSaving
+              ? null
+              : () async {
+                  if (!(_formKey.currentState?.validate() ?? false)) {
+                    return;
+                  }
 
-            final log = widget.logToEdit ?? ServiceLog();
-            log.carId = widget.carId;
-            log.date = _date;
-            log.odometer = odometer;
-            log.description = _descController.text;
+                  final log = widget.logToEdit ?? ServiceLog();
+                  log.carId = widget.carId;
+                  log.date = _date;
+                  log.odometer = int.parse(_odometerController.text.trim());
+                  log.description = _descController.text.trim();
 
-            widget.onSave(log);
-            Navigator.pop(context);
-          },
-          child: Text(loc.save),
+                  setState(() {
+                    _isSaving = true;
+                    _saveError = null;
+                  });
+                  final navigator = Navigator.of(context);
+                  try {
+                    await widget.onSave(log);
+                    if (mounted) navigator.pop();
+                  } catch (error) {
+                    if (!mounted) return;
+                    setState(() {
+                      _isSaving = false;
+                      _saveError = loc.saveError(error.toString());
+                    });
+                  }
+                },
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(loc.save),
         ),
       ],
     );

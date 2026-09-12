@@ -18,6 +18,7 @@ import 'db/database_service.dart';
 import 'models/reminder.dart';
 import 'services/google_drive_sync_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/sync_status_indicator.dart';
 
 Future<void> _deleteFileIfExists(String path) async {
   try {
@@ -298,7 +299,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 ),
                 if (sync.isConnected) ...[
                   const SizedBox(width: 10),
-                  _SyncStatusDot(sync: sync),
+                  SyncStatusIndicator(sync: sync),
                 ],
               ],
             );
@@ -713,47 +714,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SyncStatusDot extends StatelessWidget {
-  final GoogleDriveSyncService sync;
-
-  const _SyncStatusDot({required this.sync});
-
-  @override
-  Widget build(BuildContext context) {
-    Color color;
-
-    if (sync.isSyncing) {
-      color = Colors.blue;
-    } else if (sync.hasSyncError) {
-      color = Colors.amber;
-    } else {
-      color = Colors.green;
-    }
-
-    return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.4),
-            blurRadius: sync.isSyncing ? 6 : 2,
-            spreadRadius: sync.isSyncing ? 1.5 : 0,
-          ),
-        ],
-      ),
-      child: sync.isSyncing
-          ? const CircularProgressIndicator(
-              strokeWidth: 1.5,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            )
-          : null,
     );
   }
 }

@@ -49,6 +49,7 @@
   "inspectionReminder": "Техогляд",
   "reminderTitle": "Назва нагадування",
   "reminderCondition": "Умова",
+  "reminderType": "Тип",
   "byDate": "По даті",
   "byMileage": "По пробігу",
   "repeatEvery": "Повторювати кожні",
@@ -108,6 +109,10 @@
     }
   },
   "loading": "Завантаження…",
+  "fieldRequired": "Заповніть поле",
+  "invalidWholeNumber": "Введіть ціле число",
+  "invalidNumber": "Введіть коректне число",
+  "numberMustBeNonNegative": "Число не може бути від’ємним",
   "reportLoadError": "Не вдалося завантажити звіт",
   "retry": "Повторити",
   "english": "Англійська",
@@ -195,6 +200,8 @@
   "chooseDate": "Вибрати дату",
   "noteDateSelected": "Дату встановлено",
   "syncInProgress": "Синхронізація…",
+  "syncUnknown": "Синхронізацію ще не виконано",
+  "syncIdle": "Синхронізовано",
   "syncError": "Помилка синхронізації",
   "syncOk": "Синхронізовано"
 }

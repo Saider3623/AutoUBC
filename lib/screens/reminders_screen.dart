@@ -5,7 +5,9 @@ import 'package:provider/provider.dart';
 import '../models/reminder.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
+import '../utils/form_validators.dart';
 import '../widgets/app_empty_state.dart';
+import '../widgets/inline_form_error.dart';
 
 class RemindersScreen extends StatelessWidget {
   const RemindersScreen({super.key});
@@ -89,8 +91,8 @@ class RemindersScreen extends StatelessWidget {
       context: context,
       builder: (context) => _ReminderDialog(
         carId: provider.selectedCar!.id,
-        onSave: (reminder) {
-          provider.addReminder(reminder);
+        onSave: (reminder) async {
+          await provider.addReminder(reminder);
         },
       ),
     );
@@ -229,11 +231,11 @@ class _ReminderCard extends StatelessWidget {
             builder: (context) => _ReminderDialog(
               carId: reminder.carId!,
               reminder: reminder,
-              onSave: (updatedReminder) {
-                provider.updateReminder(updatedReminder);
+              onSave: (updatedReminder) async {
+                await provider.updateReminder(updatedReminder);
               },
-              onDelete: () {
-                provider.deleteReminder(reminder);
+              onDelete: () async {
+                await provider.deleteReminder(reminder);
               },
             ),
           );
@@ -251,8 +253,8 @@ class _ReminderCard extends StatelessWidget {
 class _ReminderDialog extends StatefulWidget {
   final int carId;
   final Reminder? reminder;
-  final Function(Reminder) onSave;
-  final Function()? onDelete;
+  final Future<void> Function(Reminder) onSave;
+  final Future<void> Function()? onDelete;
 
   const _ReminderDialog({
     required this.carId,
@@ -266,6 +268,9 @@ class _ReminderDialog extends StatefulWidget {
 }
 
 class _ReminderDialogState extends State<_ReminderDialog> {
+  final _formKey = GlobalKey<FormState>();
+  bool _isSaving = false;
+  String? _saveError;
   late ReminderType _type;
   late DateTime _dueDate;
   late int _repeatMonths;
@@ -328,185 +333,204 @@ class _ReminderDialogState extends State<_ReminderDialog> {
               maxHeight: MediaQuery.of(context).size.height * 0.7,
             ),
             padding: EdgeInsets.zero,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DropdownButtonFormField<ReminderType>(
-                initialValue: _type,
-                decoration: InputDecoration(
-                  labelText: 'Тип',
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                items: [
-                  DropdownMenuItem(
-                    value: ReminderType.insurance,
-                    child: Text(loc.insuranceReminder),
-                  ),
-                  DropdownMenuItem(
-                    value: ReminderType.maintenance,
-                    child: Text(loc.maintenanceReminder),
-                  ),
-                  DropdownMenuItem(
-                    value: ReminderType.inspection,
-                    child: Text(loc.inspectionReminder),
-                  ),
-                  DropdownMenuItem(
-                    value: ReminderType.custom,
-                    child: Text(loc.customReminder),
-                  ),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _type = value!;
-                    if (_type == ReminderType.custom) {
-                      _useKmForCustom = false;
-                    }
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              if (_type == ReminderType.custom) ...[
-                TextField(
-                  controller: _titleController,
-                  decoration: InputDecoration(
-                    labelText: loc.reminderTitle,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<bool>(
-                  initialValue: _useKmForCustom,
-                  decoration: InputDecoration(
-                    labelText: loc.reminderCondition,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  items: [
-                    DropdownMenuItem(
-                      value: false,
-                      child: Text(loc.byDate),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  DropdownButtonFormField<ReminderType>(
+                    initialValue: _type,
+                    decoration: InputDecoration(
+                      labelText: loc.reminderType,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
-                    DropdownMenuItem(
-                      value: true,
-                      child: Text(loc.byMileage),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _useKmForCustom = value!;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-              ],
-              if (_type != ReminderType.maintenance &&
-                  !(_type == ReminderType.custom && _useKmForCustom))
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300, width: 1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ListTile(
-                    leading:
-                        const Icon(Icons.calendar_today, color: Colors.grey),
-                    title: Text(
-                      DateFormat.yMMMd(languageCode).format(_dueDate),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _dueDate,
-                        firstDate: DateTime(2000),
-                        lastDate:
-                            DateTime.now().add(const Duration(days: 365 * 10)),
-                        locale: localeProvider.locale,
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          _dueDate = picked;
-                        });
-                      }
+                    items: [
+                      DropdownMenuItem(
+                        value: ReminderType.insurance,
+                        child: Text(loc.insuranceReminder),
+                      ),
+                      DropdownMenuItem(
+                        value: ReminderType.maintenance,
+                        child: Text(loc.maintenanceReminder),
+                      ),
+                      DropdownMenuItem(
+                        value: ReminderType.inspection,
+                        child: Text(loc.inspectionReminder),
+                      ),
+                      DropdownMenuItem(
+                        value: ReminderType.custom,
+                        child: Text(loc.customReminder),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _type = value!;
+                        if (_type == ReminderType.custom) {
+                          _useKmForCustom = false;
+                        }
+                      });
                     },
                   ),
-                ),
-              if (_type != ReminderType.maintenance &&
-                  !(_type == ReminderType.custom && _useKmForCustom))
-                const SizedBox(height: 16),
-              if (_type != ReminderType.maintenance &&
-                  !(_type == ReminderType.custom && _useKmForCustom))
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text('${loc.repeatEvery} (${loc.months})'),
-                      value: _repeatMonthsEnabled,
+                  const SizedBox(height: 16),
+                  if (_type == ReminderType.custom) ...[
+                    TextField(
+                      controller: _titleController,
+                      decoration: InputDecoration(
+                        labelText: loc.reminderTitle,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<bool>(
+                      initialValue: _useKmForCustom,
+                      decoration: InputDecoration(
+                        labelText: loc.reminderCondition,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: false,
+                          child: Text(loc.byDate),
+                        ),
+                        DropdownMenuItem(
+                          value: true,
+                          child: Text(loc.byMileage),
+                        ),
+                      ],
                       onChanged: (value) {
                         setState(() {
-                          _repeatMonthsEnabled = value;
-                          if (!_repeatMonthsEnabled) {
-                            _repeatMonths = 0;
-                            _repeatMonthsController.clear();
-                          }
+                          _useKmForCustom = value!;
                         });
                       },
                     ),
-                    if (_repeatMonthsEnabled)
-                      TextField(
-                        controller: _repeatMonthsController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: loc.repeatEvery,
-                          suffixText: loc.months,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_type != ReminderType.maintenance &&
+                      !(_type == ReminderType.custom && _useKmForCustom))
+                    Container(
+                      decoration: BoxDecoration(
+                        border:
+                            Border.all(color: Colors.grey.shade300, width: 1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        leading: const Icon(Icons.calendar_today,
+                            color: Colors.grey),
+                        title: Text(
+                          DateFormat.yMMMd(languageCode).format(_dueDate),
+                          style: const TextStyle(fontSize: 16),
                         ),
-                        onChanged: (value) {
-                          _repeatMonths = int.tryParse(value) ?? _repeatMonths;
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _dueDate,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime.now()
+                                .add(const Duration(days: 365 * 10)),
+                            locale: localeProvider.locale,
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              _dueDate = picked;
+                            });
+                          }
                         },
                       ),
-                  ],
-                ),
-              if (_type == ReminderType.maintenance ||
-                  (_type == ReminderType.custom && _useKmForCustom))
-                TextField(
-                  controller: _repeatKmController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: '${loc.repeatEvery} (${loc.km})',
-                    hintText: '${loc.currentMileage}: $currentKm ${loc.km}',
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onChanged: (value) {
-                    _repeatKm = int.tryParse(value) ?? _repeatKm;
-                  },
-                ),
-            ],
+                    ),
+                  if (_type != ReminderType.maintenance &&
+                      !(_type == ReminderType.custom && _useKmForCustom))
+                    const SizedBox(height: 16),
+                  if (_type != ReminderType.maintenance &&
+                      !(_type == ReminderType.custom && _useKmForCustom))
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('${loc.repeatEvery} (${loc.months})'),
+                          value: _repeatMonthsEnabled,
+                          onChanged: (value) {
+                            setState(() {
+                              _repeatMonthsEnabled = value;
+                              if (!_repeatMonthsEnabled) {
+                                _repeatMonths = 0;
+                                _repeatMonthsController.clear();
+                              }
+                            });
+                          },
+                        ),
+                        if (_repeatMonthsEnabled)
+                          TextFormField(
+                            controller: _repeatMonthsController,
+                            keyboardType: TextInputType.number,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            validator: (value) => validateWholeNumber(
+                              value,
+                              requiredMessage: loc.fieldRequired,
+                              invalidMessage: loc.invalidWholeNumber,
+                              nonNegativeMessage: loc.numberMustBeNonNegative,
+                            ),
+                            decoration: InputDecoration(
+                              labelText: loc.repeatEvery,
+                              suffixText: loc.months,
+                            ),
+                            onChanged: (value) {
+                              final parsed = int.tryParse(value);
+                              if (parsed != null && parsed >= 0) {
+                                _repeatMonths = parsed;
+                              }
+                            },
+                          ),
+                      ],
+                    ),
+                  if (_type == ReminderType.maintenance ||
+                      (_type == ReminderType.custom && _useKmForCustom))
+                    TextFormField(
+                      controller: _repeatKmController,
+                      keyboardType: TextInputType.number,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      validator: (value) => validateWholeNumber(
+                        value,
+                        requiredMessage: loc.fieldRequired,
+                        invalidMessage: loc.invalidWholeNumber,
+                        nonNegativeMessage: loc.numberMustBeNonNegative,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: '${loc.repeatEvery} (${loc.km})',
+                        hintText: '${loc.currentMileage}: $currentKm ${loc.km}',
+                      ),
+                      onChanged: (value) {
+                        final parsed = int.tryParse(value);
+                        if (parsed != null && parsed >= 0) {
+                          _repeatKm = parsed;
+                        }
+                      },
+                    ),
+                  InlineFormError(message: _saveError),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
       ),
       actions: [
         if (widget.onDelete != null)
           TextButton(
-            onPressed: () {
-              widget.onDelete!();
-              Navigator.pop(context);
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              await widget.onDelete!();
+              if (mounted) navigator.pop();
             },
             child: Text(loc.delete, style: const TextStyle(color: Colors.red)),
           ),
@@ -515,39 +539,64 @@ class _ReminderDialogState extends State<_ReminderDialog> {
           child: Text(loc.cancel),
         ),
         ElevatedButton(
-          onPressed: () {
-            final parsedRepeatMonths =
-                int.tryParse(_repeatMonthsController.text);
-            final repeatMonths =
-                _repeatMonthsEnabled ? (parsedRepeatMonths ?? 0) : 0;
-            final reminder = Reminder()
-              ..carId = widget.carId
-              ..type = _type
-              ..title =
-                  _type == ReminderType.custom ? _titleController.text : null
-              ..dueDate = _dueDate
-              ..repeatMonths = repeatMonths
-              ..repeatKm = (_type == ReminderType.maintenance ||
-                      (_type == ReminderType.custom && _useKmForCustom))
-                  ? _repeatKm
-                  : null
-              ..startKm = (_type == ReminderType.maintenance ||
-                      (_type == ReminderType.custom && _useKmForCustom))
-                  ? currentKm
-                  : null
-              ..isCompleted = widget.reminder?.isCompleted ?? false;
-            if (widget.reminder != null) {
-              reminder.id = widget.reminder!.id;
-            }
-            widget.onSave(reminder);
-            Navigator.pop(context);
-          },
+          onPressed: _isSaving
+              ? null
+              : () async {
+                  if (!(_formKey.currentState?.validate() ?? false)) {
+                    return;
+                  }
+
+                  final usesKm = _type == ReminderType.maintenance ||
+                      (_type == ReminderType.custom && _useKmForCustom);
+                  final repeatMonths = _repeatMonthsEnabled
+                      ? int.parse(_repeatMonthsController.text.trim())
+                      : 0;
+                  final repeatKm = usesKm
+                      ? int.parse(_repeatKmController.text.trim())
+                      : null;
+                  final reminder = Reminder()
+                    ..carId = widget.carId
+                    ..type = _type
+                    ..title = _type == ReminderType.custom
+                        ? _titleController.text.trim()
+                        : null
+                    ..dueDate = _dueDate
+                    ..repeatMonths = repeatMonths
+                    ..repeatKm = repeatKm
+                    ..startKm = usesKm ? currentKm : null
+                    ..isCompleted = widget.reminder?.isCompleted ?? false;
+                  if (widget.reminder != null) {
+                    reminder.id = widget.reminder!.id;
+                  }
+
+                  setState(() {
+                    _isSaving = true;
+                    _saveError = null;
+                  });
+                  final navigator = Navigator.of(context);
+                  try {
+                    await widget.onSave(reminder);
+                    if (mounted) navigator.pop();
+                  } catch (error) {
+                    if (!mounted) return;
+                    setState(() {
+                      _isSaving = false;
+                      _saveError = loc.saveError(error.toString());
+                    });
+                  }
+                },
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          child: Text(loc.save),
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(loc.save),
         ),
       ],
     );

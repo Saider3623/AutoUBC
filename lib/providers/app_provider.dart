@@ -425,6 +425,20 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateServiceLog(ServiceLog log) async {
+    try {
+      await _markLocalMutationPending();
+      await _db.updateServiceLog(log);
+      if (_selectedCar != null) {
+        await loadLogsForCar(_selectedCar!.id);
+      }
+      await _scheduleBackupAndSync();
+    } catch (e) {
+      debugPrint('Помилка оновлення логу обслуговування: $e');
+      rethrow;
+    }
+  }
+
   Future<void> deleteServiceLog(ServiceLog log) async {
     try {
       await _markLocalMutationPending();

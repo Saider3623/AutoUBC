@@ -4,6 +4,45 @@ import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:autoubc/services/google_drive_sync_service.dart';
 
 void main() {
+  group('sync status presentation', () {
+    test('keeps a connected session neutral before the first success', () {
+      expect(
+        effectiveSyncStatus(
+          status: SyncStatus.unknown,
+          activeOperations: 0,
+        ),
+        SyncStatus.unknown,
+      );
+    });
+
+    test('active operations always present as syncing', () {
+      expect(
+        effectiveSyncStatus(
+          status: SyncStatus.error,
+          activeOperations: 1,
+        ),
+        SyncStatus.syncing,
+      );
+    });
+
+    test('preserves idle and error after operations finish', () {
+      expect(
+        effectiveSyncStatus(
+          status: SyncStatus.idle,
+          activeOperations: 0,
+        ),
+        SyncStatus.idle,
+      );
+      expect(
+        effectiveSyncStatus(
+          status: SyncStatus.error,
+          activeOperations: 0,
+        ),
+        SyncStatus.error,
+      );
+    });
+  });
+
   group('local-first startup decisions', () {
     test('downloads when the local database is empty and remote exists', () {
       expect(

@@ -8,6 +8,15 @@ import 'package:http/http.dart' as http;
 /// The action selected during startup or after the first authorization.
 enum SyncStartupAction { none, download, upload, error }
 
+enum SyncStatus { unknown, idle, syncing, error }
+
+SyncStatus effectiveSyncStatus({
+  required SyncStatus status,
+  required int activeOperations,
+}) {
+  return activeOperations > 0 ? SyncStatus.syncing : status;
+}
+
 /// Returns whether the app should ask for the first car after synchronization.
 bool shouldPromptForFirstCarSetup({
   required bool isConnected,
@@ -98,6 +107,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
   Future<void> _operationQueue = Future<void>.value();
   int _activeOperations = 0;
   bool _lastSyncFailed = false;
+  SyncStatus _syncStatus = SyncStatus.unknown;
 
   /// Поточний Google-акаунт (null = не авторизований).
   GoogleSignInAccount? get currentUser => _currentUser;
@@ -111,14 +121,27 @@ class GoogleDriveSyncService extends ChangeNotifier {
   /// Чи була помилка під час останньої спроби синхронізації.
   bool get hasSyncError => _lastSyncFailed;
 
+  SyncStatus get syncStatus => effectiveSyncStatus(
+        status: _syncStatus,
+        activeOperations: _activeOperations,
+      );
+
   void _beginOperation() {
     _activeOperations++;
+    _syncStatus = SyncStatus.syncing;
     notifyListeners();
   }
 
-  void _endOperation({required bool success}) {
+  void _endOperation({
+    required bool success,
+    SyncStatus? terminalStatus,
+  }) {
     _activeOperations = (_activeOperations > 0) ? _activeOperations - 1 : 0;
-    _lastSyncFailed = !success;
+    _lastSyncFailed = terminalStatus == SyncStatus.error || !success;
+    if (_activeOperations == 0) {
+      _syncStatus =
+          terminalStatus ?? (success ? SyncStatus.idle : SyncStatus.error);
+    }
     notifyListeners();
   }
 
@@ -138,6 +161,8 @@ class GoogleDriveSyncService extends ChangeNotifier {
     try {
       final account = await _googleSignIn.signInSilently();
       _currentUser = account;
+      _syncStatus = SyncStatus.unknown;
+      _lastSyncFailed = false;
       notifyListeners();
       return account != null;
     } catch (e, stackTrace) {
@@ -152,6 +177,8 @@ class GoogleDriveSyncService extends ChangeNotifier {
     try {
       final account = await _googleSignIn.signIn();
       _currentUser = account;
+      _syncStatus = SyncStatus.unknown;
+      _lastSyncFailed = false;
       notifyListeners();
       return account != null;
     } catch (e, stackTrace) {
@@ -165,6 +192,8 @@ class GoogleDriveSyncService extends ChangeNotifier {
   Future<void> signOut() async {
     await _googleSignIn.signOut();
     _currentUser = null;
+    _syncStatus = SyncStatus.unknown;
+    _lastSyncFailed = false;
     notifyListeners();
   }
 
@@ -335,7 +364,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
       final remoteFile = await _findBackupFile(api);
       if (remoteFile == null || remoteFile.id == null) {
         debugPrint('[GoogleDrive] Бекап на Диску не знайдено.');
-        _endOperation(success: true);
+        _endOperation(success: true, terminalStatus: SyncStatus.unknown);
         return false;
       }
 

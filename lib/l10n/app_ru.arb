@@ -49,6 +49,7 @@
   "inspectionReminder": "Техосмотр",
   "reminderTitle": "Название напоминания",
   "reminderCondition": "Условие",
+  "reminderType": "Тип",
   "byDate": "По дате",
   "byMileage": "По пробегу",
   "repeatEvery": "Повторять каждые",
@@ -108,6 +109,10 @@
     }
   },
   "loading": "Загрузка…",
+  "fieldRequired": "Заполните поле",
+  "invalidWholeNumber": "Введите целое число",
+  "invalidNumber": "Введите корректное число",
+  "numberMustBeNonNegative": "Число не может быть отрицательным",
   "reportLoadError": "Не удалось загрузить отчет",
   "retry": "Повторить",
   "english": "Английский",
@@ -195,6 +200,8 @@
   "chooseDate": "Выбрать дату",
   "noteDateSelected": "Дата установлена",
   "syncInProgress": "Синхронизация…",
+  "syncUnknown": "Синхронизация еще не выполнена",
+  "syncIdle": "Синхронизировано",
   "syncError": "Ошибка синхронизации",
   "syncOk": "Синхронизировано"
 }
