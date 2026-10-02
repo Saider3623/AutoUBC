@@ -252,6 +252,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                   });
                                 }
                                 return Wrap(
+                                  alignment: WrapAlignment.center,
                                   spacing: 8.0,
                                   runSpacing: 4.0,
                                   children: fuelTypes.map((type) {
@@ -310,8 +311,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                     keyboardType:
                                         const TextInputType.numberWithOptions(
                                             decimal: true),
-                                    autovalidateMode:
-                                        AutovalidateMode.onUserInteraction,
+                                    autovalidateMode: AutovalidateMode.disabled,
                                     validator: (value) =>
                                         validateNonNegativeDecimal(
                                       value,
@@ -366,6 +366,10 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                                   .format(_selectedDate);
                                           final timeString = DateFormat('HH:mm')
                                               .format(DateTime.now());
+                                          final focusScope =
+                                              FocusScope.of(context);
+                                          final fuelFormState =
+                                              _fuelFormKey.currentState;
                                           try {
                                             await provider.addFuelLog(
                                               dateString,
@@ -378,6 +382,8 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                               ),
                                             );
                                             if (!mounted) return;
+                                            focusScope.unfocus();
+                                            fuelFormState?.reset();
                                             _litersController.clear();
                                             setState(() {
                                               _isSavingFuel = false;

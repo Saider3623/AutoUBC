@@ -8,7 +8,6 @@ import 'l10n/app_localizations.dart';
 import 'providers/app_provider.dart';
 import 'providers/locale_provider.dart';
 import 'screens/data_entry_screen.dart';
-import 'screens/history_screen.dart';
 import 'screens/weekly_report_screen.dart';
 import 'screens/export_report_screen.dart';
 import 'screens/reminders_screen.dart';
@@ -144,7 +143,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   final DatabaseService _db = DatabaseService();
   AppProvider? _appProvider;
   GoogleDriveSyncService? _syncService;
-  final int _totalPages = 3;
+  final int _totalPages = 2;
   static const int _initialPage = 1000; // Велике число для кругової прокрутки
   int _currentDisplayPage = 0;
   bool _isInteractiveSignIn = false;
@@ -459,8 +458,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       case 0:
                         return const DataEntryScreen();
                       case 1:
-                        return const HistoryScreen();
-                      case 2:
                         return const WeeklyReportScreen();
                       default:
                         return const DataEntryScreen();

@@ -9,6 +9,7 @@ import '../utils/report_status.dart';
 import '../utils/weekly_report_utils.dart';
 import '../utils/fuel_summary.dart';
 import '../widgets/app_empty_state.dart';
+import 'week_detail_screen.dart';
 
 class WeeklyReportScreen extends StatefulWidget {
   const WeeklyReportScreen({super.key});
@@ -25,6 +26,56 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
 
   DateTime _selectedMonth = DateTime.now();
   final DatabaseService _db = DatabaseService();
+
+  Future<void> _onWeekTap(Map<String, DateTime> week) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WeekDetailScreen(
+          weekStart: week['start']!,
+          weekEnd: week['end']!,
+        ),
+      ),
+    );
+    if (mounted) setState(() {});
+  }
+
+  bool _weekHasLogsCached(AppProvider provider, Map<String, DateTime> week) {
+    final start = week['start']!;
+    final end = week['end']!;
+    final startDate = DateTime(start.year, start.month, start.day);
+    final endDate = DateTime(end.year, end.month, end.day, 23, 59, 59);
+
+    bool inRange(String dateString) {
+      final d = DateTime.parse(dateString);
+      return !d.isBefore(startDate) && !d.isAfter(endDate);
+    }
+
+    for (final log in provider.odometerLogs) {
+      if (inRange(log.dateString)) return true;
+    }
+    for (final log in provider.fuelLogs) {
+      if (inRange(log.dateString)) return true;
+    }
+    return false;
+  }
+
+  Widget _wrapClickable(
+    Widget card,
+    Map<String, DateTime> week, {
+    required BorderRadius borderRadius,
+    bool enabled = true,
+  }) {
+    if (!enabled) return card;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: borderRadius,
+        onTap: () => _onWeekTap(week),
+        child: card,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,10 +141,39 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                   final isFutureWeek = week['start']!.isAfter(today);
 
                   if (isFutureWeek) {
-                    return _buildFutureWeekCard(
+                    return _wrapClickable(
+                      _buildFutureWeekCard(
+                        week,
+                        languageCode: languageCode,
+                        noRefuelsLabel: loc.upcoming,
+                      ),
                       week,
-                      languageCode: languageCode,
-                      noRefuelsLabel: loc.upcoming,
+                      borderRadius: BorderRadius.circular(20),
+                      enabled: false,
+                    );
+                  }
+
+                  final hasAnyLogs = _weekHasLogsCached(provider, week);
+                  if (!hasAnyLogs) {
+                    final empty = WeeklyReportData(
+                      distance: 0,
+                      fuelSummaries: const [],
+                      odometerStart: null,
+                      odometerEnd: null,
+                    );
+                    return _wrapClickable(
+                      _buildWeeklyReportCard(
+                        context,
+                        week,
+                        empty,
+                        languageCode: languageCode,
+                        loc: loc,
+                        isNoMileage: true,
+                        isCurrentWeek: isCurrentWeek,
+                      ),
+                      week,
+                      borderRadius: BorderRadius.circular(20),
+                      enabled: false,
                     );
                   }
 
@@ -106,33 +186,48 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                     ),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
-                        return _buildErrorWeekCard(
-                          loc.reportLoadError,
-                          loc.retry,
-                          isCurrentWeek: isCurrentWeek,
-                          colorScheme: Theme.of(context).colorScheme,
-                          onRetry: () => setState(() {}),
+                        return _wrapClickable(
+                          _buildErrorWeekCard(
+                            loc.reportLoadError,
+                            loc.retry,
+                            isCurrentWeek: isCurrentWeek,
+                            colorScheme: Theme.of(context).colorScheme,
+                            onRetry: () => setState(() {}),
+                          ),
+                          week,
+                          borderRadius: BorderRadius.circular(16),
+                          enabled: false,
                         );
                       }
 
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return _buildLoadingWeekCard(
-                          isCurrentWeek: isCurrentWeek,
-                          colorScheme: Theme.of(context).colorScheme,
+                        return _wrapClickable(
+                          _buildLoadingWeekCard(
+                            isCurrentWeek: isCurrentWeek,
+                            colorScheme: Theme.of(context).colorScheme,
+                          ),
+                          week,
+                          borderRadius: BorderRadius.circular(16),
+                          enabled: false,
                         );
                       }
 
                       final data = snapshot.data!;
                       final status = classifyWeeklyReportStatus(data.distance);
                       final isNoMileage = status.isNoMileage;
-                      return _buildWeeklyReportCard(
-                        context,
+                      return _wrapClickable(
+                        _buildWeeklyReportCard(
+                          context,
+                          week,
+                          data,
+                          languageCode: languageCode,
+                          loc: loc,
+                          isNoMileage: isNoMileage,
+                          isCurrentWeek: isCurrentWeek,
+                        ),
                         week,
-                        data,
-                        languageCode: languageCode,
-                        loc: loc,
-                        isNoMileage: isNoMileage,
-                        isCurrentWeek: isCurrentWeek,
+                        borderRadius: BorderRadius.circular(20),
+                        enabled: !isNoMileage,
                       );
                     },
                   );
