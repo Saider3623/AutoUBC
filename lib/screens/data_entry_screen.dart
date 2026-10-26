@@ -11,6 +11,7 @@ import '../l10n/app_localizations.dart';
 import '../db/database_service.dart';
 import '../models/note.dart';
 import '../utils/form_validators.dart';
+import '../utils/weekly_report_utils.dart';
 import '../widgets/inline_form_error.dart';
 
 // #region debug-point F6:reporter
@@ -114,7 +115,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
+    final yesterday = addCalendarDays(today, -1);
     final yesterdayString = DateFormat('yyyy-MM-dd').format(yesterday);
 
     final odometerLog = await _db.getOdometerLog(carId, yesterdayString);
