@@ -1,0 +1,32 @@
+# Каждый пуш в main форка fesh-biz/AutoUBC автоматически отправляется в main оригинала Saider3623/AutoUBC.
+# Нужен секрет UPSTREAM_TOKEN: Personal Access Token аккаунта fesh-biz с правом записи в Saider3623/AutoUBC.
+name: Sync to Saider3623/AutoUBC
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'fesh-biz/AutoUBC'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Push to upstream main
+        env:
+          UPSTREAM_TOKEN: ${{ secrets.UPSTREAM_TOKEN }}
+        run: |
+          if [ -z "$UPSTREAM_TOKEN" ]; then
+            echo "::error::Секрет UPSTREAM_TOKEN не задан в настройках форка"
+            exit 1
+          fi
+          git push "https://x-access-token:${UPSTREAM_TOKEN}@github.com/Saider3623/AutoUBC.git" HEAD:refs/heads/main
