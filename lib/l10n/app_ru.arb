@@ -28,7 +28,7 @@
   "date": "Дата",
   "odometer": "Одометр",
   "km": "км",
-  "liters": "л",
+  "fuel": "Топливо",
   "save": "Сохранить",
   "saveOdometerSuccess": "Показания одометра сохранены",
   "saveError": "Ошибка сохранения: {error}",

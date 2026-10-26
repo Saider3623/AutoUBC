@@ -214,11 +214,11 @@ abstract class AppLocalizations {
   /// **'km'**
   String get km;
 
-  /// No description provided for @liters.
+  /// No description provided for @fuel.
   ///
   /// In en, this message translates to:
-  /// **'l'**
-  String get liters;
+  /// **'Fuel'**
+  String get fuel;
 
   /// No description provided for @save.
   ///
