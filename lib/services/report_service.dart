@@ -264,8 +264,7 @@ class ReportService {
         fuelSummaries: fuelSummaries,
       ));
 
-      // Calendar-day step: a 24-hour step never leaves the DST fall-back day.
-      current = addCalendarDays(weekEnd, 1);
+      current = weekEnd.add(const Duration(days: 1));
     }
 
     return weeks;

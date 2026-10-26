@@ -10,12 +10,10 @@ import '../models/fuel_log.dart';
 import '../models/reminder.dart';
 import '../models/service_log.dart';
 import '../models/note.dart';
-import '../services/remote_log_service.dart';
 
 // #region debug-point D6:reporter
 void _dbgApp(String h, String loc, String msg,
     [Map<String, Object?> data = const {}]) {
-  RemoteLog.add('[DEBUG][$h] $loc: $msg${data.isEmpty ? '' : ' $data'}');
   http
       .post(
         Uri.parse('http://192.168.31.107:7777/event'),

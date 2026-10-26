@@ -21,7 +21,6 @@ import 'models/reminder.dart';
 import 'services/google_drive_sync_service.dart';
 import 'theme/app_theme.dart';
 import 'widgets/sync_status_indicator.dart';
-import 'services/remote_log_service.dart';
 
 Future<void> _deleteFileIfExists(String path) async {
   try {
@@ -32,7 +31,6 @@ Future<void> _deleteFileIfExists(String path) async {
 // #region debug-point D6:reporter
 void _dbgMain(String h, String loc, String msg,
     [Map<String, Object?> data = const {}]) {
-  RemoteLog.add('[DEBUG][$h] $loc: $msg${data.isEmpty ? '' : ' $data'}');
   http
       .post(
         Uri.parse('http://192.168.31.107:7777/event'),
@@ -119,13 +117,7 @@ Future<SyncStartupAction> _initializeCloudSync({
   return action;
 }
 
-void main() {
-  // Captures all logs and uploads them when the build provides a log token;
-  // otherwise it just runs the app.
-  RemoteLog.run(_runApp);
-}
-
-Future<void> _runApp() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // #region debug-point A:startup
   _dbgMain('A', 'main.dart:main', 'app main started');

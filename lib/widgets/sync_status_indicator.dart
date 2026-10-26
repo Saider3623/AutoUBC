@@ -7,12 +7,10 @@ import 'package:http/http.dart' as http;
 import '../l10n/app_localizations.dart';
 import '../services/google_drive_sync_service.dart';
 import '../theme/app_theme.dart';
-import '../services/remote_log_service.dart';
 
 // #region debug-point D6:reporter
 void _dbgIndicator(String h, String loc, String msg,
     [Map<String, Object?> data = const {}]) {
-  RemoteLog.add('[DEBUG][$h] $loc: $msg${data.isEmpty ? '' : ' $data'}');
   http
       .post(
         Uri.parse('http://192.168.31.107:7777/event'),
