@@ -5,10 +5,12 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
+import 'remote_log_service.dart';
 
 // #region debug-point D6:reporter
 void _dbgSync(String h, String loc, String msg,
     [Map<String, Object?> data = const {}]) {
+  RemoteLog.add('[DEBUG][$h] $loc: $msg${data.isEmpty ? '' : ' $data'}');
   http
       .post(
         Uri.parse('http://192.168.31.107:7777/event'),

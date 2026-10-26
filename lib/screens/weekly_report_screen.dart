@@ -96,7 +96,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
 
         final today = DateTime.now();
         final weeks = prioritizeCurrentReportWeek(
-          _getWeeksInMonth(_selectedMonth, workWeekDays),
+          buildReportWeeks(_selectedMonth, workWeekDays),
           today,
         );
 
@@ -171,6 +171,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                         languageCode: languageCode,
                         loc: loc,
                         isNoMileage: true,
+                        hasEntries: false,
                         isCurrentWeek: isCurrentWeek,
                       ),
                       week,
@@ -225,11 +226,14 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
                           languageCode: languageCode,
                           loc: loc,
                           isNoMileage: isNoMileage,
+                          hasEntries: data.hasEntries,
                           isCurrentWeek: isCurrentWeek,
                         ),
                         week,
                         borderRadius: BorderRadius.circular(20),
-                        enabled: !isNoMileage,
+                        // Any week with entries opens the detail screen, so a
+                        // wrong refuel can be removed even without mileage.
+                        enabled: data.hasEntries,
                       );
                     },
                   );
@@ -355,20 +359,24 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     required String languageCode,
     required AppLocalizations loc,
     required bool isNoMileage,
+    required bool hasEntries,
     required bool isCurrentWeek,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final weekTitle =
         '${DateFormat.d(languageCode).format(week['start']!)} - ${DateFormat.d(languageCode).format(week['end']!)} ${DateFormat.MMMM(languageCode).format(week['start']!)}';
+    // The "nothing recorded" look is reserved for weeks without any entries;
+    // a week with refuels but zero mileage still shows its data.
+    final isEmptyWeek = !hasEntries;
 
     return Card(
-      elevation: isCurrentWeek ? 4 : (isNoMileage ? 0 : 1.5),
-      color: isNoMileage ? _noMileageBackground : null,
+      elevation: isCurrentWeek ? 4 : (isEmptyWeek ? 0 : 1.5),
+      color: isEmptyWeek ? _noMileageBackground : null,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: isCurrentWeek
             ? BorderSide(color: colorScheme.primary, width: 2)
-            : isNoMileage
+            : isEmptyWeek
                 ? BorderSide(
                     color: _noMileageForeground.withValues(alpha: 0.08))
                 : BorderSide.none,
@@ -393,7 +401,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
             const SizedBox(height: 14),
             const Divider(height: 1, thickness: 1, color: _dividerColor),
             const SizedBox(height: 16),
-            if (isNoMileage)
+            if (isEmptyWeek)
               _buildNoMileagePanel(loc)
             else
               _buildReportGrid(data, loc, colorScheme),
@@ -715,28 +723,6 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     return liters.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '');
   }
 
-  List<Map<String, DateTime>> _getWeeksInMonth(
-      DateTime month, int workWeekDays) {
-    final weeks = <Map<String, DateTime>>[];
-    final firstDayOfMonth = DateTime(month.year, month.month, 1);
-    final lastDayOfMonth = DateTime(month.year, month.month + 1, 0);
-
-    DateTime currentStart = firstDayOfMonth;
-    while (currentStart.isBefore(lastDayOfMonth) ||
-        currentStart.isAtSameMomentAs(lastDayOfMonth)) {
-      DateTime currentEnd = workingWeekEnd(currentStart, workWeekDays);
-
-      if (currentEnd.isAfter(lastDayOfMonth)) {
-        currentEnd = lastDayOfMonth;
-      }
-
-      weeks.add({'start': currentStart, 'end': currentEnd});
-      currentStart = currentEnd.add(const Duration(days: 1));
-    }
-
-    return weeks;
-  }
-
   Future<WeeklyReportData> _calculateWeeklyReport(
     int carId,
     DateTime startDate,
@@ -766,9 +752,10 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
       distance = odometerEnd - odometerStart;
       if (distance < 0) distance = 0;
     } else if (previousWeekLog != null) {
-      // If the current week has no entries, reuse the previous reading as the start.
+      // No odometer reading inside the week yet: the previous reading is the
+      // start, and the end stays empty so the missing reading is visible.
       odometerStart = previousWeekLog.odometer;
-      odometerEnd = previousWeekLog.odometer;
+      odometerEnd = null;
       distance = 0;
     }
 
@@ -777,6 +764,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
       fuelSummaries: summarizeFuelLogsByType(fuelLogs),
       odometerStart: odometerStart,
       odometerEnd: odometerEnd,
+      hasEntries: odometerLogs.isNotEmpty || fuelLogs.isNotEmpty,
     );
   }
 }
@@ -787,10 +775,14 @@ class WeeklyReportData {
   final int? odometerStart;
   final int? odometerEnd;
 
+  /// Whether the week contains at least one odometer or fuel entry.
+  final bool hasEntries;
+
   WeeklyReportData({
     required this.distance,
     required this.fuelSummaries,
     this.odometerStart,
     this.odometerEnd,
+    this.hasEntries = false,
   });
 }
