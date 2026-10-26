@@ -30,6 +30,27 @@ The Isar integration test is skipped by desktop `flutter test` when the native
 Isar DLL is unavailable. Run it in an environment where the Isar native library
 is packaged, such as an integration/device test target.
 
+## Remote logs (optional)
+
+Builds can upload every app log (`print`, `debugPrint`, Flutter errors,
+uncaught exceptions, debug points) to a private GitHub repository, one file per
+launch: `logs/<date>/<time>_<os>_<id>.log`. Logs are written to a local file
+first and uploaded every 30 seconds and when the app goes to the background; a
+session that ended with a crash is uploaded on the next launch.
+
+Logging is disabled unless the build gets a token, so regular builds are
+unaffected:
+
+1. Create a private repository for logs (default `fesh-biz/autoubc-logs`) with
+   an initial commit.
+2. Create a fine-grained GitHub token limited to **that repository only** with
+   `Contents: Read and write`. The token is embedded in the APK, so never give
+   it access to the source repository.
+3. Copy `.secrets/remote_log.example.json` to `.secrets/remote_log.json`
+   (git-ignored) and put the token there.
+4. `build.ps1` picks the file up automatically. For `flutter run`, add
+   `--dart-define-from-file=.secrets/remote_log.json`.
+
 ## Data safety
 
 Before local backups, Isar creates a compact snapshot with `copyToFile()`. Cloud

@@ -13,10 +13,12 @@ import '../models/note.dart';
 import '../utils/form_validators.dart';
 import '../utils/weekly_report_utils.dart';
 import '../widgets/inline_form_error.dart';
+import '../services/remote_log_service.dart';
 
 // #region debug-point F6:reporter
 void _dbgEntry(String h, String loc, String msg,
     [Map<String, Object?> data = const {}]) {
+  RemoteLog.add('[DEBUG][$h] $loc: $msg${data.isEmpty ? '' : ' $data'}');
   http
       .post(
         Uri.parse('http://192.168.31.107:7777/event'),
