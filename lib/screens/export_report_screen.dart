@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/settings_provider.dart';
 import '../services/report_service.dart';
 
 class ExportReportScreen extends StatefulWidget {
@@ -29,11 +30,14 @@ class _ExportReportScreenState extends State<ExportReportScreen> {
     setState(() => _isLoading = true);
     try {
       final languageCode = localeProvider.locale?.languageCode ?? 'uk';
+      final workWeekDays = Provider.of<SettingsProvider>(context, listen: false)
+          .workWeekDays;
       final file = await _reportService.generatePdfReport(
         appProvider.selectedCar!,
         startDate,
         endDate,
         languageCode,
+        workWeekDays: workWeekDays,
       );
       await _reportService.shareReport(file, languageCode: languageCode);
     } catch (e) {

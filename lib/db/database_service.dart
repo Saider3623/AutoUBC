@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/car.dart';
@@ -11,6 +13,26 @@ import '../models/note.dart';
 import '../utils/date_utils.dart';
 import '../utils/validation.dart';
 
+// #region debug-point D6:reporter
+void _dbgDb(String h, String loc, String msg,
+    [Map<String, Object?> data = const {}]) {
+  http
+      .post(
+        Uri.parse('http://192.168.31.107:7777/event'),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'sessionId': 'startup-freeze-google-auth',
+          'runId': 'pre-fix',
+          'hypothesisId': h,
+          'location': loc,
+          'msg': '[DEBUG] $msg',
+          'data': data,
+        }),
+      )
+      .catchError((_) => http.Response('', 0));
+}
+// #endregion
+
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
   factory DatabaseService() => _instance;
@@ -20,15 +42,39 @@ class DatabaseService {
   Future<void>? _initialization;
   Future<void> _lifecycleQueue = Future<void>.value();
   bool? _hadDatabaseAtStartup;
+  // #region debug-point A:seq
+  int _lifecycleSeq = 0;
+  // #endregion
 
   /// Whether the database file existed before the first local open.
   /// A missing file is the only startup condition that permits cloud restore.
   bool get hadDatabaseAtStartup => _hadDatabaseAtStartup ?? false;
 
   Future<T> _enqueueLifecycle<T>(Future<T> Function() operation) {
-    final result = _lifecycleQueue.then((_) => operation());
+    // #region debug-point A:enqueue
+    final seq = ++_lifecycleSeq;
+    final startedAt = DateTime.now().millisecondsSinceEpoch;
+    _dbgDb('A', 'database_service.dart:_enqueueLifecycle', 'queued seq=$seq');
+    final result = _lifecycleQueue.then((_) async {
+      _dbgDb(
+          'A', 'database_service.dart:_enqueueLifecycle', 'running seq=$seq');
+      try {
+        final value = await operation();
+        _dbgDb(
+            'A',
+            'database_service.dart:_enqueueLifecycle',
+            'finished seq=$seq in '
+                '${DateTime.now().millisecondsSinceEpoch - startedAt}ms');
+        return value;
+      } catch (error) {
+        _dbgDb('A', 'database_service.dart:_enqueueLifecycle',
+            'failed seq=$seq: $error');
+        rethrow;
+      }
+    });
     _lifecycleQueue = result.then<void>((_) {}, onError: (_, __) {});
     return result;
+    // #endregion
   }
 
   Future<Isar> get isar {
@@ -46,6 +92,9 @@ class DatabaseService {
   }
 
   Future<void> _init() async {
+    // #region debug-point B:init
+    _dbgDb('B', 'database_service.dart:_init', 'begin');
+    // #endregion
     // Try multiple directories to find a writable one
     Directory? appDir;
     final dirsToTry = <Future<Directory>>[
@@ -92,10 +141,17 @@ class DatabaseService {
       name: 'autoubc',
     );
 
+    // #region debug-point B:init
+    _dbgDb('B', 'database_service.dart:_init', 'isar opened at ${appDir.path}');
+    // #endregion
+
     // Make a local snapshot before the non-destructive compatibility repair.
     // Use the already opened instance here; calling the public `isar` getter
     // would enqueue behind this initialization and deadlock the lifecycle queue.
     await _createAutoLocalBackup(_isar!);
+    // #region debug-point B:init
+    _dbgDb('B', 'database_service.dart:_init', 'local backup done');
+    // #endregion
     // Compatibility repair must not prevent a valid database from opening. An
     // old backup can contain duplicate or partially migrated child records;
     // those records are retained and can be repaired later without hiding all
@@ -106,6 +162,9 @@ class DatabaseService {
       debugPrint('[Database] Compatibility repair skipped: $error');
       debugPrint('$stackTrace');
     }
+    // #region debug-point B:init
+    _dbgDb('B', 'database_service.dart:_init', 'done');
+    // #endregion
   }
 
   Future<void> close() {
@@ -127,6 +186,50 @@ class DatabaseService {
         _initialization = null;
       }
       return _isar!;
+    });
+  }
+
+  /// Closes the database, runs [operation], then always reopens it.
+  ///
+  /// The whole sequence is a single lifecycle operation, so any other database
+  /// request queues behind it instead of interleaving with the close/reopen
+  /// pair. Overlapping `close()`/`reopen()` calls used to leave the app either
+  /// without a usable database or attached to the database file that was just
+  /// replaced, which froze the UI thread.
+  Future<T> withClosedDatabase<T>(Future<T> Function() operation) {
+    return _enqueueLifecycle(() async {
+      // #region debug-point A:swap
+      _dbgDb('A', 'database_service.dart:withClosedDatabase', 'begin');
+      // #endregion
+      final db = _isar;
+      _isar = null;
+      await db?.close();
+      // #region debug-point A:swap
+      _dbgDb('A', 'database_service.dart:withClosedDatabase', 'db closed');
+      // #endregion
+      try {
+        final value = await operation();
+        // #region debug-point A:swap
+        _dbgDb('A', 'database_service.dart:withClosedDatabase',
+            'operation finished value=$value');
+        // #endregion
+        return value;
+      } finally {
+        if (_isar == null) {
+          // #region debug-point A:swap
+          _dbgDb('A', 'database_service.dart:withClosedDatabase', 'reopening');
+          // #endregion
+          _initialization ??= _init();
+          try {
+            await _initialization;
+          } finally {
+            _initialization = null;
+          }
+          // #region debug-point A:swap
+          _dbgDb('A', 'database_service.dart:withClosedDatabase', 'reopened');
+          // #endregion
+        }
+      }
     });
   }
 

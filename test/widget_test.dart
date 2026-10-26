@@ -73,5 +73,10 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Додайте автомобіль, щоб почати'), findsNothing);
+
+    // The startup silent sign-in is bounded by a timeout. The platform channel
+    // never answers in this test environment, so advance time until that
+    // deadline fires instead of leaving a pending timer behind.
+    await tester.pump(const Duration(seconds: 16));
   });
 }

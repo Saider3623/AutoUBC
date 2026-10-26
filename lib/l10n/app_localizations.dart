@@ -127,7 +127,7 @@ abstract class AppLocalizations {
   /// No description provided for @carSettings.
   ///
   /// In en, this message translates to:
-  /// **'Car Settings'**
+  /// **'Settings'**
   String get carSettings;
 
   /// No description provided for @reminders.
@@ -843,6 +843,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Synchronized'**
   String get syncOk;
+
+  /// No description provided for @workWeekSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Working week mode'**
+  String get workWeekSection;
+
+  /// No description provided for @workWeekFiveDay.
+  ///
+  /// In en, this message translates to:
+  /// **'5-day week'**
+  String get workWeekFiveDay;
+
+  /// No description provided for @workWeekSixDay.
+  ///
+  /// In en, this message translates to:
+  /// **'6-day week'**
+  String get workWeekSixDay;
+
+  /// No description provided for @workWeekSundayNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday is always a non-working day.'**
+  String get workWeekSundayNote;
+
+  /// No description provided for @saturdayNotWorkingConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'In the configured mode (5 days), Saturday is not a working day. Add data?'**
+  String get saturdayNotWorkingConfirm;
 }
 
 class _AppLocalizationsDelegate

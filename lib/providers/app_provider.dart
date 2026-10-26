@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../db/database_service.dart';
 import '../models/car.dart';
@@ -8,6 +10,26 @@ import '../models/fuel_log.dart';
 import '../models/reminder.dart';
 import '../models/service_log.dart';
 import '../models/note.dart';
+
+// #region debug-point D6:reporter
+void _dbgApp(String h, String loc, String msg,
+    [Map<String, Object?> data = const {}]) {
+  http
+      .post(
+        Uri.parse('http://192.168.31.107:7777/event'),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'sessionId': 'startup-freeze-google-auth',
+          'runId': 'pre-fix',
+          'hypothesisId': h,
+          'location': loc,
+          'msg': '[DEBUG] $msg',
+          'data': data,
+        }),
+      )
+      .catchError((_) => http.Response('', 0));
+}
+// #endregion
 
 class AppProvider extends ChangeNotifier {
   final DatabaseService _db = DatabaseService();
@@ -173,7 +195,13 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> loadCars() {
     final current = _loadCarsFuture;
-    if (current != null) return current;
+    if (current != null) {
+      // #region debug-point H:loadcars
+      _dbgApp(
+          'H', 'app_provider.dart:loadCars', 'dedupe: reuse in-flight load');
+      // #endregion
+      return current;
+    }
 
     final future = _loadCarsInternal();
     _loadCarsFuture = future;
@@ -183,10 +211,17 @@ class AppProvider extends ChangeNotifier {
   }
 
   Future<void> _loadCarsInternal() async {
+    // #region debug-point A:loadcars
+    _dbgApp('A', 'app_provider.dart:_loadCarsInternal', 'begin');
+    // #endregion
     try {
       _isLoading = true;
       notifyListeners();
       _cars = await _db.getAllCars();
+      // #region debug-point A:loadcars
+      _dbgApp('A', 'app_provider.dart:_loadCarsInternal',
+          'cars loaded (${_cars.length})');
+      // #endregion
       if (_cars.isEmpty) {
         _selectedCar = null;
         _odometerLogs = [];
@@ -216,10 +251,17 @@ class AppProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+      // #region debug-point A:loadcars
+      _dbgApp(
+          'A', 'app_provider.dart:_loadCarsInternal', 'end isLoading=false');
+      // #endregion
     }
   }
 
   Future<void> loadLogsForCar(int carId) async {
+    // #region debug-point H:loadlogs
+    _dbgApp('H', 'app_provider.dart:loadLogsForCar', 'begin carId=$carId');
+    // #endregion
     try {
       _isLoading = true;
       notifyListeners();
@@ -233,6 +275,9 @@ class AppProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+      // #region debug-point H:loadlogs
+      _dbgApp('H', 'app_provider.dart:loadLogsForCar', 'end carId=$carId');
+      // #endregion
     }
   }
 
@@ -496,6 +541,12 @@ class AppProvider extends ChangeNotifier {
 
   // Refresh all in-memory data after restoring a backup.
   Future<void> refreshAll() async {
+    // #region debug-point H:refresh
+    _dbgApp('H', 'app_provider.dart:refreshAll', 'begin');
+    // #endregion
     await loadCars();
+    // #region debug-point H:refresh
+    _dbgApp('H', 'app_provider.dart:refreshAll', 'end');
+    // #endregion
   }
 }

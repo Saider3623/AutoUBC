@@ -1,9 +1,30 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
+
+// #region debug-point D6:reporter
+void _dbgSync(String h, String loc, String msg,
+    [Map<String, Object?> data = const {}]) {
+  http
+      .post(
+        Uri.parse('http://192.168.31.107:7777/event'),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'sessionId': 'startup-freeze-google-auth',
+          'runId': 'pre-fix',
+          'hypothesisId': h,
+          'location': loc,
+          'msg': '[DEBUG] $msg',
+          'data': data,
+        }),
+      )
+      .catchError((_) => http.Response('', 0));
+}
+// #endregion
 
 /// The action selected during startup or after the first authorization.
 enum SyncStartupAction { none, download, upload, error }
@@ -63,6 +84,14 @@ const _kBackupFileName = 'autoubc_backup.isar';
 const _kDriveScope = 'https://www.googleapis.com/auth/drive.appdata';
 const _kGoogleWebClientId =
     '495555935730-cha6pi6dq22t131cn5ufspsjevfa8b1v.apps.googleusercontent.com';
+
+/// Every network step has an explicit deadline. A stalled Drive request or an
+/// unresponsive sign-in must never block the caller (and the UI isolate)
+/// forever, because the sync queue would stay occupied and the spinner would
+/// never stop.
+const _kAuthTimeout = Duration(seconds: 15);
+const _kMetadataTimeout = Duration(seconds: 30);
+const _kTransferTimeout = Duration(seconds: 120);
 
 /// HTTP-клієнт, що автоматично додає токен авторизації Google.
 class _AuthenticatedClient extends http.BaseClient {
@@ -129,6 +158,10 @@ class GoogleDriveSyncService extends ChangeNotifier {
   void _beginOperation() {
     _activeOperations++;
     _syncStatus = SyncStatus.syncing;
+    // #region debug-point C:ops
+    _dbgSync('C', 'google_drive_sync_service.dart:_beginOperation',
+        'active=$_activeOperations');
+    // #endregion
     notifyListeners();
   }
 
@@ -142,6 +175,10 @@ class GoogleDriveSyncService extends ChangeNotifier {
       _syncStatus =
           terminalStatus ?? (success ? SyncStatus.idle : SyncStatus.error);
     }
+    // #region debug-point C:ops
+    _dbgSync('C', 'google_drive_sync_service.dart:_endOperation',
+        'active=$_activeOperations success=$success status=$_syncStatus');
+    // #endregion
     notifyListeners();
   }
 
@@ -159,7 +196,15 @@ class GoogleDriveSyncService extends ChangeNotifier {
   /// Не показує жодних діалогів, якщо акаунт вже прив'язаний.
   Future<bool> signInSilently() async {
     try {
-      final account = await _googleSignIn.signInSilently();
+      // #region debug-point D:signin
+      _dbgSync('D', 'google_drive_sync_service.dart:signInSilently', 'begin');
+      // #endregion
+      final account =
+          await _googleSignIn.signInSilently().timeout(_kAuthTimeout);
+      // #region debug-point D:signin
+      _dbgSync('D', 'google_drive_sync_service.dart:signInSilently',
+          'done account=${account?.email}');
+      // #endregion
       _currentUser = account;
       _syncStatus = SyncStatus.unknown;
       _lastSyncFailed = false;
@@ -175,7 +220,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
   /// Інтерактивний вхід — викликається лише по кнопці.
   Future<bool> signIn() async {
     try {
-      final account = await _googleSignIn.signIn();
+      final account = await _googleSignIn.signIn().timeout(_kTransferTimeout);
       _currentUser = account;
       _syncStatus = SyncStatus.unknown;
       _lastSyncFailed = false;
@@ -250,7 +295,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
     final user = _currentUser;
     if (user == null) return null;
 
-    final auth = await user.authentication;
+    final auth = await user.authentication.timeout(_kAuthTimeout);
     final accessToken = auth.accessToken;
     if (accessToken == null || accessToken.isEmpty) {
       throw StateError('Google access token is unavailable.');
@@ -268,12 +313,14 @@ class GoogleDriveSyncService extends ChangeNotifier {
   /// API errors are intentionally propagated to the caller: an unknown cloud
   /// state must not be treated as a missing file and replaced by local data.
   Future<drive.File?> _findBackupFile(drive.DriveApi api) async {
-    final list = await api.files.list(
-      spaces: 'appDataFolder',
-      q: "name = '$_kBackupFileName' and trashed = false",
-      orderBy: 'modifiedTime desc',
-      $fields: 'files(id, name, modifiedTime)',
-    );
+    final list = await api.files
+        .list(
+          spaces: 'appDataFolder',
+          q: "name = '$_kBackupFileName' and trashed = false",
+          orderBy: 'modifiedTime desc',
+          $fields: 'files(id, name, modifiedTime)',
+        )
+        .timeout(_kMetadataTimeout);
 
     return selectNewestBackupFile(list.files ?? const <drive.File>[]);
   }
@@ -308,18 +355,22 @@ class GoogleDriveSyncService extends ChangeNotifier {
       );
 
       if (existingFile?.id != null) {
-        await api.files.update(
-          drive.File(),
-          existingFile!.id!,
-          uploadMedia: media,
-        );
+        await api.files
+            .update(
+              drive.File(),
+              existingFile!.id!,
+              uploadMedia: media,
+            )
+            .timeout(_kTransferTimeout);
         debugPrint(
             '[GoogleDrive] Бекап оновлено (PATCH). ID: ${existingFile.id}');
       } else {
         final driveFile = drive.File()
           ..name = _kBackupFileName
           ..parents = ['appDataFolder'];
-        await api.files.create(driveFile, uploadMedia: media);
+        await api.files
+            .create(driveFile, uploadMedia: media)
+            .timeout(_kTransferTimeout);
         debugPrint('[GoogleDrive] Бекап створено (POST).');
       }
 
@@ -351,6 +402,10 @@ class GoogleDriveSyncService extends ChangeNotifier {
   }) async {
     if (_currentUser == null) return false;
     _beginOperation();
+    // #region debug-point D:download
+    _dbgSync('D', 'google_drive_sync_service.dart:_downloadBackup',
+        'begin target=$targetFilePath');
+    // #endregion
 
     _DriveSession? session;
     File? tempFile;
@@ -359,19 +414,29 @@ class GoogleDriveSyncService extends ChangeNotifier {
       if (session == null) {
         throw StateError('Не вдалося ініціалізувати Drive API');
       }
+      // #region debug-point D:download
+      _dbgSync('D', 'google_drive_sync_service.dart:_downloadBackup',
+          'drive session ready');
+      // #endregion
 
       final api = session.api;
       final remoteFile = await _findBackupFile(api);
+      // #region debug-point D:download
+      _dbgSync('D', 'google_drive_sync_service.dart:_downloadBackup',
+          'remote file=${remoteFile?.id}');
+      // #endregion
       if (remoteFile == null || remoteFile.id == null) {
         debugPrint('[GoogleDrive] Бекап на Диску не знайдено.');
         _endOperation(success: true, terminalStatus: SyncStatus.unknown);
         return false;
       }
 
-      final response = await api.files.get(
-        remoteFile.id!,
-        downloadOptions: drive.DownloadOptions.fullMedia,
-      ) as drive.Media;
+      final response = await api.files
+          .get(
+            remoteFile.id!,
+            downloadOptions: drive.DownloadOptions.fullMedia,
+          )
+          .timeout(_kTransferTimeout) as drive.Media;
 
       final targetFile = File(targetFilePath);
       tempFile = File('$targetFilePath.download.isar');
@@ -385,7 +450,21 @@ class GoogleDriveSyncService extends ChangeNotifier {
 
       final sink = tempFile.openWrite();
       try {
-        await sink.addStream(response.stream);
+        // #region debug-point D:download
+        _dbgSync('D', 'google_drive_sync_service.dart:_downloadBackup',
+            'transferring media');
+        // #endregion
+        await sink.addStream(response.stream).timeout(_kTransferTimeout);
+        // #region debug-point D:download
+        _dbgSync('D', 'google_drive_sync_service.dart:_downloadBackup',
+            'transfer done');
+        // #endregion
+      } catch (_) {
+        // Abort a stalled transfer: closing the HTTP client ends the media
+        // stream, so the sink can be closed and the temporary file removed
+        // instead of keeping the sync queue busy forever.
+        session.close();
+        rethrow;
       } finally {
         await sink.close();
       }
@@ -396,6 +475,10 @@ class GoogleDriveSyncService extends ChangeNotifier {
       if (validateFile != null && !await validateFile(tempFile.path)) {
         throw StateError('Downloaded backup failed schema validation.');
       }
+      // #region debug-point D:download
+      _dbgSync('D', 'google_drive_sync_service.dart:_downloadBackup',
+          'validated, replacing target');
+      // #endregion
 
       if (await targetFile.exists()) {
         if (await previousFile.exists()) await previousFile.delete();

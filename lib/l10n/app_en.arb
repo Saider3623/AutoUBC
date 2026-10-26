@@ -4,7 +4,7 @@
   "addCar": "Add Car",
   "selectCar": "Select Car",
   "deleteCar": "Delete Current Car",
-  "carSettings": "Car Settings",
+  "carSettings": "Settings",
   "reminders": "Reminders",
   "serviceBook": "Service Book",
   "exportReports": "Export Reports",
@@ -203,5 +203,10 @@
   "syncUnknown": "Not synchronized yet",
   "syncIdle": "Synchronized",
   "syncError": "Synchronization error",
-  "syncOk": "Synchronized"
+  "syncOk": "Synchronized",
+  "workWeekSection": "Working week mode",
+  "workWeekFiveDay": "5-day week",
+  "workWeekSixDay": "6-day week",
+  "workWeekSundayNote": "Sunday is always a non-working day.",
+  "saturdayNotWorkingConfirm": "In the configured mode (5 days), Saturday is not a working day. Add data?"
 }

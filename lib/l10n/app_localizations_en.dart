@@ -21,7 +21,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteCar => 'Delete Current Car';
 
   @override
-  String get carSettings => 'Car Settings';
+  String get carSettings => 'Settings';
 
   @override
   String get reminders => 'Reminders';
@@ -401,4 +401,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncOk => 'Synchronized';
+
+  @override
+  String get workWeekSection => 'Working week mode';
+
+  @override
+  String get workWeekFiveDay => '5-day week';
+
+  @override
+  String get workWeekSixDay => '6-day week';
+
+  @override
+  String get workWeekSundayNote => 'Sunday is always a non-working day.';
+
+  @override
+  String get saturdayNotWorkingConfirm =>
+      'In the configured mode (5 days), Saturday is not a working day. Add data?';
 }

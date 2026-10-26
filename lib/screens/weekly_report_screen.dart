@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/settings_provider.dart';
 import '../db/database_service.dart';
 import '../utils/report_status.dart';
 import '../utils/weekly_report_utils.dart';
@@ -82,6 +83,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     final loc = AppLocalizations.of(context)!;
     final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
     final languageCode = localeProvider.locale?.languageCode ?? 'uk';
+    final workWeekDays = Provider.of<SettingsProvider>(context).workWeekDays;
 
     return Consumer<AppProvider>(
       builder: (context, provider, child) {
@@ -94,7 +96,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
 
         final today = DateTime.now();
         final weeks = prioritizeCurrentReportWeek(
-          _getWeeksInMonth(_selectedMonth),
+          _getWeeksInMonth(_selectedMonth, workWeekDays),
           today,
         );
 
@@ -713,7 +715,8 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     return liters.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '');
   }
 
-  List<Map<String, DateTime>> _getWeeksInMonth(DateTime month) {
+  List<Map<String, DateTime>> _getWeeksInMonth(
+      DateTime month, int workWeekDays) {
     final weeks = <Map<String, DateTime>>[];
     final firstDayOfMonth = DateTime(month.year, month.month, 1);
     final lastDayOfMonth = DateTime(month.year, month.month + 1, 0);
@@ -721,8 +724,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     DateTime currentStart = firstDayOfMonth;
     while (currentStart.isBefore(lastDayOfMonth) ||
         currentStart.isAtSameMomentAs(lastDayOfMonth)) {
-      final daysToSunday = 7 - currentStart.weekday;
-      DateTime currentEnd = currentStart.add(Duration(days: daysToSunday));
+      DateTime currentEnd = workingWeekEnd(currentStart, workWeekDays);
 
       if (currentEnd.isAfter(lastDayOfMonth)) {
         currentEnd = lastDayOfMonth;

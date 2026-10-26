@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/app_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/settings_provider.dart';
 import 'screens/data_entry_screen.dart';
 import 'screens/weekly_report_screen.dart';
 import 'screens/export_report_screen.dart';
@@ -25,6 +28,26 @@ Future<void> _deleteFileIfExists(String path) async {
   } catch (_) {}
 }
 
+// #region debug-point D6:reporter
+void _dbgMain(String h, String loc, String msg,
+    [Map<String, Object?> data = const {}]) {
+  http
+      .post(
+        Uri.parse('http://192.168.31.107:7777/event'),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'sessionId': 'startup-freeze-google-auth',
+          'runId': 'pre-fix',
+          'hypothesisId': h,
+          'location': loc,
+          'msg': '[DEBUG] $msg',
+          'data': data,
+        }),
+      )
+      .catchError((_) => http.Response('', 0));
+}
+// #endregion
+
 Future<SyncStartupAction> _initializeCloudSync({
   required GoogleDriveSyncService sync,
   required AppProvider appProvider,
@@ -35,28 +58,41 @@ Future<SyncStartupAction> _initializeCloudSync({
 
   // AppProvider starts loading immediately in its constructor. Await that
   // exact operation before deciding whether the local database is usable.
+  // #region debug-point A:cloudinit
+  _dbgMain(
+      'A', 'main.dart:_initializeCloudSync', 'begin, await initialization');
+  // #endregion
   await appProvider.initialization;
+  // #region debug-point A:cloudinit
+  _dbgMain('A', 'main.dart:_initializeCloudSync',
+      'initialization done, cars=${appProvider.cars.length}');
+  // #endregion
   final action = await sync.decideStartupAction(
     hasLocalData: appProvider.cars.isNotEmpty,
     hasPendingLocalChanges: appProvider.hasPendingSync,
     restoreIfEmpty: restoreIfEmpty,
   );
+  // #region debug-point A:cloudinit
+  _dbgMain('A', 'main.dart:_initializeCloudSync', 'action=$action');
+  // #endregion
 
   switch (action) {
     case SyncStartupAction.download:
       final dbPath = await dbService.getDatabasePath();
-      await dbService.close();
-      bool downloaded = false;
-      try {
-        downloaded = await sync.downloadBackup(
+      // The database stays closed for the whole download and is reopened before
+      // any other queued request can run. Keeping the replacement inside a
+      // single lifecycle operation stops the UI from reopening the database
+      // while its file is being swapped, which deadlocks Isar and freezes the
+      // app right after the first authorization.
+      final downloaded = await dbService.withClosedDatabase(
+        () => sync.downloadBackup(
           dbPath,
           validateFile: dbService.verifyDatabaseSnapshot,
-        );
-      } finally {
-        // Keep the local database usable even if the remote file disappeared
-        // between the state check and the download request.
-        await dbService.reopen();
-      }
+        ),
+      );
+      // #region debug-point A:download
+      _dbgMain('A', 'main.dart:_initializeCloudSync', 'download=$downloaded');
+      // #endregion
       if (downloaded) {
         await appProvider.refreshAll();
         await appProvider.markSyncCompleted();
@@ -83,16 +119,34 @@ Future<SyncStartupAction> _initializeCloudSync({
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // #region debug-point A:startup
+  _dbgMain('A', 'main.dart:main', 'app main started');
+  // #endregion
+  // #region debug-point G:heartbeat
+  // UI-isolate liveness probe. Runs for the whole process lifetime, so if these
+  // events stop while the process is still alive the UI thread is blocked.
+  var hbTick = 0;
+  Timer.periodic(const Duration(seconds: 1), (_) {
+    hbTick++;
+    _dbgMain('G', 'main.dart:heartbeat', 'ui alive elapsed=${hbTick}s');
+  });
+  // #endregion
   Intl.defaultLocale = 'uk';
   final localeProvider = LocaleProvider();
   await localeProvider.loadSavedLocale();
-  runApp(MyApp(localeProvider: localeProvider));
+  final settingsProvider = SettingsProvider();
+  await settingsProvider.loadSavedSettings();
+  runApp(MyApp(
+    localeProvider: localeProvider,
+    settingsProvider: settingsProvider,
+  ));
 }
 
 class MyApp extends StatelessWidget {
   final LocaleProvider? localeProvider;
+  final SettingsProvider? settingsProvider;
 
-  const MyApp({super.key, this.localeProvider});
+  const MyApp({super.key, this.localeProvider, this.settingsProvider});
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +156,10 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider.value(value: localeProvider!)
         else
           ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        if (settingsProvider != null)
+          ChangeNotifierProvider.value(value: settingsProvider!)
+        else
+          ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => AppProvider()),
         ChangeNotifierProvider(create: (_) => GoogleDriveSyncService()),
       ],
@@ -148,6 +206,18 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   int _currentDisplayPage = 0;
   bool _isInteractiveSignIn = false;
   bool _isLifecycleSyncInProgress = false;
+  // Serializes cloud initialization so two overlapping flows (automatic
+  // startup sync and the manual "restore from Drive" action) can never close
+  // and reopen the database at the same time. Concurrent close/reopen calls
+  // deadlock Isar and freeze the UI thread (ANR).
+  Future<void> _cloudInitQueue = Future<void>.value();
+
+  /// Runs [operation] after any in-flight cloud initialization has finished.
+  Future<T> _runGuardedCloudInit<T>(Future<T> Function() operation) {
+    final result = _cloudInitQueue.then((_) => operation());
+    _cloudInitQueue = result.then<void>((_) {}, onError: (_, __) {});
+    return result;
+  }
 
   @override
   void initState() {
@@ -158,6 +228,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
     // Тихий вхід у Google при старті
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // #region debug-point A:startup
+      _dbgMain('A', 'main.dart:initState', 'postFrame begin');
+      // #endregion
       final sync = Provider.of<GoogleDriveSyncService>(context, listen: false);
       final appProvider = Provider.of<AppProvider>(context, listen: false);
       _syncService = sync;
@@ -176,13 +249,22 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       };
 
       await sync.signInSilently();
+      // #region debug-point A:startup
+      _dbgMain('A', 'main.dart:initState',
+          'signInSilently done, connected=${sync.isConnected}');
+      // #endregion
       if (mounted) {
-        final syncAction = await _initializeCloudSync(
-          sync: sync,
-          appProvider: appProvider,
-          dbService: dbService,
-          restoreIfEmpty: !dbService.hadDatabaseAtStartup,
+        final syncAction = await _runGuardedCloudInit(
+          () => _initializeCloudSync(
+            sync: sync,
+            appProvider: appProvider,
+            dbService: dbService,
+            restoreIfEmpty: !dbService.hadDatabaseAtStartup,
+          ),
         );
+        // #region debug-point A:startup
+        _dbgMain('A', 'main.dart:initState', 'cloud init finished=$syncAction');
+        // #endregion
         await _promptForFirstCarIfNeeded(
           sync: sync,
           appProvider: appProvider,
@@ -296,10 +378,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (sync.isConnected) ...[
-                  const SizedBox(width: 10),
-                  SyncStatusIndicator(sync: sync),
-                ],
+                // The indicator slot keeps a fixed width so its appearance or
+                // disappearance never shifts the car name.
+                const SizedBox(width: 10),
+                SyncStatusIndicator(sync: sync),
               ],
             );
           },
@@ -597,11 +679,13 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       if (!mounted) return;
 
       if (success) {
-        final syncAction = await _initializeCloudSync(
-          sync: sync,
-          appProvider: appProvider,
-          dbService: _db,
-          restoreIfEmpty: true,
+        final syncAction = await _runGuardedCloudInit(
+          () => _initializeCloudSync(
+            sync: sync,
+            appProvider: appProvider,
+            dbService: _db,
+            restoreIfEmpty: true,
+          ),
         );
         await _promptForFirstCarIfNeeded(
           sync: sync,

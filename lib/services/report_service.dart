@@ -11,6 +11,7 @@ import '../models/fuel_log.dart';
 import '../db/database_service.dart';
 import '../utils/report_status.dart';
 import '../utils/fuel_summary.dart';
+import '../utils/weekly_report_utils.dart';
 
 export '../utils/fuel_summary.dart';
 
@@ -65,9 +66,7 @@ class _PdfTranslations {
   final String odometerStart;
   final String odometerEnd;
   final String mileage;
-  final String refuelCount;
   final String noMileage;
-  final String pcs;
   final String km;
   final String l;
   final String shareText;
@@ -78,9 +77,7 @@ class _PdfTranslations {
     required this.odometerStart,
     required this.odometerEnd,
     required this.mileage,
-    required this.refuelCount,
     required this.noMileage,
-    required this.pcs,
     required this.km,
     required this.l,
     required this.shareText,
@@ -95,9 +92,7 @@ class _PdfTranslations {
           odometerStart: 'Начало недели',
           odometerEnd: 'Конец недели',
           mileage: 'Пробег за неделю',
-          refuelCount: 'Заправки',
           noMileage: 'Без пробега',
-          pcs: 'шт.',
           km: 'км',
           l: 'л',
           shareText: 'Отчет AutoUBC',
@@ -109,9 +104,7 @@ class _PdfTranslations {
           odometerStart: 'Week start',
           odometerEnd: 'Week end',
           mileage: 'Weekly mileage',
-          refuelCount: 'Refuels',
           noMileage: 'No mileage',
-          pcs: 'pcs',
           km: 'km',
           l: 'L',
           shareText: 'AutoUBC Report',
@@ -124,9 +117,7 @@ class _PdfTranslations {
           odometerStart: 'Початок тижня',
           odometerEnd: 'Кінець тижня',
           mileage: 'Пробіг за тиждень',
-          refuelCount: 'Заправки',
           noMileage: 'Без пробігу',
-          pcs: 'шт.',
           km: 'км',
           l: 'л',
           shareText: 'Звіт AutoUBC',
@@ -143,8 +134,9 @@ class ReportService {
     Car car,
     DateTime startDate,
     DateTime endDate,
-    String languageCode,
-  ) async {
+    String languageCode, {
+    int workWeekDays = 6,
+  }) async {
     final t = _PdfTranslations.of(languageCode);
     final pdf = pw.Document();
 
@@ -163,8 +155,8 @@ class ReportService {
     final fuelLogs = await _db.getFuelLogsInRange(car.id, startStr, endStr);
     fuelLogs.sort((a, b) => a.dateString.compareTo(b.dateString));
 
-    final weeks = await _buildWeeks(
-        car.id, startDate, endDate, odometerLogs, fuelLogs, languageCode, t);
+    final weeks = await _buildWeeks(car.id, startDate, endDate, odometerLogs,
+        fuelLogs, languageCode, t, workWeekDays);
 
     pdf.addPage(
       pw.MultiPage(
@@ -207,7 +199,7 @@ class ReportService {
     return file;
   }
 
-  /// Розбити діапазон дат на тижні (Пн–Нд), обмежені межами місяця
+  /// Розбити діапазон дат на тижні, обмежені межами місяця
   Future<List<_WeekData>> _buildWeeks(
     int carId,
     DateTime monthStart,
@@ -216,14 +208,14 @@ class ReportService {
     List<FuelLog> fuelLogs,
     String languageCode,
     _PdfTranslations t,
+    int workWeekDays,
   ) async {
     final weeks = <_WeekData>[];
 
     DateTime current = monthStart;
 
     while (!current.isAfter(monthEnd)) {
-      final daysUntilSunday = 7 - current.weekday; // weekday: 1=Пн..7=Нд
-      DateTime weekEnd = current.add(Duration(days: daysUntilSunday));
+      DateTime weekEnd = workingWeekEnd(current, workWeekDays);
       if (weekEnd.isAfter(monthEnd)) weekEnd = monthEnd;
 
       // Одометр: всі записи в межах тижня
@@ -296,10 +288,6 @@ class ReportService {
         week.odometerEnd != null ? '${week.odometerEnd} ${t.km}' : '—';
     final mileageStr =
         week.odometerStart != null ? '${week.mileage} ${t.km}' : '—';
-    final totalRefuelCount = week.fuelSummaries.fold<int>(
-      0,
-      (sum, summary) => sum + summary.refuelCount,
-    );
 
     return pw.Column(
       mainAxisSize: pw.MainAxisSize.min,
@@ -335,7 +323,8 @@ class ReportService {
             ),
           )
         else
-          // Одна таблиця: одометр, кількість чеків і літри за типами пального.
+          // Одна таблиця: одометр і літри за типами пального; кількість чеків
+          // наводиться поруч із кожним типом у дужках.
           pw.Table(
             border:
                 pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.5),
@@ -344,24 +333,14 @@ class ReportService {
               1: const pw.FlexColumnWidth(2),
             },
             children: [
-              _tableRow(
-                t.odometerStart,
-                odoStartStr,
-                ttf,
-                ttfBold,
-                header: true,
-              ),
+              _tableRow(t.odometerStart, odoStartStr, ttf, ttfBold,
+                  header: true),
               _tableRow(t.odometerEnd, odoEndStr, ttf, ttfBold),
               _tableRow(t.mileage, mileageStr, ttf, ttfBold),
-              _tableRow(
-                t.refuelCount,
-                '$totalRefuelCount ${t.pcs}',
-                ttf,
-                ttfBold,
-              ),
+              // Кількість чеків показується поруч із кожним типом пального.
               ...week.fuelSummaries.map(
                 (summary) => _tableRow(
-                  summary.fuelType,
+                  '${summary.fuelType} (${summary.refuelCount})',
                   _formatLiters(summary.totalLiters, t),
                   ttf,
                   ttfBold,

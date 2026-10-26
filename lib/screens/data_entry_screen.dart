@@ -1,13 +1,37 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/settings_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../db/database_service.dart';
 import '../models/note.dart';
 import '../utils/form_validators.dart';
 import '../widgets/inline_form_error.dart';
+
+// #region debug-point F6:reporter
+void _dbgEntry(String h, String loc, String msg,
+    [Map<String, Object?> data = const {}]) {
+  http
+      .post(
+        Uri.parse('http://192.168.31.107:7777/event'),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'sessionId': 'startup-freeze-google-auth',
+          'runId': 'pre-fix',
+          'hypothesisId': h,
+          'location': loc,
+          'msg': '[DEBUG] $msg',
+          'data': data,
+        }),
+      )
+      .catchError((_) => http.Response('', 0));
+}
+// #endregion
 
 class DataEntryScreen extends StatefulWidget {
   const DataEntryScreen({super.key});
@@ -29,11 +53,22 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
   bool _isSavingFuel = false;
   String? _odometerSaveError;
   String? _fuelSaveError;
+  // Set when yesterday had a refuel but no odometer reading. Highlights the
+  // odometer field until the missing past reading is saved.
+  bool _odometerMissingForPast = false;
+  // #region debug-point F:counters
+  int _depsCount = 0;
+  int _checkCount = 0;
+  int _loadCount = 0;
+  // #endregion
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentOdometer();
+    // #region debug-point F:lifecycle
+    _dbgEntry('F', 'data_entry_screen.dart:initState', 'initState');
+    // #endregion
+    _checkMissedOdometerForYesterday();
   }
 
   @override
@@ -46,11 +81,70 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final carId = Provider.of<AppProvider>(context).selectedCar?.id;
+    // #region debug-point F:lifecycle
+    _depsCount++;
+    _dbgEntry('F', 'data_entry_screen.dart:didChangeDependencies',
+        'deps #$_depsCount carId=$carId loadedCarId=$_loadedCarId');
+    // #endregion
     if (carId != _loadedCarId) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _loadCurrentOdometer();
+        if (mounted) _checkMissedOdometerForYesterday();
       });
     }
+  }
+
+  /// If yesterday has a refueling entry but no odometer reading, pre-select
+  /// yesterday and flag the odometer field so the user can fill the gap.
+  Future<void> _checkMissedOdometerForYesterday() async {
+    // #region debug-point F:check
+    final checkNo = ++_checkCount;
+    _dbgEntry('F', 'data_entry_screen.dart:_checkMissedOdometerForYesterday',
+        'check #$checkNo begin');
+    // #endregion
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    final carId = provider.selectedCar?.id;
+    if (carId == null) {
+      _loadedCarId = null;
+      // #region debug-point F:check
+      _dbgEntry('F', 'data_entry_screen.dart:_checkMissedOdometerForYesterday',
+          'check #$checkNo end (no car)');
+      // #endregion
+      return;
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final yesterdayString = DateFormat('yyyy-MM-dd').format(yesterday);
+
+    final odometerLog = await _db.getOdometerLog(carId, yesterdayString);
+    if (!mounted) return;
+
+    var shouldFlag = false;
+    if (odometerLog == null) {
+      final fuelLogs =
+          await _db.getFuelLogsInRange(carId, yesterdayString, yesterdayString);
+      if (!mounted) return;
+      shouldFlag = fuelLogs.isNotEmpty;
+    }
+
+    // #region debug-point F:check
+    _dbgEntry('F', 'data_entry_screen.dart:_checkMissedOdometerForYesterday',
+        'check #$checkNo end shouldFlag=$shouldFlag');
+    // #endregion
+
+    if (shouldFlag && !_odometerMissingForPast) {
+      setState(() {
+        _selectedDate = yesterday;
+        _odometerMissingForPast = true;
+      });
+    } else if (!shouldFlag && _odometerMissingForPast) {
+      setState(() {
+        _odometerMissingForPast = false;
+      });
+    }
+
+    await _loadCurrentOdometer();
   }
 
   Future<void> _loadCurrentOdometer() async {
@@ -60,14 +154,27 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
       _loadedCarId = null;
       return;
     }
+    // #region debug-point F:loadodo
+    final loadNo = ++_loadCount;
+    _dbgEntry('F', 'data_entry_screen.dart:_loadCurrentOdometer',
+        'loadOdo #$loadNo begin carId=$carId');
+    // #endregion
     final dateString = DateFormat('yyyy-MM-dd').format(_selectedDate);
     final log = await _db.getOdometerLog(carId, dateString);
     if (!mounted ||
         Provider.of<AppProvider>(context, listen: false).selectedCar?.id !=
             carId) {
+      // #region debug-point F:loadodo
+      _dbgEntry('F', 'data_entry_screen.dart:_loadCurrentOdometer',
+          'loadOdo #$loadNo aborted (unmounted or car changed)');
+      // #endregion
       return;
     }
     _loadedCarId = carId;
+    // #region debug-point F:loadodo
+    _dbgEntry('F', 'data_entry_screen.dart:_loadCurrentOdometer',
+        'loadOdo #$loadNo end found=${log != null}');
+    // #endregion
     setState(() {
       if (log != null) {
         _odometerController.text = log.odometer.toString();
@@ -75,6 +182,35 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
         _odometerController.clear();
       }
     });
+  }
+
+  /// In 5-day mode, asks for confirmation before saving mileage on Saturday.
+  Future<bool> _confirmNonWorkingSaturday() async {
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    if (settings.workWeekDays != SettingsProvider.fiveDayWeek ||
+        _selectedDate.weekday != DateTime.saturday) {
+      return true;
+    }
+
+    if (!mounted) return false;
+    final loc = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(loc.saturdayNotWorkingConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(loc.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(loc.add),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
   }
 
   @override
@@ -105,6 +241,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                         if (picked != null && picked != _selectedDate) {
                           setState(() {
                             _selectedDate = picked;
+                            _odometerMissingForPast = false;
                           });
                           _loadCurrentOdometer();
                         }
@@ -152,6 +289,18 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                     decoration: InputDecoration(
                                       labelText: loc.odometer,
                                       suffixText: loc.km,
+                                      enabledBorder: _odometerMissingForPast
+                                          ? const OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.red, width: 2),
+                                            )
+                                          : null,
+                                      focusedBorder: _odometerMissingForPast
+                                          ? const OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.red, width: 2),
+                                            )
+                                          : null,
                                     ),
                                   ),
                                 ),
@@ -166,10 +315,6 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                             return;
                                           }
 
-                                          setState(() {
-                                            _isSavingOdometer = true;
-                                            _odometerSaveError = null;
-                                          });
                                           final provider =
                                               Provider.of<AppProvider>(context,
                                                   listen: false);
@@ -177,9 +322,21 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                               ScaffoldMessenger.of(context);
                                           final successMessage =
                                               loc.saveOdometerSuccess;
+
+                                          if (!await _confirmNonWorkingSaturday()) {
+                                            return;
+                                          }
+                                          if (!mounted) return;
+
+                                          setState(() {
+                                            _isSavingOdometer = true;
+                                            _odometerSaveError = null;
+                                          });
                                           final dateString =
                                               DateFormat('yyyy-MM-dd')
                                                   .format(_selectedDate);
+                                          final wasMissingForPast =
+                                              _odometerMissingForPast;
                                           try {
                                             await provider.saveOdometerLog(
                                               dateString,
@@ -189,7 +346,16 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                             if (!mounted) return;
                                             setState(() {
                                               _isSavingOdometer = false;
+                                              if (wasMissingForPast) {
+                                                _odometerMissingForPast = false;
+                                                _selectedDate = DateTime.now();
+                                              }
                                             });
+                                            if (wasMissingForPast) {
+                                              // The gap for the previous day is
+                                              // closed: switch back to today.
+                                              await _loadCurrentOdometer();
+                                            }
                                             messenger.showSnackBar(
                                               SnackBar(
                                                 content: Text(successMessage),

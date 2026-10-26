@@ -24,3 +24,18 @@ List<Map<String, DateTime>> prioritizeCurrentReportWeek(
 }
 
 DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+
+/// Returns the inclusive end date of the working-week segment that starts at
+/// [start], honoring the configured [workWeekDays] (5 = Mon–Fri, 6 = Mon–Sat).
+///
+/// When [start] already falls on a non-working day after the configured week
+/// end (Saturday/Sunday in 5-day mode or Sunday in 6-day mode) the remaining
+/// weekend days are grouped together up to Sunday.
+DateTime workingWeekEnd(DateTime start, int workWeekDays) {
+  final day = _dateOnly(start);
+  final delta = workWeekDays - day.weekday;
+  if (delta >= 0) {
+    return day.add(Duration(days: delta));
+  }
+  return day.add(Duration(days: 7 - day.weekday));
+}

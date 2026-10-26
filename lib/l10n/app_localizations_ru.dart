@@ -21,7 +21,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get deleteCar => 'Удалить текущий автомобиль';
 
   @override
-  String get carSettings => 'Настройки автомобиля';
+  String get carSettings => 'Настройки';
 
   @override
   String get reminders => 'Напоминания';
@@ -402,4 +402,20 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncOk => 'Синхронизировано';
+
+  @override
+  String get workWeekSection => 'Режим рабочей недели';
+
+  @override
+  String get workWeekFiveDay => '5-дневная неделя';
+
+  @override
+  String get workWeekSixDay => '6-дневная неделя';
+
+  @override
+  String get workWeekSundayNote => 'Воскресенье всегда нерабочий день.';
+
+  @override
+  String get saturdayNotWorkingConfirm =>
+      'В установленном режиме (5 дней) суббота не является рабочим днём. Добавить данные?';
 }

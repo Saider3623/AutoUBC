@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/app_provider.dart';
+import '../providers/settings_provider.dart';
 
 class ManageCarsScreen extends StatefulWidget {
   final bool autoOpenAddCar;
@@ -56,6 +57,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final appProvider = Provider.of<AppProvider>(context);
+    final settingsProvider = Provider.of<SettingsProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -139,6 +141,48 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                     ),
                   ],
                 ],
+              ),
+              const SizedBox(height: 24),
+              // Working week mode (app-wide setting).
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        loc.workWeekSection,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 12),
+                      SegmentedButton<int>(
+                        segments: [
+                          ButtonSegment<int>(
+                            value: SettingsProvider.fiveDayWeek,
+                            label: Text(loc.workWeekFiveDay),
+                          ),
+                          ButtonSegment<int>(
+                            value: SettingsProvider.sixDayWeek,
+                            label: Text(loc.workWeekSixDay),
+                          ),
+                        ],
+                        selected: {settingsProvider.workWeekDays},
+                        onSelectionChanged: (selection) {
+                          if (selection.isNotEmpty) {
+                            settingsProvider.setWorkWeekDays(selection.first);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        loc.workWeekSundayNote,
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
               if (appProvider.selectedCar != null) ...[
