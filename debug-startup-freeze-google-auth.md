@@ -1,5 +1,5 @@
 # Debug Session: startup-freeze-google-auth
-- **Status**: [OPEN]
+- **Status**: [FIX READY — ожидает проверки на устройстве]
 - **Issue**: После установки приложения и авторизации через Google индикатор синхронизации возле названия авто крутится, после чего приложение зависает при каждом запуске. Статические правки (атомарное восстановление БД, мьютекс облачной инициализации, таймауты Drive API) проблему не устранили.
 - **Debug Server**: http://127.0.0.1:<port>/event (будет заполнено после старта сервера)
 - **Log File**: .dbg/trae-debug-log-startup-freeze-google-auth.ndjson
@@ -20,9 +20,15 @@
 | E | Блокировка платформенного (UI) потока вне Dart: ANR от нативного кода, зависание event loop не видно в логах Dart | Low | High | Pending |
 | F | Re-entrancy на экране ввода данных: `didChangeDependencies` -> `_checkMissedOdometerForYesterday`/`_loadCurrentOdometer` повторно вызываются без ограничения после каждого `notifyListeners` | Medium | Low | Pending |
 | G | UI-изолят реально заблокирован: глобальный heartbeat (`main.dart`) прекращается, хотя процесс жив | Medium | Low | Pending |
+| H | Бесконечный цикл разбиения месяца на недели: шаг `add(Duration(days: 1))` не покидает день перевода часов (25.10.2026, 25 часов), `weeks` растёт бесконечно | High | Low | **Confirmed** |
 
 ## Log Evidence
-[Будет заполнено после сбора runtime-логов]
+Лог `pre-fix` (23.10.2026):
+- Скачивание, замена файла и переоткрытие БД завершаются успешно (`finished seq=3`, статус `syncing -> idle`) — A, B, C, D опровергнуты.
+- До скачивания (0 машин) heartbeat идёт каждую секунду; зависание начинается только после `cars loaded (1)`, т.е. при первом построении `PageView` с данными.
+- Все 12 запросов к БД после загрузки (seq 4–15) объясняются `loadLogsForCar` и экраном ввода — очередь не блокирована.
+
+Причина (H): `WeeklyReportScreen._getWeeksInMonth` (и `ReportService._buildWeeks`). Для октября: Вс 25.10 00:00 + 24 ч = Вс 25.10 23:00 → `workingWeekEnd` снова даёт Вс 25.10 00:00 → цикл без выхода, список растёт, UI-изолят заблокирован. Зависает любой октябрь с переводом часов внутри месяца (2024, 2025, 2026, 2028) в режимах 5 и 6 дней.
 
 ## Instrumentation Points (pre-fix)
 Только логи, бизнес-логика не изменена. Отчёты идут POST-ом на `http://192.168.31.107:7777/event`.
@@ -43,4 +49,5 @@
 - Точки F: якщо `check #N`/`deps #N` зростають безмежно — re-entrancy на екрані вводу (F).
 
 ## Verification Conclusion
-[Pre-fix vs post-fix]
+Fix: календарная арифметика `addCalendarDays()` (`DateTime(y, m, d + n)`) в `weekly_report_utils.dart`; разбиение недель вынесено в `buildReportWeeks()`; исправлены `report_service.dart` и вычисление «вчера» в `data_entry_screen.dart`. Регрессионные тесты — `test/weekly_report_utils_test.dart` (запускать с `TZ=Europe/Kyiv`).
+Post-fix: подтвердить на устройстве — heartbeat не прерывается, вкладка «Еженедельный отчёт» за октябрь открывается.

@@ -96,7 +96,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
 
         final today = DateTime.now();
         final weeks = prioritizeCurrentReportWeek(
-          _getWeeksInMonth(_selectedMonth, workWeekDays),
+          buildReportWeeks(_selectedMonth, workWeekDays),
           today,
         );
 
@@ -713,28 +713,6 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
   String _formatLiters(double liters) {
     if (liters % 1 == 0) return liters.toInt().toString();
     return liters.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '');
-  }
-
-  List<Map<String, DateTime>> _getWeeksInMonth(
-      DateTime month, int workWeekDays) {
-    final weeks = <Map<String, DateTime>>[];
-    final firstDayOfMonth = DateTime(month.year, month.month, 1);
-    final lastDayOfMonth = DateTime(month.year, month.month + 1, 0);
-
-    DateTime currentStart = firstDayOfMonth;
-    while (currentStart.isBefore(lastDayOfMonth) ||
-        currentStart.isAtSameMomentAs(lastDayOfMonth)) {
-      DateTime currentEnd = workingWeekEnd(currentStart, workWeekDays);
-
-      if (currentEnd.isAfter(lastDayOfMonth)) {
-        currentEnd = lastDayOfMonth;
-      }
-
-      weeks.add({'start': currentStart, 'end': currentEnd});
-      currentStart = currentEnd.add(const Duration(days: 1));
-    }
-
-    return weeks;
   }
 
   Future<WeeklyReportData> _calculateWeeklyReport(
