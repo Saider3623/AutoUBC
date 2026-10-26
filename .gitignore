@@ -9,6 +9,10 @@
 .history
 .svn/
 migrate_working_dir/
+# Local secrets (remote log token etc.)
+.secrets/*
+!.secrets/*.example.json
+
 # AI assistant / local scratch artifacts
 .kombai/
 pic/

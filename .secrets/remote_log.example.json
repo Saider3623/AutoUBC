@@ -1,0 +1,5 @@
+{
+  "LOG_GITHUB_TOKEN": "github_pat_REPLACE_ME",
+  "LOG_GITHUB_REPO": "fesh-biz/autoubc-logs",
+  "LOG_GITHUB_BRANCH": "main"
+}
