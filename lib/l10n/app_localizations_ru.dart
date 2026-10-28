@@ -412,50 +412,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get workWeekScheduleHint =>
-      'По умолчанию неделя 6-дневная (Пн–Сб). В указанные периоды действует 5-дневная (Пн–Пт). Воскресенье всегда нерабочее.';
+      'По умолчанию неделя 6-дневная (Пн–Сб). С даты начала до даты конца действует 5-дневная (Пн–Пт). Воскресенье всегда нерабочее.';
 
   @override
-  String get fiveDayPeriodsEmpty =>
-      'Периодов 5-дневной недели нет — всё время действует 6-дневная.';
+  String get fiveDayPeriodStart => 'Начало 5-дневной недели';
 
   @override
-  String get addFiveDayPeriod => 'Добавить период 5-дневной недели';
+  String get fiveDayPeriodEnd => 'Конец 5-дневной недели';
 
   @override
-  String get editFiveDayPeriod => 'Период 5-дневной недели';
-
-  @override
-  String get fiveDayPeriodStart => 'Начало';
-
-  @override
-  String get fiveDayPeriodEnd => 'Конец';
-
-  @override
-  String get fiveDayPeriodEndNotSet => 'Не указан';
+  String get fiveDayPeriodStartNotSet => 'Не указано — всегда 6-дневная';
 
   @override
   String get fiveDayPeriodEndHint =>
       'Если конец ещё неизвестен, оставьте пустым и укажите позже, когда руководство решит.';
 
   @override
-  String get fiveDayPeriodOpenEnd => 'до решения руководства';
-
-  @override
-  String get fiveDayPeriodActive => 'Действует сейчас';
-
-  @override
-  String get fiveDayPeriodEndBeforeStart =>
-      'Конец не может быть раньше начала.';
-
-  @override
-  String fiveDayPeriodOverlap(String period) {
-    return 'Период пересекается с другим: $period.';
-  }
-
-  @override
-  String deleteFiveDayPeriodConfirm(String period) {
-    return 'Удалить период $period? Недели этих дат в отчётах будут считаться 6-дневными.';
-  }
+  String get fiveDayPeriodOpenEnd => 'До решения руководства';
 
   @override
   String get fiveDayPeriodSaved => 'График рабочей недели сохранён';

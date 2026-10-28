@@ -859,44 +859,26 @@ abstract class AppLocalizations {
   /// No description provided for @workWeekScheduleHint.
   ///
   /// In en, this message translates to:
-  /// **'By default the week has 6 days (Mon–Sat). During the periods below a 5-day week (Mon–Fri) applies. Sunday is always a day off.'**
+  /// **'By default the week has 6 days (Mon–Sat). From the start date to the end date a 5-day week (Mon–Fri) applies. Sunday is always a day off.'**
   String get workWeekScheduleHint;
-
-  /// No description provided for @fiveDayPeriodsEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No 5-day week periods — a 6-day week applies all the time.'**
-  String get fiveDayPeriodsEmpty;
-
-  /// No description provided for @addFiveDayPeriod.
-  ///
-  /// In en, this message translates to:
-  /// **'Add 5-day week period'**
-  String get addFiveDayPeriod;
-
-  /// No description provided for @editFiveDayPeriod.
-  ///
-  /// In en, this message translates to:
-  /// **'5-day week period'**
-  String get editFiveDayPeriod;
 
   /// No description provided for @fiveDayPeriodStart.
   ///
   /// In en, this message translates to:
-  /// **'Start'**
+  /// **'5-day week starts'**
   String get fiveDayPeriodStart;
 
   /// No description provided for @fiveDayPeriodEnd.
   ///
   /// In en, this message translates to:
-  /// **'End'**
+  /// **'5-day week ends'**
   String get fiveDayPeriodEnd;
 
-  /// No description provided for @fiveDayPeriodEndNotSet.
+  /// No description provided for @fiveDayPeriodStartNotSet.
   ///
   /// In en, this message translates to:
-  /// **'Not set'**
-  String get fiveDayPeriodEndNotSet;
+  /// **'Not set — always a 6-day week'**
+  String get fiveDayPeriodStartNotSet;
 
   /// No description provided for @fiveDayPeriodEndHint.
   ///
@@ -907,32 +889,8 @@ abstract class AppLocalizations {
   /// No description provided for @fiveDayPeriodOpenEnd.
   ///
   /// In en, this message translates to:
-  /// **'until management decides'**
+  /// **'Until management decides'**
   String get fiveDayPeriodOpenEnd;
-
-  /// No description provided for @fiveDayPeriodActive.
-  ///
-  /// In en, this message translates to:
-  /// **'Active now'**
-  String get fiveDayPeriodActive;
-
-  /// No description provided for @fiveDayPeriodEndBeforeStart.
-  ///
-  /// In en, this message translates to:
-  /// **'The end can't be earlier than the start.'**
-  String get fiveDayPeriodEndBeforeStart;
-
-  /// No description provided for @fiveDayPeriodOverlap.
-  ///
-  /// In en, this message translates to:
-  /// **'The period overlaps another one: {period}.'**
-  String fiveDayPeriodOverlap(String period);
-
-  /// No description provided for @deleteFiveDayPeriodConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete the period {period}? Weeks in these dates will be reported as 6-day weeks.'**
-  String deleteFiveDayPeriodConfirm(String period);
 
   /// No description provided for @fiveDayPeriodSaved.
   ///
