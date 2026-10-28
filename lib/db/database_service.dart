@@ -13,7 +13,6 @@ import '../models/note.dart';
 import '../models/five_day_period.dart';
 import '../utils/date_utils.dart';
 import '../utils/validation.dart';
-import '../utils/work_schedule.dart';
 import '../services/remote_log_service.dart';
 
 // #region debug-point D6:reporter
@@ -738,42 +737,33 @@ class DatabaseService {
     return periods;
   }
 
-  /// Creates or updates a five-day period. Periods must not overlap, so every
-  /// date has exactly one working-week mode.
-  Future<void> saveFiveDayPeriod(FiveDayPeriod period) async {
+  /// Replaces the five-day period with [startDate]..[endDate] (`YYYY-MM-DD`,
+  /// `null` end = open-ended). A `null` [startDate] removes the period, so
+  /// every week has six days. Only one period is kept.
+  Future<void> setFiveDayPeriod(String? startDate, String? endDate) async {
     final db = await isar;
-    period.startDate = period.startDate.trim();
-    validateDateString(period.startDate);
-    final endDate = period.endDate?.trim();
-    period.endDate = (endDate == null || endDate.isEmpty) ? null : endDate;
-    if (period.endDate != null) {
-      validateDateString(period.endDate!);
-      if (period.endDate!.compareTo(period.startDate) < 0) {
-        throw const DataValidationException(
-            'Five-day period cannot end before it starts.');
+    final start = startDate?.trim();
+    final trimmedEnd = endDate?.trim();
+    final end = (trimmedEnd == null || trimmedEnd.isEmpty) ? null : trimmedEnd;
+    if (start != null) {
+      validateDateString(start);
+      if (end != null) {
+        validateDateString(end);
+        if (end.compareTo(start) < 0) {
+          throw const DataValidationException(
+              'Five-day period cannot end before it starts.');
+        }
       }
     }
 
     await db.writeTxn(() async {
-      final existing = await db.fiveDayPeriods.where().findAll();
-      final overlapping = findOverlappingFiveDayPeriod(
-        existing,
-        period.startDate,
-        period.endDate,
-        excludeId: period.id,
-      );
-      if (overlapping != null) {
-        throw DataValidationException(
-            'Five-day period overlaps another period '
-            '(${overlapping.startDate} – ${overlapping.endDate ?? '…'}).');
-      }
+      await db.fiveDayPeriods.clear();
+      if (start == null) return;
+      final period = FiveDayPeriod()
+        ..startDate = start
+        ..endDate = end;
       await db.fiveDayPeriods.put(period);
     });
-  }
-
-  Future<void> deleteFiveDayPeriod(FiveDayPeriod period) async {
-    final db = await isar;
-    await db.writeTxn(() => db.fiveDayPeriods.delete(period.id));
   }
 
   // Backup and restore operations.

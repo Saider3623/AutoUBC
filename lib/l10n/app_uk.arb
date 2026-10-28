@@ -206,35 +206,12 @@
   "syncOk": "Синхронізовано",
   "workWeekSection": "Режим робочого тижня",
   "saturdayNotWorkingConfirm": "За графіком на цю дату діє 5-денний тиждень, субота неробоча. Додати дані?",
-  "workWeekScheduleHint": "За замовчуванням тиждень 6-денний (Пн–Сб). У вказані періоди діє 5-денний (Пн–Пт). Неділя завжди неробоча.",
-  "fiveDayPeriodsEmpty": "Періодів 5-денного тижня немає — весь час діє 6-денний.",
-  "addFiveDayPeriod": "Додати період 5-денного тижня",
-  "editFiveDayPeriod": "Період 5-денного тижня",
-  "fiveDayPeriodStart": "Початок",
-  "fiveDayPeriodEnd": "Кінець",
-  "fiveDayPeriodEndNotSet": "Не вказано",
+  "workWeekScheduleHint": "За замовчуванням тиждень 6-денний (Пн–Сб). Від дати початку до дати кінця діє 5-денний (Пн–Пт). Неділя завжди неробоча.",
+  "fiveDayPeriodStart": "Початок 5-денного тижня",
+  "fiveDayPeriodEnd": "Кінець 5-денного тижня",
+  "fiveDayPeriodStartNotSet": "Не вказано — завжди 6-денний",
   "fiveDayPeriodEndHint": "Якщо кінець ще невідомий, залиште порожнім і вкажіть пізніше, коли керівництво вирішить.",
-  "fiveDayPeriodOpenEnd": "до рішення керівництва",
-  "fiveDayPeriodActive": "Діє зараз",
-  "fiveDayPeriodEndBeforeStart": "Кінець не може бути раніше за початок.",
-  "fiveDayPeriodOverlap": "Період перетинається з іншим: {period}.",
-  "@fiveDayPeriodOverlap": {
-    "placeholders": {
-      "period": {
-        "type": "String",
-        "description": "Діапазон дат, напр. 01.10.2026 — 15.03.2027"
-      }
-    }
-  },
-  "deleteFiveDayPeriodConfirm": "Видалити період {period}? Тижні цих дат у звітах рахуватимуться як 6-денні.",
-  "@deleteFiveDayPeriodConfirm": {
-    "placeholders": {
-      "period": {
-        "type": "String",
-        "description": "Діапазон дат, напр. 01.10.2026 — 15.03.2027"
-      }
-    }
-  },
+  "fiveDayPeriodOpenEnd": "До рішення керівництва",
   "fiveDayPeriodSaved": "Графік робочого тижня збережено",
   "clearDate": "Очистити дату"
 }

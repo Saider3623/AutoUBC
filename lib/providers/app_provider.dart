@@ -68,8 +68,9 @@ class AppProvider extends ChangeNotifier {
   List<ServiceLog> get serviceLogs => _serviceLogs;
   List<Note> get notes => _notes;
 
-  /// Five-day periods of the app-wide working-week schedule, newest first.
-  List<FiveDayPeriod> get fiveDayPeriods => _fiveDayPeriods;
+  /// The app-wide five-day period, or `null` when every week has six days.
+  FiveDayPeriod? get fiveDayPeriod =>
+      _fiveDayPeriods.isEmpty ? null : _fiveDayPeriods.first;
 
   /// Working-week schedule used by the weekly report, PDF and data entry.
   WorkSchedule get workSchedule => _workSchedule;
@@ -276,7 +277,8 @@ class AppProvider extends ChangeNotifier {
   Future<void> _loadFiveDayPeriods() async {
     try {
       _fiveDayPeriods = await _db.getFiveDayPeriods();
-      _workSchedule = WorkSchedule.fromPeriods(_fiveDayPeriods);
+      // Only one period is used; older builds could store several.
+      _workSchedule = WorkSchedule.fromPeriods(_fiveDayPeriods.take(1));
     } catch (e, stackTrace) {
       debugPrint('Помилка завантаження графіка робочого тижня: $e');
       debugPrint('$stackTrace');
@@ -564,29 +566,17 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
-  /// Creates or updates a five-day period of the working-week schedule.
-  Future<void> saveFiveDayPeriod(FiveDayPeriod period) async {
+  /// Sets the five-day period ([startDate]..[endDate], `YYYY-MM-DD`). A `null`
+  /// [startDate] removes it; a `null` [endDate] keeps the period open-ended.
+  Future<void> setFiveDayPeriod(String? startDate, String? endDate) async {
     try {
       await _markLocalMutationPending();
-      await _db.saveFiveDayPeriod(period);
+      await _db.setFiveDayPeriod(startDate, endDate);
       await _loadFiveDayPeriods();
       notifyListeners();
       await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка збереження періоду 5-денного тижня: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> deleteFiveDayPeriod(FiveDayPeriod period) async {
-    try {
-      await _markLocalMutationPending();
-      await _db.deleteFiveDayPeriod(period);
-      await _loadFiveDayPeriods();
-      notifyListeners();
-      await _scheduleBackupAndSync();
-    } catch (e) {
-      debugPrint('Помилка видалення періоду 5-денного тижня: $e');
       rethrow;
     }
   }

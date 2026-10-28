@@ -206,35 +206,12 @@
   "syncOk": "Synchronized",
   "workWeekSection": "Working week mode",
   "saturdayNotWorkingConfirm": "According to the schedule, a 5-day week applies on this date and Saturday is a day off. Add data?",
-  "workWeekScheduleHint": "By default the week has 6 days (Mon–Sat). During the periods below a 5-day week (Mon–Fri) applies. Sunday is always a day off.",
-  "fiveDayPeriodsEmpty": "No 5-day week periods — a 6-day week applies all the time.",
-  "addFiveDayPeriod": "Add 5-day week period",
-  "editFiveDayPeriod": "5-day week period",
-  "fiveDayPeriodStart": "Start",
-  "fiveDayPeriodEnd": "End",
-  "fiveDayPeriodEndNotSet": "Not set",
+  "workWeekScheduleHint": "By default the week has 6 days (Mon–Sat). From the start date to the end date a 5-day week (Mon–Fri) applies. Sunday is always a day off.",
+  "fiveDayPeriodStart": "5-day week starts",
+  "fiveDayPeriodEnd": "5-day week ends",
+  "fiveDayPeriodStartNotSet": "Not set — always a 6-day week",
   "fiveDayPeriodEndHint": "If the end isn't known yet, leave it empty and set it later when management decides.",
-  "fiveDayPeriodOpenEnd": "until management decides",
-  "fiveDayPeriodActive": "Active now",
-  "fiveDayPeriodEndBeforeStart": "The end can't be earlier than the start.",
-  "fiveDayPeriodOverlap": "The period overlaps another one: {period}.",
-  "@fiveDayPeriodOverlap": {
-    "placeholders": {
-      "period": {
-        "type": "String",
-        "description": "Date range, e.g. 01.10.2026 — 15.03.2027"
-      }
-    }
-  },
-  "deleteFiveDayPeriodConfirm": "Delete the period {period}? Weeks in these dates will be reported as 6-day weeks.",
-  "@deleteFiveDayPeriodConfirm": {
-    "placeholders": {
-      "period": {
-        "type": "String",
-        "description": "Date range, e.g. 01.10.2026 — 15.03.2027"
-      }
-    }
-  },
+  "fiveDayPeriodOpenEnd": "Until management decides",
   "fiveDayPeriodSaved": "Working week schedule saved",
   "clearDate": "Clear date"
 }

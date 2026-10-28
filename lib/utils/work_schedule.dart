@@ -1,8 +1,5 @@
 import '../models/five_day_period.dart';
 
-/// Upper bound used for open-ended periods in `YYYY-MM-DD` comparisons.
-const String _openEndDateString = '9999-12-31';
-
 /// Inclusive date range of the five-day working-week mode.
 ///
 /// [end] is `null` while the end of the period is not decided yet; such a
@@ -103,25 +100,5 @@ String formatScheduleDate(DateTime date) =>
     '${date.year.toString().padLeft(4, '0')}-'
     '${date.month.toString().padLeft(2, '0')}-'
     '${date.day.toString().padLeft(2, '0')}';
-
-/// Returns the first stored period that shares at least one day with the
-/// range [startDate]..[endDate] (`null` end = open-ended), ignoring the record
-/// with [excludeId] (the period being edited).
-FiveDayPeriod? findOverlappingFiveDayPeriod(
-  Iterable<FiveDayPeriod> periods,
-  String startDate,
-  String? endDate, {
-  int? excludeId,
-}) {
-  final end = endDate ?? _openEndDateString;
-  for (final period in periods) {
-    if (excludeId != null && period.id == excludeId) continue;
-    final otherEnd = period.endDate ?? _openEndDateString;
-    final overlaps = period.startDate.compareTo(end) <= 0 &&
-        startDate.compareTo(otherEnd) <= 0;
-    if (overlaps) return period;
-  }
-  return null;
-}
 
 DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);

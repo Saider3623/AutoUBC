@@ -127,46 +127,6 @@ void main() {
     });
   });
 
-  group('findOverlappingFiveDayPeriod', () {
-    final periods = [
-      _period(1, '2025-10-01', '2026-03-15'),
-      _period(2, '2026-10-01'),
-    ];
-
-    test('finds an overlap with an open-ended period', () {
-      expect(
-        findOverlappingFiveDayPeriod(periods, '2027-10-01', null)?.id,
-        2,
-      );
-    });
-
-    test('treats shared boundary dates as overlapping', () {
-      expect(
-        findOverlappingFiveDayPeriod(periods, '2026-03-15', '2026-04-01')?.id,
-        1,
-      );
-    });
-
-    test('allows a period between existing ones', () {
-      expect(
-        findOverlappingFiveDayPeriod(periods, '2026-03-16', '2026-09-30'),
-        isNull,
-      );
-    });
-
-    test('ignores the period being edited', () {
-      expect(
-        findOverlappingFiveDayPeriod(
-          periods,
-          '2026-10-01',
-          '2027-03-20',
-          excludeId: 2,
-        ),
-        isNull,
-      );
-    });
-  });
-
   test('formats and parses schedule dates', () {
     expect(formatScheduleDate(DateTime(2026, 3, 5)), '2026-03-05');
     expect(parseScheduleDate('2026-03-05'), DateTime(2026, 3, 5));
