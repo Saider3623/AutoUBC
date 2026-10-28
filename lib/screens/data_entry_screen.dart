@@ -503,7 +503,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                       }
                                     },
                                     decoration: InputDecoration(
-                                      labelText: loc.liters,
+                                      labelText: loc.fuel,
                                       suffixText: loc.litersShort,
                                     ),
                                   ),

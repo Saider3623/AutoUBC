@@ -68,7 +68,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get km => 'км';
 
   @override
-  String get liters => 'л';
+  String get fuel => 'Топливо';
 
   @override
   String get save => 'Сохранить';

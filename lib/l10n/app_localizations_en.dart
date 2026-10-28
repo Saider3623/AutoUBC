@@ -68,7 +68,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get km => 'km';
 
   @override
-  String get liters => 'l';
+  String get fuel => 'Fuel';
 
   @override
   String get save => 'Save';

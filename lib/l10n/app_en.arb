@@ -28,7 +28,7 @@
   "date": "Date",
   "odometer": "Odometer",
   "km": "km",
-  "liters": "l",
+  "fuel": "Fuel",
   "save": "Save",
   "saveOdometerSuccess": "Odometer reading saved",
   "saveError": "Save error: {error}",
