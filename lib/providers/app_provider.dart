@@ -10,7 +10,9 @@ import '../models/fuel_log.dart';
 import '../models/reminder.dart';
 import '../models/service_log.dart';
 import '../models/note.dart';
+import '../models/five_day_period.dart';
 import '../services/remote_log_service.dart';
+import '../utils/work_schedule.dart';
 
 // #region debug-point D6:reporter
 void _dbgApp(String h, String loc, String msg,
@@ -42,6 +44,8 @@ class AppProvider extends ChangeNotifier {
   List<Reminder> _reminders = [];
   List<ServiceLog> _serviceLogs = [];
   List<Note> _notes = [];
+  List<FiveDayPeriod> _fiveDayPeriods = [];
+  WorkSchedule _workSchedule = const WorkSchedule();
   bool _isLoading = false;
   Future<bool> Function()? onDataSaved;
   DateTime? _lastBackupTime;
@@ -63,6 +67,12 @@ class AppProvider extends ChangeNotifier {
   List<Reminder> get reminders => _reminders;
   List<ServiceLog> get serviceLogs => _serviceLogs;
   List<Note> get notes => _notes;
+
+  /// Five-day periods of the app-wide working-week schedule, newest first.
+  List<FiveDayPeriod> get fiveDayPeriods => _fiveDayPeriods;
+
+  /// Working-week schedule used by the weekly report, PDF and data entry.
+  WorkSchedule get workSchedule => _workSchedule;
   bool get isLoading => _isLoading;
   bool get hasPendingSync => _needsSync;
 
@@ -219,6 +229,7 @@ class AppProvider extends ChangeNotifier {
     try {
       _isLoading = true;
       notifyListeners();
+      await _loadFiveDayPeriods();
       _cars = await _db.getAllCars();
       // #region debug-point A:loadcars
       _dbgApp('A', 'app_provider.dart:_loadCarsInternal',
@@ -257,6 +268,18 @@ class AppProvider extends ChangeNotifier {
       _dbgApp(
           'A', 'app_provider.dart:_loadCarsInternal', 'end isLoading=false');
       // #endregion
+    }
+  }
+
+  /// Reloads the working-week schedule. Failures keep the previous schedule
+  /// so the reports still open with the last known periods.
+  Future<void> _loadFiveDayPeriods() async {
+    try {
+      _fiveDayPeriods = await _db.getFiveDayPeriods();
+      _workSchedule = WorkSchedule.fromPeriods(_fiveDayPeriods);
+    } catch (e, stackTrace) {
+      debugPrint('Помилка завантаження графіка робочого тижня: $e');
+      debugPrint('$stackTrace');
     }
   }
 
@@ -537,6 +560,33 @@ class AppProvider extends ChangeNotifier {
       await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка видалення нотатки: $e');
+      rethrow;
+    }
+  }
+
+  /// Creates or updates a five-day period of the working-week schedule.
+  Future<void> saveFiveDayPeriod(FiveDayPeriod period) async {
+    try {
+      await _markLocalMutationPending();
+      await _db.saveFiveDayPeriod(period);
+      await _loadFiveDayPeriods();
+      notifyListeners();
+      await _scheduleBackupAndSync();
+    } catch (e) {
+      debugPrint('Помилка збереження періоду 5-денного тижня: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteFiveDayPeriod(FiveDayPeriod period) async {
+    try {
+      await _markLocalMutationPending();
+      await _db.deleteFiveDayPeriod(period);
+      await _loadFiveDayPeriods();
+      notifyListeners();
+      await _scheduleBackupAndSync();
+    } catch (e) {
+      debugPrint('Помилка видалення періоду 5-денного тижня: $e');
       rethrow;
     }
   }

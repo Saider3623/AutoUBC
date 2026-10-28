@@ -12,6 +12,7 @@ import '../db/database_service.dart';
 import '../utils/report_status.dart';
 import '../utils/fuel_summary.dart';
 import '../utils/weekly_report_utils.dart';
+import '../utils/work_schedule.dart';
 
 export '../utils/fuel_summary.dart';
 
@@ -135,7 +136,7 @@ class ReportService {
     DateTime startDate,
     DateTime endDate,
     String languageCode, {
-    int workWeekDays = 6,
+    WorkSchedule schedule = const WorkSchedule(),
   }) async {
     final t = _PdfTranslations.of(languageCode);
     final pdf = pw.Document();
@@ -156,7 +157,7 @@ class ReportService {
     fuelLogs.sort((a, b) => a.dateString.compareTo(b.dateString));
 
     final weeks = await _buildWeeks(car.id, startDate, endDate, odometerLogs,
-        fuelLogs, languageCode, t, workWeekDays);
+        fuelLogs, languageCode, t, schedule);
 
     pdf.addPage(
       pw.MultiPage(
@@ -208,14 +209,14 @@ class ReportService {
     List<FuelLog> fuelLogs,
     String languageCode,
     _PdfTranslations t,
-    int workWeekDays,
+    WorkSchedule schedule,
   ) async {
     final weeks = <_WeekData>[];
 
     DateTime current = monthStart;
 
     while (!current.isAfter(monthEnd)) {
-      DateTime weekEnd = workingWeekEnd(current, workWeekDays);
+      DateTime weekEnd = reportWeekEnd(current, schedule);
       if (weekEnd.isAfter(monthEnd)) weekEnd = monthEnd;
 
       // Одометр: всі записи в межах тижня

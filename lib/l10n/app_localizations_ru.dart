@@ -407,15 +407,59 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workWeekSection => 'Режим рабочей недели';
 
   @override
-  String get workWeekFiveDay => '5-дневная неделя';
-
-  @override
-  String get workWeekSixDay => '6-дневная неделя';
-
-  @override
-  String get workWeekSundayNote => 'Воскресенье всегда нерабочий день.';
-
-  @override
   String get saturdayNotWorkingConfirm =>
-      'В установленном режиме (5 дней) суббота не является рабочим днём. Добавить данные?';
+      'По графику на эту дату действует 5-дневная неделя, суббота нерабочая. Добавить данные?';
+
+  @override
+  String get workWeekScheduleHint =>
+      'По умолчанию неделя 6-дневная (Пн–Сб). В указанные периоды действует 5-дневная (Пн–Пт). Воскресенье всегда нерабочее.';
+
+  @override
+  String get fiveDayPeriodsEmpty =>
+      'Периодов 5-дневной недели нет — всё время действует 6-дневная.';
+
+  @override
+  String get addFiveDayPeriod => 'Добавить период 5-дневной недели';
+
+  @override
+  String get editFiveDayPeriod => 'Период 5-дневной недели';
+
+  @override
+  String get fiveDayPeriodStart => 'Начало';
+
+  @override
+  String get fiveDayPeriodEnd => 'Конец';
+
+  @override
+  String get fiveDayPeriodEndNotSet => 'Не указан';
+
+  @override
+  String get fiveDayPeriodEndHint =>
+      'Если конец ещё неизвестен, оставьте пустым и укажите позже, когда руководство решит.';
+
+  @override
+  String get fiveDayPeriodOpenEnd => 'до решения руководства';
+
+  @override
+  String get fiveDayPeriodActive => 'Действует сейчас';
+
+  @override
+  String get fiveDayPeriodEndBeforeStart =>
+      'Конец не может быть раньше начала.';
+
+  @override
+  String fiveDayPeriodOverlap(String period) {
+    return 'Период пересекается с другим: $period.';
+  }
+
+  @override
+  String deleteFiveDayPeriodConfirm(String period) {
+    return 'Удалить период $period? Недели этих дат в отчётах будут считаться 6-дневными.';
+  }
+
+  @override
+  String get fiveDayPeriodSaved => 'График рабочей недели сохранён';
+
+  @override
+  String get clearDate => 'Очистить дату';
 }

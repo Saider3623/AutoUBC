@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
-import '../providers/settings_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../db/database_service.dart';
 import '../models/note.dart';
@@ -187,11 +186,12 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
     });
   }
 
-  /// In 5-day mode, asks for confirmation before saving mileage on Saturday.
+  /// Asks for confirmation before saving mileage on a Saturday that is a day
+  /// off under the working-week schedule (inside a five-day period).
   Future<bool> _confirmNonWorkingSaturday() async {
-    final settings = Provider.of<SettingsProvider>(context, listen: false);
-    if (settings.workWeekDays != SettingsProvider.fiveDayWeek ||
-        _selectedDate.weekday != DateTime.saturday) {
+    final schedule =
+        Provider.of<AppProvider>(context, listen: false).workSchedule;
+    if (!schedule.isNonWorkingSaturday(_selectedDate)) {
       return true;
     }
 

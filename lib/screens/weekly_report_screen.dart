@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
-import '../providers/settings_provider.dart';
 import '../db/database_service.dart';
 import '../utils/report_status.dart';
 import '../utils/weekly_report_utils.dart';
@@ -83,7 +82,6 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     final loc = AppLocalizations.of(context)!;
     final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
     final languageCode = localeProvider.locale?.languageCode ?? 'uk';
-    final workWeekDays = Provider.of<SettingsProvider>(context).workWeekDays;
 
     return Consumer<AppProvider>(
       builder: (context, provider, child) {
@@ -96,7 +94,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
 
         final today = DateTime.now();
         final weeks = prioritizeCurrentReportWeek(
-          buildReportWeeks(_selectedMonth, workWeekDays),
+          buildReportWeeks(_selectedMonth, provider.workSchedule),
           today,
         );
 

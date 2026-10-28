@@ -9,7 +9,6 @@ import 'package:provider/provider.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/app_provider.dart';
 import 'providers/locale_provider.dart';
-import 'providers/settings_provider.dart';
 import 'screens/data_entry_screen.dart';
 import 'screens/weekly_report_screen.dart';
 import 'screens/export_report_screen.dart';
@@ -142,19 +141,13 @@ Future<void> _runApp() async {
   Intl.defaultLocale = 'uk';
   final localeProvider = LocaleProvider();
   await localeProvider.loadSavedLocale();
-  final settingsProvider = SettingsProvider();
-  await settingsProvider.loadSavedSettings();
-  runApp(MyApp(
-    localeProvider: localeProvider,
-    settingsProvider: settingsProvider,
-  ));
+  runApp(MyApp(localeProvider: localeProvider));
 }
 
 class MyApp extends StatelessWidget {
   final LocaleProvider? localeProvider;
-  final SettingsProvider? settingsProvider;
 
-  const MyApp({super.key, this.localeProvider, this.settingsProvider});
+  const MyApp({super.key, this.localeProvider});
 
   @override
   Widget build(BuildContext context) {
@@ -164,10 +157,6 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider.value(value: localeProvider!)
         else
           ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        if (settingsProvider != null)
-          ChangeNotifierProvider.value(value: settingsProvider!)
-        else
-          ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => AppProvider()),
         ChangeNotifierProvider(create: (_) => GoogleDriveSyncService()),
       ],

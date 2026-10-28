@@ -10,8 +10,10 @@ import '../models/fuel_log.dart';
 import '../models/reminder.dart';
 import '../models/service_log.dart';
 import '../models/note.dart';
+import '../models/five_day_period.dart';
 import '../utils/date_utils.dart';
 import '../utils/validation.dart';
+import '../utils/work_schedule.dart';
 import '../services/remote_log_service.dart';
 
 // #region debug-point D6:reporter
@@ -137,7 +139,8 @@ class DatabaseService {
         FuelLogSchema,
         ReminderSchema,
         ServiceLogSchema,
-        NoteSchema
+        NoteSchema,
+        FiveDayPeriodSchema,
       ],
       directory: appDir.path,
       name: 'autoubc',
@@ -726,6 +729,53 @@ class DatabaseService {
     await db.writeTxn(() => db.notes.delete(note.id));
   }
 
+  // Working-week schedule operations (app-wide, not tied to a car).
+  Future<List<FiveDayPeriod>> getFiveDayPeriods() async {
+    final db = await isar;
+    final periods = await db.fiveDayPeriods.where().findAll();
+    // Newest periods first.
+    periods.sort((a, b) => b.startDate.compareTo(a.startDate));
+    return periods;
+  }
+
+  /// Creates or updates a five-day period. Periods must not overlap, so every
+  /// date has exactly one working-week mode.
+  Future<void> saveFiveDayPeriod(FiveDayPeriod period) async {
+    final db = await isar;
+    period.startDate = period.startDate.trim();
+    validateDateString(period.startDate);
+    final endDate = period.endDate?.trim();
+    period.endDate = (endDate == null || endDate.isEmpty) ? null : endDate;
+    if (period.endDate != null) {
+      validateDateString(period.endDate!);
+      if (period.endDate!.compareTo(period.startDate) < 0) {
+        throw const DataValidationException(
+            'Five-day period cannot end before it starts.');
+      }
+    }
+
+    await db.writeTxn(() async {
+      final existing = await db.fiveDayPeriods.where().findAll();
+      final overlapping = findOverlappingFiveDayPeriod(
+        existing,
+        period.startDate,
+        period.endDate,
+        excludeId: period.id,
+      );
+      if (overlapping != null) {
+        throw DataValidationException(
+            'Five-day period overlaps another period '
+            '(${overlapping.startDate} – ${overlapping.endDate ?? '…'}).');
+      }
+      await db.fiveDayPeriods.put(period);
+    });
+  }
+
+  Future<void> deleteFiveDayPeriod(FiveDayPeriod period) async {
+    final db = await isar;
+    await db.writeTxn(() => db.fiveDayPeriods.delete(period.id));
+  }
+
   // Backup and restore operations.
   Future<String> getDatabasePath() async {
     final db = await isar;
@@ -752,6 +802,7 @@ class DatabaseService {
           ReminderSchema,
           ServiceLogSchema,
           NoteSchema,
+          FiveDayPeriodSchema,
         ],
         directory: file.parent.path,
         name: databaseName,

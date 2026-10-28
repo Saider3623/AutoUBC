@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:autoubc/models/car.dart';
+import 'package:autoubc/models/five_day_period.dart';
 import 'package:autoubc/models/fuel_log.dart';
 import 'package:autoubc/models/note.dart';
 import 'package:autoubc/models/odometer_log.dart';
@@ -15,5 +16,10 @@ void main() {
     expect(ReminderSchema.properties['carId'], isNotNull);
     expect(ServiceLogSchema.properties['carId'], isNotNull);
     expect(NoteSchema.properties['carId'], isNotNull);
+  });
+
+  test('working-week schedule stores plain YYYY-MM-DD boundaries', () {
+    expect(FiveDayPeriodSchema.properties['startDate'], isNotNull);
+    expect(FiveDayPeriodSchema.properties['endDate'], isNotNull);
   });
 }
