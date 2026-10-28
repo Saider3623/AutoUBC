@@ -1,6 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:autoubc/utils/weekly_report_utils.dart';
+import 'package:autoubc/utils/work_schedule.dart';
+
+/// Six-day weeks only (no five-day periods).
+const _sixDayOnly = WorkSchedule();
+
+/// Five-day weeks for the whole of 2026 and later.
+final _fiveDayOnly = WorkSchedule([FiveDayRange(DateTime(2026, 1, 1))]);
 
 Map<String, DateTime> _week(int startDay, int endDay) {
   return {
@@ -53,7 +60,7 @@ void main() {
       '${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   test('builds October 2026 weeks across the DST change (6-day week)', () {
-    final weeks = buildReportWeeks(DateTime(2026, 10, 15), 6);
+    final weeks = buildReportWeeks(DateTime(2026, 10, 15), _sixDayOnly);
 
     expect(
       weeks.map((w) => '${fmt(w['start']!)}..${fmt(w['end']!)}').toList(),
@@ -72,7 +79,7 @@ void main() {
   });
 
   test('builds October 2026 weeks across the DST change (5-day week)', () {
-    final weeks = buildReportWeeks(DateTime(2026, 10, 1), 5);
+    final weeks = buildReportWeeks(DateTime(2026, 10, 1), _fiveDayOnly);
 
     expect(
       weeks.map((w) => '${fmt(w['start']!)}..${fmt(w['end']!)}').toList(),
@@ -93,8 +100,8 @@ void main() {
 
   test('every report week starts and ends at local midnight', () {
     for (final month in [DateTime(2026, 3, 1), DateTime(2026, 10, 1)]) {
-      for (final days in [5, 6]) {
-        for (final week in buildReportWeeks(month, days)) {
+      for (final schedule in [_sixDayOnly, _fiveDayOnly]) {
+        for (final week in buildReportWeeks(month, schedule)) {
           for (final d in week.values) {
             expect(d.hour, 0, reason: '$d');
             expect(d.minute, 0, reason: '$d');

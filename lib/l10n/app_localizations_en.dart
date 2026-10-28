@@ -406,15 +406,59 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workWeekSection => 'Working week mode';
 
   @override
-  String get workWeekFiveDay => '5-day week';
-
-  @override
-  String get workWeekSixDay => '6-day week';
-
-  @override
-  String get workWeekSundayNote => 'Sunday is always a non-working day.';
-
-  @override
   String get saturdayNotWorkingConfirm =>
-      'In the configured mode (5 days), Saturday is not a working day. Add data?';
+      'According to the schedule, a 5-day week applies on this date and Saturday is a day off. Add data?';
+
+  @override
+  String get workWeekScheduleHint =>
+      'By default the week has 6 days (Mon–Sat). During the periods below a 5-day week (Mon–Fri) applies. Sunday is always a day off.';
+
+  @override
+  String get fiveDayPeriodsEmpty =>
+      'No 5-day week periods — a 6-day week applies all the time.';
+
+  @override
+  String get addFiveDayPeriod => 'Add 5-day week period';
+
+  @override
+  String get editFiveDayPeriod => '5-day week period';
+
+  @override
+  String get fiveDayPeriodStart => 'Start';
+
+  @override
+  String get fiveDayPeriodEnd => 'End';
+
+  @override
+  String get fiveDayPeriodEndNotSet => 'Not set';
+
+  @override
+  String get fiveDayPeriodEndHint =>
+      'If the end isn\'t known yet, leave it empty and set it later when management decides.';
+
+  @override
+  String get fiveDayPeriodOpenEnd => 'until management decides';
+
+  @override
+  String get fiveDayPeriodActive => 'Active now';
+
+  @override
+  String get fiveDayPeriodEndBeforeStart =>
+      'The end can\'t be earlier than the start.';
+
+  @override
+  String fiveDayPeriodOverlap(String period) {
+    return 'The period overlaps another one: $period.';
+  }
+
+  @override
+  String deleteFiveDayPeriodConfirm(String period) {
+    return 'Delete the period $period? Weeks in these dates will be reported as 6-day weeks.';
+  }
+
+  @override
+  String get fiveDayPeriodSaved => 'Working week schedule saved';
+
+  @override
+  String get clearDate => 'Clear date';
 }

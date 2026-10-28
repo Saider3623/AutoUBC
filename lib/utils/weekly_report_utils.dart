@@ -1,3 +1,5 @@
+import 'work_schedule.dart';
+
 /// Returns whether [date] falls inside the inclusive date range of [week].
 bool isDateInReportWeek(Map<String, DateTime> week, DateTime date) {
   final day = DateTime(date.year, date.month, date.day);
@@ -50,15 +52,24 @@ DateTime workingWeekEnd(DateTime start, int workWeekDays) {
   return addCalendarDays(day, 7 - day.weekday);
 }
 
+/// Returns the inclusive end of the report segment that starts at [start],
+/// using the working-week length that [schedule] sets for that week.
+DateTime reportWeekEnd(DateTime start, WorkSchedule schedule) =>
+    workingWeekEnd(start, schedule.workWeekDaysForWeekOf(start));
+
 /// Splits [month] into consecutive working-week segments clipped to the
-/// month bounds. Every `start`/`end` is a local midnight.
-List<Map<String, DateTime>> buildReportWeeks(DateTime month, int workWeekDays) {
+/// month bounds, following the five-day periods of [schedule] (six-day weeks
+/// everywhere else). Every `start`/`end` is a local midnight.
+List<Map<String, DateTime>> buildReportWeeks(
+  DateTime month,
+  WorkSchedule schedule,
+) {
   final weeks = <Map<String, DateTime>>[];
   final lastDayOfMonth = DateTime(month.year, month.month + 1, 0);
 
   var currentStart = DateTime(month.year, month.month, 1);
   while (!currentStart.isAfter(lastDayOfMonth)) {
-    var currentEnd = workingWeekEnd(currentStart, workWeekDays);
+    var currentEnd = reportWeekEnd(currentStart, schedule);
     if (currentEnd.isAfter(lastDayOfMonth)) currentEnd = lastDayOfMonth;
 
     weeks.add({'start': currentStart, 'end': currentEnd});

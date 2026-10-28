@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/app_provider.dart';
-import '../providers/settings_provider.dart';
+import '../widgets/work_schedule_card.dart';
 
 class ManageCarsScreen extends StatefulWidget {
   final bool autoOpenAddCar;
@@ -31,15 +31,23 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
   final TextEditingController _addCarController = TextEditingController();
   final TextEditingController _newFuelController = TextEditingController();
   List<String> _localFuelTypes = [];
+  int? _loadedCarId;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _loadCurrentCarData();
+    // Any AppProvider notification (e.g. a saved working-week period) lands
+    // here. Reload fuel types only when the selected car actually changed so
+    // unsaved fuel-type edits are kept.
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    if (provider.selectedCar?.id != _loadedCarId) {
+      _loadCurrentCarData();
+    }
   }
 
   void _loadCurrentCarData() {
     final provider = Provider.of<AppProvider>(context, listen: false);
+    _loadedCarId = provider.selectedCar?.id;
     if (provider.selectedCar != null) {
       _localFuelTypes =
           List.from(provider.selectedCar!.fuelTypes ?? ['ГАЗ', '95']);
@@ -57,7 +65,6 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final appProvider = Provider.of<AppProvider>(context);
-    final settingsProvider = Provider.of<SettingsProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -143,47 +150,8 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              // Working week mode (app-wide setting).
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        loc.workWeekSection,
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 12),
-                      SegmentedButton<int>(
-                        segments: [
-                          ButtonSegment<int>(
-                            value: SettingsProvider.fiveDayWeek,
-                            label: Text(loc.workWeekFiveDay),
-                          ),
-                          ButtonSegment<int>(
-                            value: SettingsProvider.sixDayWeek,
-                            label: Text(loc.workWeekSixDay),
-                          ),
-                        ],
-                        selected: {settingsProvider.workWeekDays},
-                        onSelectionChanged: (selection) {
-                          if (selection.isNotEmpty) {
-                            settingsProvider.setWorkWeekDays(selection.first);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        loc.workWeekSundayNote,
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // Working-week schedule (app-wide setting).
+              const WorkScheduleCard(),
               const SizedBox(height: 24),
               if (appProvider.selectedCar != null) ...[
                 // Fuel types.

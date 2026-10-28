@@ -850,29 +850,101 @@ abstract class AppLocalizations {
   /// **'Working week mode'**
   String get workWeekSection;
 
-  /// No description provided for @workWeekFiveDay.
-  ///
-  /// In en, this message translates to:
-  /// **'5-day week'**
-  String get workWeekFiveDay;
-
-  /// No description provided for @workWeekSixDay.
-  ///
-  /// In en, this message translates to:
-  /// **'6-day week'**
-  String get workWeekSixDay;
-
-  /// No description provided for @workWeekSundayNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Sunday is always a non-working day.'**
-  String get workWeekSundayNote;
-
   /// No description provided for @saturdayNotWorkingConfirm.
   ///
   /// In en, this message translates to:
-  /// **'In the configured mode (5 days), Saturday is not a working day. Add data?'**
+  /// **'According to the schedule, a 5-day week applies on this date and Saturday is a day off. Add data?'**
   String get saturdayNotWorkingConfirm;
+
+  /// No description provided for @workWeekScheduleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'By default the week has 6 days (Mon–Sat). During the periods below a 5-day week (Mon–Fri) applies. Sunday is always a day off.'**
+  String get workWeekScheduleHint;
+
+  /// No description provided for @fiveDayPeriodsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No 5-day week periods — a 6-day week applies all the time.'**
+  String get fiveDayPeriodsEmpty;
+
+  /// No description provided for @addFiveDayPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Add 5-day week period'**
+  String get addFiveDayPeriod;
+
+  /// No description provided for @editFiveDayPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'5-day week period'**
+  String get editFiveDayPeriod;
+
+  /// No description provided for @fiveDayPeriodStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get fiveDayPeriodStart;
+
+  /// No description provided for @fiveDayPeriodEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get fiveDayPeriodEnd;
+
+  /// No description provided for @fiveDayPeriodEndNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get fiveDayPeriodEndNotSet;
+
+  /// No description provided for @fiveDayPeriodEndHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If the end isn't known yet, leave it empty and set it later when management decides.'**
+  String get fiveDayPeriodEndHint;
+
+  /// No description provided for @fiveDayPeriodOpenEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'until management decides'**
+  String get fiveDayPeriodOpenEnd;
+
+  /// No description provided for @fiveDayPeriodActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active now'**
+  String get fiveDayPeriodActive;
+
+  /// No description provided for @fiveDayPeriodEndBeforeStart.
+  ///
+  /// In en, this message translates to:
+  /// **'The end can't be earlier than the start.'**
+  String get fiveDayPeriodEndBeforeStart;
+
+  /// No description provided for @fiveDayPeriodOverlap.
+  ///
+  /// In en, this message translates to:
+  /// **'The period overlaps another one: {period}.'**
+  String fiveDayPeriodOverlap(String period);
+
+  /// No description provided for @deleteFiveDayPeriodConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the period {period}? Weeks in these dates will be reported as 6-day weeks.'**
+  String deleteFiveDayPeriodConfirm(String period);
+
+  /// No description provided for @fiveDayPeriodSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Working week schedule saved'**
+  String get fiveDayPeriodSaved;
+
+  /// No description provided for @clearDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear date'**
+  String get clearDate;
 }
 
 class _AppLocalizationsDelegate

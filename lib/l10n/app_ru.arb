@@ -205,8 +205,36 @@
   "syncError": "Ошибка синхронизации",
   "syncOk": "Синхронизировано",
   "workWeekSection": "Режим рабочей недели",
-  "workWeekFiveDay": "5-дневная неделя",
-  "workWeekSixDay": "6-дневная неделя",
-  "workWeekSundayNote": "Воскресенье всегда нерабочий день.",
-  "saturdayNotWorkingConfirm": "В установленном режиме (5 дней) суббота не является рабочим днём. Добавить данные?"
+  "saturdayNotWorkingConfirm": "По графику на эту дату действует 5-дневная неделя, суббота нерабочая. Добавить данные?",
+  "workWeekScheduleHint": "По умолчанию неделя 6-дневная (Пн–Сб). В указанные периоды действует 5-дневная (Пн–Пт). Воскресенье всегда нерабочее.",
+  "fiveDayPeriodsEmpty": "Периодов 5-дневной недели нет — всё время действует 6-дневная.",
+  "addFiveDayPeriod": "Добавить период 5-дневной недели",
+  "editFiveDayPeriod": "Период 5-дневной недели",
+  "fiveDayPeriodStart": "Начало",
+  "fiveDayPeriodEnd": "Конец",
+  "fiveDayPeriodEndNotSet": "Не указан",
+  "fiveDayPeriodEndHint": "Если конец ещё неизвестен, оставьте пустым и укажите позже, когда руководство решит.",
+  "fiveDayPeriodOpenEnd": "до решения руководства",
+  "fiveDayPeriodActive": "Действует сейчас",
+  "fiveDayPeriodEndBeforeStart": "Конец не может быть раньше начала.",
+  "fiveDayPeriodOverlap": "Период пересекается с другим: {period}.",
+  "@fiveDayPeriodOverlap": {
+    "placeholders": {
+      "period": {
+        "type": "String",
+        "description": "Диапазон дат, напр. 01.10.2026 — 15.03.2027"
+      }
+    }
+  },
+  "deleteFiveDayPeriodConfirm": "Удалить период {period}? Недели этих дат в отчётах будут считаться 6-дневными.",
+  "@deleteFiveDayPeriodConfirm": {
+    "placeholders": {
+      "period": {
+        "type": "String",
+        "description": "Диапазон дат, напр. 01.10.2026 — 15.03.2027"
+      }
+    }
+  },
+  "fiveDayPeriodSaved": "График рабочей недели сохранён",
+  "clearDate": "Очистить дату"
 }
