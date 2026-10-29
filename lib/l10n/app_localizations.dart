@@ -1353,6 +1353,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sync now'**
   String get syncNow;
+
+  /// No description provided for @notificationChannelDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance, inspection and other reminder dates'**
+  String get notificationChannelDescription;
+
+  /// No description provided for @notificationDueToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Due today, {date}'**
+  String notificationDueToday(String date);
+
+  /// No description provided for @notificationDueTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Due tomorrow, {date}'**
+  String notificationDueTomorrow(String date);
+
+  /// No description provided for @notificationDueInWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Due in a week, on {date}'**
+  String notificationDueInWeek(String date);
+
+  /// No description provided for @reminderDueToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Due today'**
+  String get reminderDueToday;
+
+  /// No description provided for @reminderDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Days left: {days}'**
+  String reminderDaysLeft(int days);
+
+  /// No description provided for @reminderDaysOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Days overdue: {days}'**
+  String reminderDaysOverdue(int days);
+
+  /// No description provided for @reminderKmLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km left'**
+  String reminderKmLeft(int km);
+
+  /// No description provided for @reminderKmOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue by {km} km'**
+  String reminderKmOverdue(int km);
+
+  /// No description provided for @reminderCompletedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Done: {title}'**
+  String reminderCompletedMessage(String title);
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @serviceBookOfferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record it in the service book?'**
+  String get serviceBookOfferTitle;
+
+  /// No description provided for @serviceBookOfferBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the mileage and what was done, so the maintenance history stays complete.'**
+  String get serviceBookOfferBody;
+
+  /// No description provided for @addRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Add record'**
+  String get addRecord;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
+
+  /// No description provided for @remindersDueMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} more'**
+  String remindersDueMore(int count);
+
+  /// No description provided for @notificationsDisabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off, so date reminders will not alert you.'**
+  String get notificationsDisabledHint;
+
+  /// No description provided for @enableNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get enableNotifications;
 }
 
 class _AppLocalizationsDelegate

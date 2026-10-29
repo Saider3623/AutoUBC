@@ -15,6 +15,7 @@ import 'screens/manage_cars_screen.dart';
 import 'domain/reminder_status.dart';
 import 'services/cloud_sync_controller.dart';
 import 'services/google_drive_sync_service.dart';
+import 'services/reminder_notifications.dart';
 import 'theme/app_theme.dart';
 import 'widgets/app_empty_state.dart';
 import 'widgets/cloud_comparison_dialog.dart';
@@ -92,6 +93,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   bool _isInteractiveSignIn = false;
   bool _isLifecycleSyncInProgress = false;
   bool _isDecisionDialogOpen = false;
+  int? _notifiedRevision;
+  Locale? _notifiedLocale;
 
   @override
   void initState() {
@@ -100,9 +103,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final cloud = context.read<CloudSyncController>();
-      _appProvider = context.read<AppProvider>();
+      final app = context.read<AppProvider>();
+      _appProvider = app;
       _cloud = cloud;
       cloud.addListener(_onCloudChanged);
+      app.addListener(_onAppChanged);
+      _onAppChanged();
       final result = await cloud.start();
       await _promptForFirstCarIfNeeded(result);
     });
@@ -145,6 +151,44 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       if (resolved) await _promptForFirstCarIfNeeded(CloudFlowResult.restored);
     } finally {
       _isDecisionDialogOpen = false;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Notification texts follow the app language.
+    if (_appProvider != null) _onAppChanged();
+  }
+
+  /// Reschedules reminder notifications after reminders, cars or the app
+  /// language changed.
+  void _onAppChanged() {
+    final app = _appProvider;
+    if (app == null || !mounted || app.isLoading || app.loadError != null) {
+      return;
+    }
+    final locale = Localizations.localeOf(context);
+    if (app.remindersRevision == _notifiedRevision &&
+        locale == _notifiedLocale) {
+      return;
+    }
+    _notifiedRevision = app.remindersRevision;
+    _notifiedLocale = locale;
+    unawaited(_rescheduleNotifications(app, locale));
+  }
+
+  Future<void> _rescheduleNotifications(AppProvider app, Locale locale) async {
+    if (!ReminderNotifications.instance.isSupported) return;
+    try {
+      final reminders = await app.allReminders();
+      await ReminderNotifications.instance.reschedule(
+        reminders: reminders,
+        cars: app.cars,
+        locale: locale,
+      );
+    } catch (error) {
+      debugPrint('[Notifications] Reading reminders failed: $error');
     }
   }
 
@@ -193,6 +237,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _cloud?.removeListener(_onCloudChanged);
+    _appProvider?.removeListener(_onAppChanged);
     _pageController.dispose();
     super.dispose();
   }

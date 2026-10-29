@@ -701,4 +701,79 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get syncNow => 'Синхронізувати зараз';
+
+  @override
+  String get notificationChannelDescription =>
+      'Терміни страховки, техогляду та інших нагадувань';
+
+  @override
+  String notificationDueToday(String date) {
+    return 'Термін сьогодні, $date';
+  }
+
+  @override
+  String notificationDueTomorrow(String date) {
+    return 'Термін завтра, $date';
+  }
+
+  @override
+  String notificationDueInWeek(String date) {
+    return 'Термін через тиждень, $date';
+  }
+
+  @override
+  String get reminderDueToday => 'Термін сьогодні';
+
+  @override
+  String reminderDaysLeft(int days) {
+    return 'Залишилось днів: $days';
+  }
+
+  @override
+  String reminderDaysOverdue(int days) {
+    return 'Прострочено днів: $days';
+  }
+
+  @override
+  String reminderKmLeft(int km) {
+    return 'Залишилось $km км';
+  }
+
+  @override
+  String reminderKmOverdue(int km) {
+    return 'Прострочено на $km км';
+  }
+
+  @override
+  String reminderCompletedMessage(String title) {
+    return 'Виконано: $title';
+  }
+
+  @override
+  String get undo => 'Скасувати';
+
+  @override
+  String get serviceBookOfferTitle => 'Записати в сервісну книжку?';
+
+  @override
+  String get serviceBookOfferBody =>
+      'Додайте пробіг і що було зроблено — історія обслуговування залишиться повною.';
+
+  @override
+  String get addRecord => 'Додати запис';
+
+  @override
+  String get notNow => 'Не зараз';
+
+  @override
+  String remindersDueMore(int count) {
+    return 'ще $count';
+  }
+
+  @override
+  String get notificationsDisabledHint =>
+      'Сповіщення вимкнено — нагадування за датою не надійдуть.';
+
+  @override
+  String get enableNotifications => 'Увімкнути';
 }

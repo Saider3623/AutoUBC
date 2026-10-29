@@ -399,5 +399,86 @@
     }
   },
   "syncChooseCopy": "Choose the copy",
-  "syncNow": "Sync now"
+  "syncNow": "Sync now",
+  "notificationChannelDescription": "Insurance, inspection and other reminder dates",
+  "notificationDueToday": "Due today, {date}",
+  "@notificationDueToday": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationDueTomorrow": "Due tomorrow, {date}",
+  "@notificationDueTomorrow": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationDueInWeek": "Due in a week, on {date}",
+  "@notificationDueInWeek": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderDueToday": "Due today",
+  "reminderDaysLeft": "Days left: {days}",
+  "@reminderDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderDaysOverdue": "Days overdue: {days}",
+  "@reminderDaysOverdue": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderKmLeft": "{km} km left",
+  "@reminderKmLeft": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderKmOverdue": "Overdue by {km} km",
+  "@reminderKmOverdue": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderCompletedMessage": "Done: {title}",
+  "@reminderCompletedMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "undo": "Undo",
+  "serviceBookOfferTitle": "Record it in the service book?",
+  "serviceBookOfferBody": "Add the mileage and what was done, so the maintenance history stays complete.",
+  "addRecord": "Add record",
+  "notNow": "Not now",
+  "remindersDueMore": "+{count} more",
+  "@remindersDueMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsDisabledHint": "Notifications are off, so date reminders will not alert you.",
+  "enableNotifications": "Turn on"
 }

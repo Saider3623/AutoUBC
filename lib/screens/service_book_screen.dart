@@ -196,7 +196,7 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => _ServiceLogDialog(
+      builder: (context) => ServiceLogDialog(
         carId: provider.selectedCar!.id,
         logToEdit: logToEdit,
         onSave: (log) async {
@@ -244,22 +244,27 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
   }
 }
 
-class _ServiceLogDialog extends StatefulWidget {
+/// Adds or edits a service book entry. [initialDescription] prefills a new
+/// entry, for example after a maintenance reminder was completed.
+class ServiceLogDialog extends StatefulWidget {
   final int carId;
   final Future<void> Function(ServiceLog) onSave;
   final ServiceLog? logToEdit;
+  final String? initialDescription;
 
-  const _ServiceLogDialog({
+  const ServiceLogDialog({
+    super.key,
     required this.carId,
     required this.onSave,
     this.logToEdit,
+    this.initialDescription,
   });
 
   @override
-  State<_ServiceLogDialog> createState() => _ServiceLogDialogState();
+  State<ServiceLogDialog> createState() => _ServiceLogDialogState();
 }
 
-class _ServiceLogDialogState extends State<_ServiceLogDialog> {
+class _ServiceLogDialogState extends State<ServiceLogDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
   String? _saveError;
@@ -295,7 +300,8 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
         if (rMax > maxKm) maxKm = rMax;
       }
       _odometerController.text = maxKm > 0 ? maxKm.toString() : '';
-      _descController.text = '- ';
+      final initial = widget.initialDescription;
+      _descController.text = initial == null ? '- ' : '- $initial\n- ';
     }
   }
 

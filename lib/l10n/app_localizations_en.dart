@@ -700,4 +700,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncNow => 'Sync now';
+
+  @override
+  String get notificationChannelDescription =>
+      'Insurance, inspection and other reminder dates';
+
+  @override
+  String notificationDueToday(String date) {
+    return 'Due today, $date';
+  }
+
+  @override
+  String notificationDueTomorrow(String date) {
+    return 'Due tomorrow, $date';
+  }
+
+  @override
+  String notificationDueInWeek(String date) {
+    return 'Due in a week, on $date';
+  }
+
+  @override
+  String get reminderDueToday => 'Due today';
+
+  @override
+  String reminderDaysLeft(int days) {
+    return 'Days left: $days';
+  }
+
+  @override
+  String reminderDaysOverdue(int days) {
+    return 'Days overdue: $days';
+  }
+
+  @override
+  String reminderKmLeft(int km) {
+    return '$km km left';
+  }
+
+  @override
+  String reminderKmOverdue(int km) {
+    return 'Overdue by $km km';
+  }
+
+  @override
+  String reminderCompletedMessage(String title) {
+    return 'Done: $title';
+  }
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get serviceBookOfferTitle => 'Record it in the service book?';
+
+  @override
+  String get serviceBookOfferBody =>
+      'Add the mileage and what was done, so the maintenance history stays complete.';
+
+  @override
+  String get addRecord => 'Add record';
+
+  @override
+  String get notNow => 'Not now';
+
+  @override
+  String remindersDueMore(int count) {
+    return '+$count more';
+  }
+
+  @override
+  String get notificationsDisabledHint =>
+      'Notifications are off, so date reminders will not alert you.';
+
+  @override
+  String get enableNotifications => 'Turn on';
 }

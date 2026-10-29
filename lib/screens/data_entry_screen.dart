@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../domain/reminder_status.dart';
 import '../l10n/app_localizations.dart';
 import '../models/note.dart';
 import '../models/odometer_log.dart';
@@ -11,9 +12,11 @@ import '../theme/fuel_colors.dart';
 import '../utils/date_utils.dart';
 import '../utils/error_messages.dart';
 import '../utils/form_validators.dart';
+import '../utils/reminder_texts.dart';
 import '../utils/validation.dart';
 import '../utils/weekly_report_utils.dart';
 import '../widgets/inline_form_error.dart';
+import 'reminders_screen.dart';
 
 /// A daily jump above this many kilometres asks for confirmation before it is
 /// saved (most often an extra digit was typed).
@@ -356,6 +359,7 @@ class _DataEntryScreenState extends State<DataEntryScreen>
                 children: [
                   if (missingDay != null && missingDay != _dismissedMissingDay)
                     _buildMissingBanner(missingDay, loc, languageCode),
+                  _buildReminderBanner(provider, loc),
                   _buildDateCard(loc, languageCode, localeProvider),
                   const SizedBox(height: 12),
                   _buildOdometerCard(provider, loc, languageCode),
@@ -414,6 +418,71 @@ class _DataEntryScreenState extends State<DataEntryScreen>
               onPressed: () => setState(() => _dismissedMissingDay = day),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// The most urgent overdue or soon-due reminder of the car. Mileage
+  /// reminders cannot be notified by date, so this is where they show up.
+  Widget _buildReminderBanner(AppProvider provider, AppLocalizations loc) {
+    final currentKm = currentMileage(provider.odometerLogs);
+    final today = DateTime.now();
+    final due = [
+      for (final reminder in sortRemindersByUrgency(
+        provider.reminders,
+        currentKm: currentKm,
+        today: today,
+      ))
+        (
+          reminder: reminder,
+          status: reminderStatus(reminder, currentKm: currentKm, today: today),
+        ),
+    ].where((entry) => entry.status.isOverdue || entry.status.isUpcoming);
+    if (due.isEmpty) return const SizedBox.shrink();
+
+    final first = due.first;
+    final overdue = first.status.isOverdue;
+    final more = due.length - 1;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Card(
+      elevation: 0,
+      color: overdue
+          ? colorScheme.errorContainer.withValues(alpha: 0.5)
+          : colorScheme.tertiaryContainer.withValues(alpha: 0.6),
+      margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const RemindersScreen()),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+          child: Row(
+            children: [
+              Icon(
+                overdue
+                    ? Icons.warning_amber_rounded
+                    : Icons.notifications_active_outlined,
+                color: overdue
+                    ? colorScheme.error
+                    : colorScheme.onTertiaryContainer,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '${reminderTitle(first.reminder, loc)}: '
+                  '${reminderTimeLeft(first.status, loc) ?? ''}',
+                ),
+              ),
+              if (more > 0)
+                Text(loc.remindersDueMore(more),
+                    style: theme.textTheme.bodySmall),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
         ),
       ),
     );

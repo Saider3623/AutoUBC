@@ -70,6 +70,12 @@ class AppProvider extends ChangeNotifier {
   /// newer changes arrived while it was running.
   int get pendingRevision => _pendingRevision;
 
+  /// Changes whenever reminders of any car may have changed: after loading
+  /// or restoring the data and after every reminder edit. Notifications are
+  /// rescheduled when it changes.
+  int get remindersRevision => _remindersRevision;
+  int _remindersRevision = 0;
+
   void _setPendingSync(bool pending) {
     if (_needsSync == pending) return;
     // Pending state is durable sync bookkeeping, not display state. Do not
@@ -223,6 +229,7 @@ class AppProvider extends ChangeNotifier {
       await _loadFiveDayPeriods();
       _cars = await _db.getAllCars();
       _loadError = null;
+      _remindersRevision++;
       if (_cars.isEmpty) {
         _selectedCar = null;
         _odometerLogs = [];
@@ -419,8 +426,7 @@ class AppProvider extends ChangeNotifier {
       if (_selectedCar == null) return;
       await _markLocalMutationPending();
       await _db.addReminder(reminder);
-      await loadLogsForCar(_selectedCar!.id);
-      await _scheduleBackupAndSync();
+      await _afterReminderChange();
     } catch (e) {
       debugPrint('Помилка додавання нагадування: $e');
       rethrow;
@@ -431,10 +437,7 @@ class AppProvider extends ChangeNotifier {
     try {
       await _markLocalMutationPending();
       await _db.updateReminder(reminder);
-      if (_selectedCar != null) {
-        await loadLogsForCar(_selectedCar!.id);
-        await _scheduleBackupAndSync();
-      }
+      await _afterReminderChange();
     } catch (e) {
       debugPrint('Помилка оновлення нагадування: $e');
       rethrow;
@@ -445,27 +448,46 @@ class AppProvider extends ChangeNotifier {
     try {
       await _markLocalMutationPending();
       await _db.deleteReminder(reminder);
-      if (_selectedCar != null) {
-        await loadLogsForCar(_selectedCar!.id);
-        await _scheduleBackupAndSync();
-      }
+      await _afterReminderChange();
     } catch (e) {
       debugPrint('Помилка видалення нагадування: $e');
       rethrow;
     }
   }
 
-  Future<void> completeReminder(Reminder reminder) async {
+  /// Marks [reminder] done and returns the id of its next occurrence, for
+  /// [undoCompleteReminder].
+  Future<int?> completeReminder(Reminder reminder) async {
     try {
       await _markLocalMutationPending();
-      await _db.completeReminder(reminder);
-      if (_selectedCar != null) {
-        await loadLogsForCar(_selectedCar!.id);
-        await _scheduleBackupAndSync();
-      }
+      final nextId = await _db.completeReminder(reminder);
+      await _afterReminderChange();
+      return nextId;
     } catch (e) {
-      debugPrint('Помилка завершення нагадування: $e');
+      debugPrint('[Data] Completing a reminder failed: $e');
       rethrow;
+    }
+  }
+
+  Future<void> undoCompleteReminder(Reminder reminder, int? nextId) async {
+    try {
+      await _markLocalMutationPending();
+      await _db.undoCompleteReminder(reminder, nextId);
+      await _afterReminderChange();
+    } catch (e) {
+      debugPrint('[Data] Undoing a reminder completion failed: $e');
+      rethrow;
+    }
+  }
+
+  /// Reminders of every car, for the notification schedule.
+  Future<List<Reminder>> allReminders() => _db.getAllReminders();
+
+  Future<void> _afterReminderChange() async {
+    _remindersRevision++;
+    if (_selectedCar != null) {
+      await loadLogsForCar(_selectedCar!.id);
+      await _scheduleBackupAndSync();
     }
   }
 
