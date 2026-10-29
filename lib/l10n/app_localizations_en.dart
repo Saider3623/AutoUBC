@@ -562,4 +562,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String appVersion(String version, String build) {
     return 'Version $version ($build)';
   }
+
+  @override
+  String get navEntry => 'Entry';
+
+  @override
+  String get navReport => 'Report';
+
+  @override
+  String get todayLabel => 'Today';
+
+  @override
+  String get yesterdayLabel => 'Yesterday';
+
+  @override
+  String previousReading(String reading, String date) {
+    return 'Previous: $reading km, $date';
+  }
+
+  @override
+  String get readingBelowPrevious => 'Lower than the previous reading';
+
+  @override
+  String readingAboveNext(String reading, String date) {
+    return 'Higher than the next reading: $reading km, $date';
+  }
+
+  @override
+  String largeJumpConfirm(String distance, int days) {
+    return '+$distance km in $days day(s). Save anyway?';
+  }
+
+  @override
+  String goToDate(String date) {
+    return 'Go to $date';
+  }
+
+  @override
+  String missingReadingBanner(String date) {
+    return 'No odometer reading for $date';
+  }
+
+  @override
+  String showAllNotes(int count) {
+    return 'All notes ($count)';
+  }
+
+  @override
+  String get showFewerNotes => 'Show less';
+
+  @override
+  String get storageExplanation =>
+      'Your data is stored on this phone; Google Drive keeps a backup copy.';
 }

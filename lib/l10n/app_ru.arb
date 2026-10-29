@@ -219,5 +219,18 @@
   "editOdometerTitle": "Изменить показание",
   "editRefuelTitle": "Изменить заправку",
   "timeLabel": "Время",
-  "appVersion": "Версия {version} ({build})"
+  "appVersion": "Версия {version} ({build})",
+  "navEntry": "Ввод",
+  "navReport": "Отчёт",
+  "todayLabel": "Сегодня",
+  "yesterdayLabel": "Вчера",
+  "previousReading": "Предыдущее: {reading} км, {date}",
+  "readingBelowPrevious": "Меньше предыдущего показания",
+  "readingAboveNext": "Больше следующего показания: {reading} км, {date}",
+  "largeJumpConfirm": "+{distance} км за {days} дн. Всё равно сохранить?",
+  "goToDate": "Перейти к {date}",
+  "missingReadingBanner": "Нет показания одометра за {date}",
+  "showAllNotes": "Все заметки ({count})",
+  "showFewerNotes": "Свернуть",
+  "storageExplanation": "Данные хранятся на телефоне, Google Drive хранит резервную копию."
 }

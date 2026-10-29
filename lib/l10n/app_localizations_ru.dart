@@ -562,4 +562,56 @@ class AppLocalizationsRu extends AppLocalizations {
   String appVersion(String version, String build) {
     return 'Версия $version ($build)';
   }
+
+  @override
+  String get navEntry => 'Ввод';
+
+  @override
+  String get navReport => 'Отчёт';
+
+  @override
+  String get todayLabel => 'Сегодня';
+
+  @override
+  String get yesterdayLabel => 'Вчера';
+
+  @override
+  String previousReading(String reading, String date) {
+    return 'Предыдущее: $reading км, $date';
+  }
+
+  @override
+  String get readingBelowPrevious => 'Меньше предыдущего показания';
+
+  @override
+  String readingAboveNext(String reading, String date) {
+    return 'Больше следующего показания: $reading км, $date';
+  }
+
+  @override
+  String largeJumpConfirm(String distance, int days) {
+    return '+$distance км за $days дн. Всё равно сохранить?';
+  }
+
+  @override
+  String goToDate(String date) {
+    return 'Перейти к $date';
+  }
+
+  @override
+  String missingReadingBanner(String date) {
+    return 'Нет показания одометра за $date';
+  }
+
+  @override
+  String showAllNotes(int count) {
+    return 'Все заметки ($count)';
+  }
+
+  @override
+  String get showFewerNotes => 'Свернуть';
+
+  @override
+  String get storageExplanation =>
+      'Данные хранятся на телефоне, Google Drive хранит резервную копию.';
 }
