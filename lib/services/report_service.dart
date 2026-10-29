@@ -195,7 +195,7 @@ class ReportService {
               children: [
                 pw.Text(
                   t.reportTitle.replaceFirst('{carName}', car.name),
-                  style: pw.TextStyle(
+                  style: const pw.TextStyle(
                       fontSize: 22, fontWeight: pw.FontWeight.bold),
                 ),
                 pw.SizedBox(height: 6),
@@ -241,7 +241,8 @@ class ReportService {
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(t.monthTotal,
-            style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
+            style: const pw.TextStyle(
+                fontSize: 13, fontWeight: pw.FontWeight.bold)),
         pw.SizedBox(height: 6),
         pw.Table(
           border: pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.5),
@@ -294,7 +295,7 @@ class ReportService {
           decoration: const pw.BoxDecoration(color: PdfColors.blueGrey800),
           child: pw.Text(
             t.weekLabel.replaceFirst('{dateRange}', dateRange),
-            style: pw.TextStyle(
+            style: const pw.TextStyle(
               fontSize: 13,
               color: PdfColors.white,
               fontWeight: pw.FontWeight.bold,
@@ -374,8 +375,8 @@ class ReportService {
         pw.Padding(
           padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
           child: pw.Text(value,
-              style:
-                  pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+              style: const pw.TextStyle(
+                  fontSize: 11, fontWeight: pw.FontWeight.bold)),
         ),
       ],
     );
