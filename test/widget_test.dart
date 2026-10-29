@@ -8,6 +8,7 @@ import 'package:autoubc/main.dart';
 import 'package:autoubc/models/car.dart';
 import 'package:autoubc/providers/app_provider.dart';
 import 'package:autoubc/providers/locale_provider.dart';
+import 'package:autoubc/services/cloud_sync_controller.dart';
 import 'package:autoubc/services/google_drive_sync_service.dart';
 import 'package:autoubc/l10n/app_localizations.dart';
 
@@ -40,6 +41,12 @@ void main() {
           ChangeNotifierProvider<AppProvider>.value(value: appProvider),
           ChangeNotifierProvider<GoogleDriveSyncService>.value(
             value: GoogleDriveSyncService(),
+          ),
+          ChangeNotifierProvider<CloudSyncController>(
+            create: (_) => CloudSyncController(
+              app: appProvider,
+              drive: GoogleDriveSyncService(),
+            ),
           ),
         ],
         child: MaterialApp(

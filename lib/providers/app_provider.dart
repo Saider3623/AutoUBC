@@ -23,7 +23,16 @@ class AppProvider extends ChangeNotifier {
   List<FiveDayPeriod> _fiveDayPeriods = [];
   WorkSchedule _workSchedule = const WorkSchedule();
   bool _isLoading = false;
+  Object? _loadError;
+
+  /// Uploads the local database; set by `CloudSyncController`. Returns whether
+  /// the cloud copy now matches the local data.
   Future<bool> Function()? onDataSaved;
+
+  /// Delay between the last local change and the upload, so a burst of edits
+  /// produces one upload instead of one per edit.
+  static Duration syncDelay = const Duration(seconds: 30);
+  Timer? _syncTimer;
   DateTime? _lastBackupTime;
   bool _needsSync = false;
   int _pendingRevision = 0;
@@ -51,7 +60,15 @@ class AppProvider extends ChangeNotifier {
   /// Working-week schedule used by the weekly report, PDF and data entry.
   WorkSchedule get workSchedule => _workSchedule;
   bool get isLoading => _isLoading;
+
+  /// The error of the last failed attempt to open the local database. While
+  /// it is set, the empty car list does not mean that there is no data.
+  Object? get loadError => _loadError;
   bool get hasPendingSync => _needsSync;
+
+  /// Counter of local changes; lets a sync that started earlier know whether
+  /// newer changes arrived while it was running.
+  int get pendingRevision => _pendingRevision;
 
   void _setPendingSync(bool pending) {
     if (_needsSync == pending) return;
@@ -79,7 +96,11 @@ class AppProvider extends ChangeNotifier {
     return operation;
   }
 
-  Future<void> markSyncCompleted() async {
+  /// Clears the pending marker. With [revision], the marker is kept when
+  /// local changes were made after that revision was read.
+  Future<void> markSyncCompleted({int? revision}) async {
+    if (revision != null && revision != _pendingRevision) return;
+    _syncTimer?.cancel();
     _setPendingSync(false);
     await _persistPendingSync();
   }
@@ -93,15 +114,17 @@ class AppProvider extends ChangeNotifier {
     await _persistPendingSync();
   }
 
-  // Start backup and synchronization after a local write.
+  /// Schedules the local backup and the upload after a local write. Every new
+  /// write restarts the delay; leaving the app flushes at once.
   Future<void> _scheduleBackupAndSync() async {
     // The marker is normally written before the mutation. Keep this fallback
     // for any future mutation path that only schedules a sync.
     if (!_needsSync) {
       await _markLocalMutationPending();
     }
-    // Start the serialized upload immediately after the local write.
-    unawaited(_performBackupAndSync());
+    if (_disposed) return;
+    _syncTimer?.cancel();
+    _syncTimer = Timer(syncDelay, () => unawaited(_performBackupAndSync()));
   }
 
   @override
@@ -109,17 +132,19 @@ class AppProvider extends ChangeNotifier {
     // `dispose` cannot reliably await a network request. An async flush here
     // could also access an already disposed notifier.
     _disposed = true;
+    _syncTimer?.cancel();
     onDataSaved = null;
     super.dispose();
   }
 
   /// Immediately flushes pending local changes to Google Drive when possible.
-  /// This is used for destructive actions and lifecycle transitions.
+  /// Used when the app goes to the background and before signing out.
   Future<bool> flushPendingSync() async {
     // A lifecycle transition is not itself a data change. Avoid creating and
     // uploading a snapshot when the local state is already synchronized.
     if (!_needsSync) return true;
 
+    _syncTimer?.cancel();
     _pendingRevision++;
     await _persistPendingSync();
     await _performBackupAndSync(force: true);
@@ -147,12 +172,8 @@ class AppProvider extends ChangeNotifier {
       shouldBackup = true;
     }
 
-    // Check whether synchronization should run.
-    if (_needsSync) {
-      shouldSync = true;
-    } else if (shouldBackup) {
-      shouldSync = true; // A backup also requires synchronization.
-    }
+    // Upload only when there is something new to upload.
+    if (_needsSync) shouldSync = true;
 
     if (shouldBackup) {
       // Local backup.
@@ -172,7 +193,7 @@ class AppProvider extends ChangeNotifier {
         } catch (error, stackTrace) {
           _setPendingSync(true);
           await _persistPendingSync();
-          debugPrint('Помилка синхронізації після зміни даних: $error');
+          debugPrint('[Sync] Upload after a local change failed: $error');
           debugPrint('$stackTrace');
         }
       } else {
@@ -201,6 +222,7 @@ class AppProvider extends ChangeNotifier {
       notifyListeners();
       await _loadFiveDayPeriods();
       _cars = await _db.getAllCars();
+      _loadError = null;
       if (_cars.isEmpty) {
         _selectedCar = null;
         _odometerLogs = [];
@@ -225,7 +247,8 @@ class AppProvider extends ChangeNotifier {
         await loadLogsForCar(_selectedCar!.id);
       }
     } catch (e, stackTrace) {
-      debugPrint('Помилка завантаження машин: $e');
+      _loadError = e;
+      debugPrint('[Data] Loading cars failed: $e');
       debugPrint('$stackTrace');
     } finally {
       _isLoading = false;
@@ -293,19 +316,15 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> deleteCar(Car car) async {
     try {
+      // Keep a local copy of the car and all its records before deleting.
+      await _db.createAutoLocalBackup(tag: 'before-delete');
       await _markLocalMutationPending();
       await _db.deleteCar(car);
       if (_selectedCar?.id == car.id) {
         _selectedCar = null;
       }
       await loadCars();
-      // A deleted car must be uploaded immediately so the old car cannot
-      // remain in Google Drive if the app is removed at once.
-      final synced = await flushPendingSync();
-      if (!synced) {
-        debugPrint(
-            'Видалення машини збережено локально; синхронізація не вдалася.');
-      }
+      await _scheduleBackupAndSync();
     } catch (e) {
       debugPrint('Помилка видалення машини: $e');
       rethrow;

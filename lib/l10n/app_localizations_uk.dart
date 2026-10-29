@@ -435,4 +435,88 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get clearDate => 'Очистити дату';
+
+  @override
+  String get cloudConflictTitle => 'У Google Drive інші дані';
+
+  @override
+  String get cloudConflictBody =>
+      'На телефоні та в Google Drive різні дані. Оберіть, яку копію залишити. Інша копія збережеться як резервна й не зникне.';
+
+  @override
+  String get cloudRestoreTitle => 'Відновити з Google Drive?';
+
+  @override
+  String get cloudRestoreBody =>
+      'Дані на телефоні буде замінено копією з Google Drive. Поточні дані телефону спершу збережуться в локальну резервну копію.';
+
+  @override
+  String get cloudColumnPhone => 'Телефон';
+
+  @override
+  String get cloudColumnDrive => 'Google Drive';
+
+  @override
+  String get cloudRowCars => 'Автомобілі';
+
+  @override
+  String get cloudRowOdometer => 'Записи пробігу';
+
+  @override
+  String get cloudRowFuel => 'Заправки';
+
+  @override
+  String get cloudRowOther => 'Інші записи';
+
+  @override
+  String get cloudRowLastEntry => 'Останній запис';
+
+  @override
+  String cloudModifiedAt(String date) {
+    return 'Копію в Google Drive збережено $date';
+  }
+
+  @override
+  String get cloudUseDrive => 'Взяти з Google Drive';
+
+  @override
+  String get cloudUsePhone => 'Залишити дані телефону';
+
+  @override
+  String get cloudDecideLater => 'Пізніше';
+
+  @override
+  String get cloudRestoreAction => 'Відновити';
+
+  @override
+  String get restoreFromDriveMenu => 'Відновити з Google Drive';
+
+  @override
+  String get cloudNoBackup => 'У Google Drive ще немає копії';
+
+  @override
+  String get cloudOperationFailed =>
+      'Не вдалося зв\'язатися з Google Drive. Нічого не змінено. Перевірте підключення й спробуйте ще раз.';
+
+  @override
+  String get cloudRestored => 'Дані відновлено з Google Drive';
+
+  @override
+  String get cloudUploaded => 'Дані телефону збережено в Google Drive';
+
+  @override
+  String get cloudCheckingDrive => 'Перевіряємо Google Drive…';
+
+  @override
+  String get cloudRestoring => 'Відновлюємо дані…';
+
+  @override
+  String get syncNeedsDecision => 'Оберіть, які дані залишити';
+
+  @override
+  String get dataLoadErrorTitle => 'Не вдалося відкрити дані';
+
+  @override
+  String get dataLoadErrorBody =>
+      'Ваші записи не видалено. Спробуйте ще раз; якщо повториться — перезапустіть застосунок.';
 }

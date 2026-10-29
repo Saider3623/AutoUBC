@@ -434,4 +434,88 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearDate => 'Clear date';
+
+  @override
+  String get cloudConflictTitle => 'Different data in Google Drive';
+
+  @override
+  String get cloudConflictBody =>
+      'The phone and Google Drive hold different data. Choose which copy to keep. The other copy is saved as a backup and is not lost.';
+
+  @override
+  String get cloudRestoreTitle => 'Restore from Google Drive?';
+
+  @override
+  String get cloudRestoreBody =>
+      'Data on this phone will be replaced with the Google Drive copy. The current phone data is saved to a local backup first.';
+
+  @override
+  String get cloudColumnPhone => 'Phone';
+
+  @override
+  String get cloudColumnDrive => 'Google Drive';
+
+  @override
+  String get cloudRowCars => 'Cars';
+
+  @override
+  String get cloudRowOdometer => 'Odometer entries';
+
+  @override
+  String get cloudRowFuel => 'Refuels';
+
+  @override
+  String get cloudRowOther => 'Other records';
+
+  @override
+  String get cloudRowLastEntry => 'Last entry';
+
+  @override
+  String cloudModifiedAt(String date) {
+    return 'Google Drive copy saved $date';
+  }
+
+  @override
+  String get cloudUseDrive => 'Use Google Drive';
+
+  @override
+  String get cloudUsePhone => 'Keep phone data';
+
+  @override
+  String get cloudDecideLater => 'Later';
+
+  @override
+  String get cloudRestoreAction => 'Restore';
+
+  @override
+  String get restoreFromDriveMenu => 'Restore from Google Drive';
+
+  @override
+  String get cloudNoBackup => 'There is no copy in Google Drive yet';
+
+  @override
+  String get cloudOperationFailed =>
+      'Could not reach Google Drive. Nothing was changed. Check the connection and try again.';
+
+  @override
+  String get cloudRestored => 'Data restored from Google Drive';
+
+  @override
+  String get cloudUploaded => 'Phone data saved to Google Drive';
+
+  @override
+  String get cloudCheckingDrive => 'Checking Google Drive…';
+
+  @override
+  String get cloudRestoring => 'Restoring data…';
+
+  @override
+  String get syncNeedsDecision => 'Choose which data to keep';
+
+  @override
+  String get dataLoadErrorTitle => 'Could not open the data';
+
+  @override
+  String get dataLoadErrorBody =>
+      'Your records are not deleted. Try again; if it repeats, restart the app.';
 }

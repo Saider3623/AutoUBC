@@ -5,41 +5,25 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 
-/// The action selected during startup or after the first authorization.
-enum SyncStartupAction { none, download, upload, error }
+import 'cloud_sync_policy.dart';
 
-enum SyncStatus { unknown, idle, syncing, error }
+/// State of the Google Drive connection shown next to the car name.
+enum SyncStatus {
+  /// Nothing has been synchronized in this session yet.
+  unknown,
+  idle,
+  syncing,
+  error,
+
+  /// The phone and the cloud hold different data and the user must choose.
+  attention,
+}
 
 SyncStatus effectiveSyncStatus({
   required SyncStatus status,
   required int activeOperations,
 }) {
   return activeOperations > 0 ? SyncStatus.syncing : status;
-}
-
-/// Returns whether the app should ask for the first car after synchronization.
-bool shouldPromptForFirstCarSetup({
-  required bool isConnected,
-  required bool hasCars,
-  required SyncStartupAction syncAction,
-}) {
-  return isConnected && !hasCars && syncAction != SyncStartupAction.error;
-}
-
-/// Resolves the local-first startup policy.
-///
-/// Existing local data is authoritative on normal launches. A remote backup is
-/// downloaded only when the local database file was missing at startup. A
-/// pending mutation from an existing local database is uploaded silently.
-SyncStartupAction resolveSyncStartupAction({
-  required bool hasLocalData,
-  required bool remoteExists,
-  bool hasPendingLocalChanges = false,
-}) {
-  if (!hasLocalData && remoteExists) return SyncStartupAction.download;
-  if (hasPendingLocalChanges) return SyncStartupAction.upload;
-  if (hasLocalData) return SyncStartupAction.none;
-  return SyncStartupAction.none;
 }
 
 /// Returns the newest backup candidate from Drive results.
@@ -58,8 +42,19 @@ drive.File? selectNewestBackupFile(Iterable<drive.File> files) {
   return candidates.isEmpty ? null : candidates.first;
 }
 
-/// Ім'я файлу бекапу на Google Диску.
-const _kBackupFileName = 'autoubc_backup.isar';
+/// A backup file stored in the Drive app data folder.
+class RemoteBackup {
+  final String id;
+  final String name;
+  final DateTime? modifiedTime;
+
+  const RemoteBackup({
+    required this.id,
+    required this.name,
+    this.modifiedTime,
+  });
+}
+
 const _kDriveScope = 'https://www.googleapis.com/auth/drive.appdata';
 const _kGoogleWebClientId =
     '495555935730-cha6pi6dq22t131cn5ufspsjevfa8b1v.apps.googleusercontent.com';
@@ -72,7 +67,11 @@ const _kAuthTimeout = Duration(seconds: 15);
 const _kMetadataTimeout = Duration(seconds: 30);
 const _kTransferTimeout = Duration(seconds: 120);
 
-/// HTTP-клієнт, що автоматично додає токен авторизації Google.
+/// A download is aborted when no data arrives for this long. There is no cap
+/// on the total time, so a slow but working connection still finishes.
+const _kStallTimeout = Duration(seconds: 30);
+
+/// HTTP client that adds the Google authorization header to every request.
 class _AuthenticatedClient extends http.BaseClient {
   final Map<String, String> _headers;
   final http.Client _inner;
@@ -91,15 +90,10 @@ class _AuthenticatedClient extends http.BaseClient {
   }
 }
 
-class _DriveSession {
-  final drive.DriveApi api;
-  final _AuthenticatedClient client;
-
-  _DriveSession(this.api, this.client);
-
-  void close() => client.close();
-}
-
+/// Google sign-in and file transfer to the Drive app data folder.
+///
+/// This class only moves files. Decisions about which copy wins are made by
+/// `CloudSyncController` with the rules in `cloud_sync_policy.dart`.
 class GoogleDriveSyncService extends ChangeNotifier {
   static final GoogleDriveSyncService _instance =
       GoogleDriveSyncService._internal();
@@ -114,20 +108,30 @@ class GoogleDriveSyncService extends ChangeNotifier {
   GoogleSignInAccount? _currentUser;
   Future<void> _operationQueue = Future<void>.value();
   int _activeOperations = 0;
-  bool _lastSyncFailed = false;
   SyncStatus _syncStatus = SyncStatus.unknown;
+  DateTime? _lastSuccessAt;
+  String? _lastError;
 
-  /// Поточний Google-акаунт (null = не авторизований).
+  /// The signed-in Google account, `null` when signed out.
   GoogleSignInAccount? get currentUser => _currentUser;
 
-  /// Чи підключений акаунт.
   bool get isConnected => _currentUser != null;
 
-  /// Чи виконується зараз синхронізація (upload/download).
+  /// Stable id of the signed-in account.
+  String? get accountId => _currentUser?.id;
+
+  String? get accountEmail => _currentUser?.email;
+
+  /// Whether an upload or download is running.
   bool get isSyncing => _activeOperations > 0;
 
-  /// Чи була помилка під час останньої спроби синхронізації.
-  bool get hasSyncError => _lastSyncFailed;
+  bool get hasSyncError => _syncStatus == SyncStatus.error;
+
+  /// Time of the last successful Drive operation in this session.
+  DateTime? get lastSuccessAt => _lastSuccessAt;
+
+  /// Technical description of the last failed Drive operation.
+  String? get lastError => _lastError;
 
   SyncStatus get syncStatus => effectiveSyncStatus(
         status: _syncStatus,
@@ -136,19 +140,19 @@ class GoogleDriveSyncService extends ChangeNotifier {
 
   void _beginOperation() {
     _activeOperations++;
-    _syncStatus = SyncStatus.syncing;
     notifyListeners();
   }
 
-  void _endOperation({
-    required bool success,
-    SyncStatus? terminalStatus,
-  }) {
+  void _endOperation({required bool success, Object? error}) {
     _activeOperations = (_activeOperations > 0) ? _activeOperations - 1 : 0;
-    _lastSyncFailed = terminalStatus == SyncStatus.error || !success;
+    if (success) {
+      _lastSuccessAt = DateTime.now();
+      _lastError = null;
+    } else {
+      _lastError = error?.toString();
+    }
     if (_activeOperations == 0) {
-      _syncStatus =
-          terminalStatus ?? (success ? SyncStatus.idle : SyncStatus.error);
+      _syncStatus = success ? SyncStatus.idle : SyncStatus.error;
     }
     notifyListeners();
   }
@@ -159,297 +163,253 @@ class GoogleDriveSyncService extends ChangeNotifier {
     return result;
   }
 
-  // ---------------------------------------------------------------------------
-  // АВТОРИЗАЦІЯ
-  // ---------------------------------------------------------------------------
-
-  /// Тихий вхід — викликається при старті додатку.
-  /// Не показує жодних діалогів, якщо акаунт вже прив'язаний.
-  Future<bool> signInSilently() async {
-    try {
-      final account =
-          await _googleSignIn.signInSilently().timeout(_kAuthTimeout);
-      _currentUser = account;
-      _syncStatus = SyncStatus.unknown;
-      _lastSyncFailed = false;
-      notifyListeners();
-      return account != null;
-    } catch (e, stackTrace) {
-      debugPrint('[GoogleDrive] Тихий вхід не вдався: $e');
-      debugPrint('$stackTrace');
-      return false;
-    }
-  }
-
-  /// Інтерактивний вхід — викликається лише по кнопці.
-  Future<bool> signIn() async {
-    try {
-      final account = await _googleSignIn.signIn().timeout(_kTransferTimeout);
-      _currentUser = account;
-      _syncStatus = SyncStatus.unknown;
-      _lastSyncFailed = false;
-      notifyListeners();
-      return account != null;
-    } catch (e, stackTrace) {
-      debugPrint('[GoogleDrive] Помилка входу: $e');
-      debugPrint('$stackTrace');
-      return false;
-    }
-  }
-
-  /// Вихід з акаунту.
-  Future<void> signOut() async {
-    await _googleSignIn.signOut();
-    _currentUser = null;
-    _syncStatus = SyncStatus.unknown;
-    _lastSyncFailed = false;
-    notifyListeners();
-  }
-
-  // ---------------------------------------------------------------------------
-  // РОБОТА З ДИСКОМ
-  // ---------------------------------------------------------------------------
-
-  /// Selects an action without comparing local and remote content.
-  ///
-  /// A normal authorized launch is local-first and does not contact Drive.
-  /// Drive is queried only when the caller explicitly allows an empty local
-  /// database to be restored (first authorization or missing local database).
-  Future<SyncStartupAction> decideStartupAction({
-    required bool hasLocalData,
-    bool hasPendingLocalChanges = false,
-    bool restoreIfEmpty = false,
-  }) async {
-    if (_currentUser == null) return SyncStartupAction.none;
-
-    // A missing local database must be restored before considering any stale
-    // pending marker from the previous local installation.
-    if (!hasLocalData && restoreIfEmpty) {
+  /// Runs one Drive operation: serialized with the others, counted for the
+  /// status indicator, with a fresh authorized client that is always closed.
+  Future<T> _operation<T>(
+    String label,
+    Future<T> Function(drive.DriveApi api) body,
+  ) {
+    return _enqueue(() async {
+      _beginOperation();
+      _AuthenticatedClient? client;
       try {
-        final session = await _getDriveSession();
-        if (session == null) return SyncStartupAction.none;
-
-        try {
-          final remoteFile = await _findBackupFile(session.api);
-          return resolveSyncStartupAction(
-            hasLocalData: false,
-            remoteExists: remoteFile != null,
-          );
-        } finally {
-          session.close();
-        }
-      } catch (e, stackTrace) {
-        debugPrint('[GoogleDrive] Помилка перевірки стану: $e');
+        client = await _authorizedClient();
+        final value = await body(drive.DriveApi(client));
+        _endOperation(success: true);
+        return value;
+      } catch (error, stackTrace) {
+        debugPrint('[GoogleDrive] $label failed: $error');
         debugPrint('$stackTrace');
-        return SyncStartupAction.error;
+        _endOperation(success: false, error: error);
+        rethrow;
+      } finally {
+        client?.close();
       }
-    }
-
-    if (hasPendingLocalChanges) return SyncStartupAction.upload;
-    if (hasLocalData) {
-      // During interactive first authorization, preserve the local database
-      // and seed/update Drive from it instead of overwriting local data.
-      return restoreIfEmpty ? SyncStartupAction.upload : SyncStartupAction.none;
-    }
-    return SyncStartupAction.none;
+    });
   }
 
-  /// Отримати авторизований HTTP-клієнт для googleapis.
-  Future<_DriveSession?> _getDriveSession() async {
+  Future<_AuthenticatedClient> _authorizedClient() async {
     final user = _currentUser;
-    if (user == null) return null;
+    if (user == null) throw StateError('Not signed in to Google.');
 
     final auth = await user.authentication.timeout(_kAuthTimeout);
     final accessToken = auth.accessToken;
     if (accessToken == null || accessToken.isEmpty) {
       throw StateError('Google access token is unavailable.');
     }
-
-    final innerClient = http.Client();
-    final client = _AuthenticatedClient(
+    return _AuthenticatedClient(
       {'Authorization': 'Bearer $accessToken'},
-      innerClient,
+      http.Client(),
     );
-    return _DriveSession(drive.DriveApi(client), client);
   }
 
-  /// Find the latest backup file in appDataFolder, when one exists.
-  /// API errors are intentionally propagated to the caller: an unknown cloud
-  /// state must not be treated as a missing file and replaced by local data.
-  Future<drive.File?> _findBackupFile(drive.DriveApi api) async {
+  // ---------------------------------------------------------------------------
+  // Authorization
+  // ---------------------------------------------------------------------------
+
+  /// Signs in without any dialog when the account was connected before.
+  Future<bool> signInSilently() async {
+    try {
+      final account =
+          await _googleSignIn.signInSilently().timeout(_kAuthTimeout);
+      _setUser(account);
+      return account != null;
+    } catch (e, stackTrace) {
+      debugPrint('[GoogleDrive] Silent sign-in failed: $e');
+      debugPrint('$stackTrace');
+      return false;
+    }
+  }
+
+  /// Interactive sign-in, started only by the user.
+  Future<bool> signIn() async {
+    try {
+      final account = await _googleSignIn.signIn().timeout(_kTransferTimeout);
+      _setUser(account);
+      return account != null;
+    } catch (e, stackTrace) {
+      debugPrint('[GoogleDrive] Sign-in failed: $e');
+      debugPrint('$stackTrace');
+      return false;
+    }
+  }
+
+  Future<void> signOut() async {
+    await _googleSignIn.signOut();
+    _setUser(null);
+  }
+
+  void _setUser(GoogleSignInAccount? account) {
+    _currentUser = account;
+    _syncStatus = SyncStatus.unknown;
+    _lastError = null;
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Drive files
+  // ---------------------------------------------------------------------------
+
+  /// Finds the main backup. API errors are propagated: an unknown cloud state
+  /// must never be treated as a missing file and replaced by local data.
+  Future<RemoteBackup?> findBackup() {
+    return _operation('find backup', _findMainBackup);
+  }
+
+  Future<RemoteBackup?> _findMainBackup(drive.DriveApi api) async {
     final list = await api.files
         .list(
           spaces: 'appDataFolder',
-          q: "name = '$_kBackupFileName' and trashed = false",
+          q: "name = '$cloudBackupFileName' and trashed = false",
           orderBy: 'modifiedTime desc',
           $fields: 'files(id, name, modifiedTime)',
         )
         .timeout(_kMetadataTimeout);
-
-    return selectNewestBackupFile(list.files ?? const <drive.File>[]);
+    final file = selectNewestBackupFile(list.files ?? const <drive.File>[]);
+    return file == null ? null : _toRemote(file);
   }
 
-  /// Вивантажити файл БД в Google Drive (appDataFolder).
-  /// Якщо файл вже існує — оновлює (PATCH), якщо ні — створює (POST).
-  Future<bool> uploadBackup(String dbFilePath) {
-    return _enqueue(() => _uploadBackup(dbFilePath));
+  /// Lists the dated copies kept before the main backup was replaced, newest
+  /// first.
+  Future<List<RemoteBackup>> listDatedCopies() {
+    return _operation('list copies', _listDatedCopies);
   }
 
-  Future<bool> _uploadBackup(String dbFilePath) async {
-    if (_currentUser == null) return false;
-    _beginOperation();
-    _DriveSession? session;
-    try {
-      session = await _getDriveSession();
-      if (session == null) {
-        throw StateError('Не вдалося ініціалізувати Drive API');
-      }
+  Future<List<RemoteBackup>> _listDatedCopies(drive.DriveApi api) async {
+    final list = await api.files
+        .list(
+          spaces: 'appDataFolder',
+          q: 'trashed = false',
+          pageSize: 200,
+          $fields: 'files(id, name, modifiedTime)',
+        )
+        .timeout(_kMetadataTimeout);
+    final copies = [
+      for (final file in list.files ?? const <drive.File>[])
+        if (file.id != null &&
+            (file.name ?? '').startsWith(cloudDatedCopyPrefix))
+          _toRemote(file),
+    ]..sort((a, b) => b.name.compareTo(a.name));
+    return copies;
+  }
 
-      final api = session.api;
-      final dbFile = File(dbFilePath);
-      if (!await dbFile.exists()) {
-        throw Exception('Файл БД не знайдено: $dbFilePath');
-      }
-
-      final existingFile = await _findBackupFile(api);
-      final media = drive.Media(
-        dbFile.openRead(),
-        await dbFile.length(),
-        contentType: 'application/octet-stream',
+  RemoteBackup _toRemote(drive.File file) => RemoteBackup(
+        id: file.id!,
+        name: file.name ?? '',
+        modifiedTime: file.modifiedTime?.toLocal(),
       );
 
-      if (existingFile?.id != null) {
-        await api.files
-            .update(
-              drive.File(),
-              existingFile!.id!,
-              uploadMedia: media,
+  /// Downloads [backup] into [targetPath]. Throws when the transfer fails or
+  /// stalls; a partial file is deleted.
+  Future<void> downloadBackup(RemoteBackup backup, String targetPath) {
+    return _operation('download', (api) async {
+      final target = File(targetPath);
+      try {
+        final media = await api.files
+            .get(
+              backup.id,
+              downloadOptions: drive.DownloadOptions.fullMedia,
             )
-            .timeout(_kTransferTimeout);
-        debugPrint(
-            '[GoogleDrive] Бекап оновлено (PATCH). ID: ${existingFile.id}');
-      } else {
-        final driveFile = drive.File()
-          ..name = _kBackupFileName
-          ..parents = ['appDataFolder'];
-        await api.files
-            .create(driveFile, uploadMedia: media)
-            .timeout(_kTransferTimeout);
-        debugPrint('[GoogleDrive] Бекап створено (POST).');
+            .timeout(_kMetadataTimeout) as drive.Media;
+        final sink = target.openWrite();
+        try {
+          // The stall timeout ends the stream with an error; `addStream` then
+          // cancels the HTTP stream and returns, so the sink can be closed.
+          await sink.addStream(media.stream.timeout(_kStallTimeout));
+        } finally {
+          try {
+            await sink.close();
+          } catch (_) {}
+        }
+        if (!await target.exists() || await target.length() == 0) {
+          throw StateError('Downloaded backup is empty.');
+        }
+      } catch (_) {
+        try {
+          if (await target.exists()) await target.delete();
+        } catch (_) {}
+        rethrow;
       }
+    });
+  }
 
-      _endOperation(success: true);
+  /// Uploads [snapshotPath] as the main backup. Before an existing backup is
+  /// replaced, a dated copy of it is kept (one per day, or a separate one when
+  /// [keepSeparateCopy] is set). Returns whether the upload succeeded.
+  Future<bool> uploadBackup(
+    String snapshotPath, {
+    bool keepSeparateCopy = false,
+  }) async {
+    if (_currentUser == null) return false;
+    try {
+      await _operation('upload', (api) async {
+        final file = File(snapshotPath);
+        if (!await file.exists()) {
+          throw StateError('Snapshot not found: $snapshotPath');
+        }
+
+        final existing = await _findMainBackup(api);
+        if (existing != null) {
+          await _keepDatedCopy(api, existing, unique: keepSeparateCopy);
+        }
+
+        final media = drive.Media(
+          file.openRead(),
+          await file.length(),
+          contentType: 'application/octet-stream',
+        );
+        if (existing != null) {
+          await api.files
+              .update(drive.File(), existing.id, uploadMedia: media)
+              .timeout(_kTransferTimeout);
+        } else {
+          final driveFile = drive.File()
+            ..name = cloudBackupFileName
+            ..parents = ['appDataFolder'];
+          await api.files
+              .create(driveFile, uploadMedia: media)
+              .timeout(_kTransferTimeout);
+        }
+      });
       return true;
-    } catch (e, stackTrace) {
-      debugPrint('[GoogleDrive] Помилка вивантаження: $e');
-      debugPrint('$stackTrace');
-      _endOperation(success: false);
+    } catch (_) {
       return false;
-    } finally {
-      session?.close();
     }
   }
 
-  /// Завантажити бекап з Google Drive і записати в локальний файл.
-  /// Повертає true, якщо файл успішно завантажено.
-  Future<bool> downloadBackup(
-    String targetFilePath, {
-    Future<bool> Function(String path)? validateFile,
-  }) {
-    return _enqueue(
-        () => _downloadBackup(targetFilePath, validateFile: validateFile));
-  }
-
-  Future<bool> _downloadBackup(
-    String targetFilePath, {
-    Future<bool> Function(String path)? validateFile,
+  /// Copies the current main backup to a dated file and prunes old copies.
+  ///
+  /// A routine copy failure does not block the upload (yesterday's copy is
+  /// already there). A [unique] copy is made before an explicit replacement
+  /// chosen by the user, so its failure aborts the replacement.
+  Future<void> _keepDatedCopy(
+    drive.DriveApi api,
+    RemoteBackup current, {
+    required bool unique,
   }) async {
-    if (_currentUser == null) return false;
-    _beginOperation();
-
-    _DriveSession? session;
-    File? tempFile;
     try {
-      session = await _getDriveSession();
-      if (session == null) {
-        throw StateError('Не вдалося ініціалізувати Drive API');
+      final copies = await _listDatedCopies(api);
+      final name = datedCloudCopyName(DateTime.now(), unique: unique);
+      if (!copies.any((copy) => copy.name == name)) {
+        final copy = drive.File()
+          ..name = name
+          ..parents = ['appDataFolder'];
+        await api.files.copy(copy, current.id).timeout(_kMetadataTimeout);
+        copies.add(RemoteBackup(id: '', name: name));
       }
-
-      final api = session.api;
-      final remoteFile = await _findBackupFile(api);
-      if (remoteFile == null || remoteFile.id == null) {
-        debugPrint('[GoogleDrive] Бекап на Диску не знайдено.');
-        _endOperation(success: true, terminalStatus: SyncStatus.unknown);
-        return false;
-      }
-
-      final response = await api.files
-          .get(
-            remoteFile.id!,
-            downloadOptions: drive.DownloadOptions.fullMedia,
-          )
-          .timeout(_kTransferTimeout) as drive.Media;
-
-      final targetFile = File(targetFilePath);
-      tempFile = File('$targetFilePath.download.isar');
-      final previousFile = File('$targetFilePath.previous');
-
-      // Recover a replacement interrupted after the old file was moved aside.
-      if (!await targetFile.exists() && await previousFile.exists()) {
-        await previousFile.rename(targetFile.path);
-      }
-      if (await tempFile.exists()) await tempFile.delete();
-
-      final sink = tempFile.openWrite();
-      try {
-        await sink.addStream(response.stream).timeout(_kTransferTimeout);
-      } catch (_) {
-        // Abort a stalled transfer: closing the HTTP client ends the media
-        // stream, so the sink can be closed and the temporary file removed
-        // instead of keeping the sync queue busy forever.
-        session.close();
-        rethrow;
-      } finally {
-        await sink.close();
-      }
-
-      if (!await tempFile.exists() || await tempFile.length() == 0) {
-        throw StateError('Downloaded backup is empty.');
-      }
-      if (validateFile != null && !await validateFile(tempFile.path)) {
-        throw StateError('Downloaded backup failed schema validation.');
-      }
-
-      if (await targetFile.exists()) {
-        if (await previousFile.exists()) await previousFile.delete();
-        await targetFile.rename(previousFile.path);
-      }
-      try {
-        await tempFile.rename(targetFile.path);
-        if (await previousFile.exists()) await previousFile.delete();
-      } catch (_) {
-        if (await targetFile.exists()) await targetFile.delete();
-        if (await previousFile.exists()) {
-          await previousFile.rename(targetFile.path);
+      final toDelete = datedCopiesToDelete(copies.map((copy) => copy.name));
+      for (final copy in copies) {
+        if (copy.id.isNotEmpty && toDelete.contains(copy.name)) {
+          try {
+            await api.files.delete(copy.id).timeout(_kMetadataTimeout);
+          } catch (error) {
+            debugPrint('[GoogleDrive] Could not delete ${copy.name}: $error');
+          }
         }
-        rethrow;
       }
-
-      debugPrint('[GoogleDrive] Бекап завантажено в $targetFilePath.');
-      _endOperation(success: true);
-      return true;
-    } catch (e, stackTrace) {
-      if (tempFile != null && await tempFile.exists()) {
-        try {
-          await tempFile.delete();
-        } catch (_) {}
-      }
-      debugPrint('[GoogleDrive] Помилка завантаження: $e');
-      debugPrint('$stackTrace');
-      _endOperation(success: false);
-      return false;
-    } finally {
-      session?.close();
+    } catch (error) {
+      if (unique) rethrow;
+      debugPrint('[GoogleDrive] Dated copy skipped: $error');
     }
   }
 }
