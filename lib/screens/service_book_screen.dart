@@ -5,7 +5,9 @@ import '../models/service_log.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/error_messages.dart';
 import '../utils/form_validators.dart';
+import '../utils/validation.dart';
 import '../widgets/app_empty_state.dart';
 import '../widgets/inline_form_error.dart';
 
@@ -229,8 +231,15 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
     );
 
     if (confirmed == true && context.mounted) {
-      await Provider.of<AppProvider>(context, listen: false)
-          .deleteServiceLog(log);
+      final messenger = ScaffoldMessenger.of(context);
+      try {
+        await Provider.of<AppProvider>(context, listen: false)
+            .deleteServiceLog(log);
+      } catch (error) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(describeError(error, loc))),
+        );
+      }
     }
   }
 }
@@ -366,8 +375,9 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
                   maxLines: 6,
                   textCapitalization: TextCapitalization.sentences,
                   autovalidateMode: AutovalidateMode.onUserInteraction,
+                  // A description made only of list markers ("- ") is empty.
                   validator: (value) => validateRequiredText(
-                    value,
+                    meaningfulText(value ?? ''),
                     message: loc.fieldRequired,
                   ),
                   decoration: InputDecoration(
@@ -376,7 +386,7 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
                     alignLabelWithHint: true,
                   ),
                   onChanged: (value) {
-                    // Якщо користувач натиснув Enter, автоматично додаємо тире
+                    // Start every new line with a dash after Enter.
                     if (value.endsWith('\n')) {
                       _descController.text = '$value- ';
                       _descController.selection = TextSelection.fromPosition(
@@ -404,11 +414,15 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
                     return;
                   }
 
-                  final log = widget.logToEdit ?? ServiceLog();
-                  log.carId = widget.carId;
-                  log.date = _date;
-                  log.odometer = int.parse(_odometerController.text.trim());
-                  log.description = _descController.text.trim();
+                  // Build a new object: the edited entry stays untouched in
+                  // the provider until the save succeeds.
+                  final log = ServiceLog()
+                    ..carId = widget.carId
+                    ..date = _date
+                    ..odometer = int.parse(_odometerController.text.trim())
+                    ..description = _descController.text.trim();
+                  final editedId = widget.logToEdit?.id;
+                  if (editedId != null) log.id = editedId;
 
                   setState(() {
                     _isSaving = true;
@@ -422,7 +436,7 @@ class _ServiceLogDialogState extends State<_ServiceLogDialog> {
                     if (!mounted) return;
                     setState(() {
                       _isSaving = false;
-                      _saveError = loc.saveError(error.toString());
+                      _saveError = describeError(error, loc);
                     });
                   }
                 },

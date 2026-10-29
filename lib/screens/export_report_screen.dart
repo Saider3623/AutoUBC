@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/report_service.dart';
+import '../utils/error_messages.dart';
 
 class ExportReportScreen extends StatefulWidget {
   const ExportReportScreen({super.key});
@@ -42,7 +43,8 @@ class _ExportReportScreenState extends State<ExportReportScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
-                  AppLocalizations.of(context)!.exportError(e.toString()))),
+                  AppLocalizations.of(context)!.exportError(
+                      describeError(e, AppLocalizations.of(context)!)))),
         );
       }
     } finally {

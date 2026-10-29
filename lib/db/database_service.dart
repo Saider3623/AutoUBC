@@ -193,7 +193,8 @@ class DatabaseService {
   void _validateCar(Car car) {
     car.name = car.name.trim();
     if (car.name.isEmpty) {
-      throw const DataValidationException('Car name cannot be empty.');
+      throw const DataValidationException(
+          ValidationCode.carNameEmpty, 'Car name cannot be empty.');
     }
 
     final fuelTypes = (car.fuelTypes ?? const <String>[])
@@ -306,7 +307,12 @@ class DatabaseService {
           .findFirst();
       if (previous != null && odometer < previous.odometer) {
         throw DataValidationException(
-            'Odometer cannot be lower than the previous reading (${previous.odometer}).');
+          ValidationCode.odometerBelowPrevious,
+          'Odometer cannot be lower than the previous reading '
+          '(${previous.odometer}).',
+          reading: previous.odometer,
+          readingDate: previous.dateString,
+        );
       }
 
       final next = await db.odometerLogs
@@ -317,7 +323,11 @@ class DatabaseService {
           .findFirst();
       if (next != null && odometer > next.odometer) {
         throw DataValidationException(
-            'Odometer cannot be higher than the next reading (${next.odometer}).');
+          ValidationCode.odometerAboveNext,
+          'Odometer cannot be higher than the next reading (${next.odometer}).',
+          reading: next.odometer,
+          readingDate: next.dateString,
+        );
       }
 
       if (existing != null) {
@@ -356,7 +366,8 @@ class DatabaseService {
     validateTimeString(timeString);
     validateNonNegativeNumber(liters, 'Liters');
     if (fuelType.trim().isEmpty) {
-      throw const DataValidationException('Fuel type cannot be empty.');
+      throw const DataValidationException(
+          ValidationCode.fuelTypeEmpty, 'Fuel type cannot be empty.');
     }
 
     await db.writeTxn(() async {
@@ -388,7 +399,8 @@ class DatabaseService {
   Future<Car> _requireCar(Isar db, int carId) async {
     final car = await db.cars.get(carId);
     if (car == null) {
-      throw const DataValidationException('Car no longer exists.');
+      throw const DataValidationException(
+          ValidationCode.carMissing, 'Car no longer exists.');
     }
     return car;
   }
@@ -461,7 +473,8 @@ class DatabaseService {
     final db = await isar;
     final carId = reminder.carId;
     if (carId == null) {
-      throw const DataValidationException('Reminder must have a car.');
+      throw const DataValidationException(
+          ValidationCode.recordWithoutCar, 'Reminder must have a car.');
     }
     await _requireCar(db, carId);
     _validateReminder(reminder);
@@ -473,7 +486,8 @@ class DatabaseService {
     final db = await isar;
     final carId = reminder.carId;
     if (carId == null) {
-      throw const DataValidationException('Reminder must have a car.');
+      throw const DataValidationException(
+          ValidationCode.recordWithoutCar, 'Reminder must have a car.');
     }
     await _requireCar(db, carId);
     _validateReminder(reminder);
@@ -502,7 +516,8 @@ class DatabaseService {
     final db = await isar;
     final carId = reminder.carId;
     if (carId == null) {
-      throw const DataValidationException('Reminder must have a car.');
+      throw const DataValidationException(
+          ValidationCode.recordWithoutCar, 'Reminder must have a car.');
     }
     await _requireCar(db, carId);
     _validateReminder(reminder);
@@ -574,7 +589,8 @@ class DatabaseService {
     await _validateServiceLog(db, log);
     final existing = await db.serviceLogs.get(log.id);
     if (existing == null) {
-      throw const DataValidationException('Service entry no longer exists.');
+      throw const DataValidationException(
+          ValidationCode.recordMissing, 'Service entry no longer exists.');
     }
     await db.writeTxn(() => db.serviceLogs.put(log));
   }
@@ -582,13 +598,14 @@ class DatabaseService {
   Future<void> _validateServiceLog(Isar db, ServiceLog log) async {
     final carId = log.carId;
     if (carId == null) {
-      throw const DataValidationException('Service entry must have a car.');
+      throw const DataValidationException(
+          ValidationCode.recordWithoutCar, 'Service entry must have a car.');
     }
     await _requireCar(db, carId);
     validateNonNegativeNumber(log.odometer, 'Service odometer');
     log.description = log.description.trim();
-    if (log.description.isEmpty) {
-      throw const DataValidationException(
+    if (meaningfulText(log.description).isEmpty) {
+      throw const DataValidationException(ValidationCode.descriptionEmpty,
           'Service description cannot be empty.');
     }
   }
@@ -631,7 +648,8 @@ class DatabaseService {
     final db = await isar;
     final carId = note.carId;
     if (carId == null) {
-      throw const DataValidationException('Note must have a car.');
+      throw const DataValidationException(
+          ValidationCode.recordWithoutCar, 'Note must have a car.');
     }
     await _requireCar(db, carId);
     _validateNote(note);
@@ -643,7 +661,8 @@ class DatabaseService {
     final db = await isar;
     final carId = note.carId;
     if (carId == null) {
-      throw const DataValidationException('Note must have a car.');
+      throw const DataValidationException(
+          ValidationCode.recordWithoutCar, 'Note must have a car.');
     }
     await _requireCar(db, carId);
     _validateNote(note);
@@ -653,7 +672,8 @@ class DatabaseService {
   void _validateNote(Note note) {
     note.description = note.description.trim();
     if (note.description.isEmpty) {
-      throw const DataValidationException('Note cannot be empty.');
+      throw const DataValidationException(
+          ValidationCode.descriptionEmpty, 'Note cannot be empty.');
     }
   }
 
@@ -685,6 +705,7 @@ class DatabaseService {
         validateDateString(end);
         if (end.compareTo(start) < 0) {
           throw const DataValidationException(
+              ValidationCode.periodEndsBeforeStart,
               'Five-day period cannot end before it starts.');
         }
       }

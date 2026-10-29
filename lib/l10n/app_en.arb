@@ -1,6 +1,5 @@
 {
   "@@locale": "en",
-  "appTitle": "AutoUBC",
   "addCar": "Add Car",
   "selectCar": "Select Car",
   "deleteCar": "Delete Current Car",
@@ -24,23 +23,12 @@
   "delete": "Delete",
   "confirm": "Confirm",
   "enterData": "Enter Data",
-  "historyAndReports": "History and Reports",
   "date": "Date",
   "odometer": "Odometer",
   "km": "km",
   "fuel": "Fuel",
   "save": "Save",
   "saveOdometerSuccess": "Odometer reading saved",
-  "saveError": "Save error: {error}",
-  "@saveError": {
-    "description": "Error message when saving fails",
-    "placeholders": {
-      "error": {
-        "type": "String",
-        "description": "Error message"
-      }
-    }
-  },
   "refuelingAdded": "Refueling added",
   "addRefueling": "Add Refueling",
   "customReminder": "Other",
@@ -167,23 +155,6 @@
   "endLabel": "End",
   "fuelSection": "FUEL",
   "noRefuels": "No refuels",
-  "averageFuelConsumption": "Average Fuel Consumption (last 30 days)",
-  "averageFuelConsumptionFor": "{fuelType}: {consumption} L/100km",
-  "@averageFuelConsumptionFor": {
-    "description": "Average fuel consumption display",
-    "placeholders": {
-      "fuelType": {
-        "type": "String",
-        "description": "Type of fuel"
-      },
-      "consumption": {
-        "type": "String",
-        "description": "Fuel consumption value"
-      }
-    }
-  },
-  "primaryFuelType": "Primary Fuel Type",
-  "selectPrimaryFuelType": "Select primary fuel type",
   "carName": "Car Name",
   "editCar": "Edit Car",
   "carAdded": "Car added successfully!",
@@ -193,17 +164,14 @@
   "addNote": "Add Note",
   "editNote": "Edit Note",
   "noteDescription": "Description",
-  "noteDateTime": "Date and Time",
   "deleteNote": "Delete Note",
   "deleteNoteConfirmation": "Are you sure you want to delete this note?",
   "noNotes": "No notes yet",
   "chooseDate": "Choose Date",
   "noteDateSelected": "Date saved",
   "syncInProgress": "Synchronizing…",
-  "syncUnknown": "Not synchronized yet",
   "syncIdle": "Synchronized",
   "syncError": "Synchronization error",
-  "syncOk": "Synchronized",
   "workWeekSection": "Working week mode",
   "saturdayNotWorkingConfirm": "According to the schedule, a 5-day week applies on this date and Saturday is a day off. Add data?",
   "workWeekScheduleHint": "By default the week has 6 days (Mon–Sat). From the start date to the end date a 5-day week (Mon–Fri) applies. Sunday is always a day off.",
@@ -246,5 +214,46 @@
   "cloudRestoring": "Restoring data…",
   "syncNeedsDecision": "Choose which data to keep",
   "dataLoadErrorTitle": "Could not open the data",
-  "dataLoadErrorBody": "Your records are not deleted. Try again; if it repeats, restart the app."
+  "dataLoadErrorBody": "Your records are not deleted. Try again; if it repeats, restart the app.",
+  "errorCarNameEmpty": "Enter the car name.",
+  "errorCarMissing": "This car no longer exists. Reopen the screen and try again.",
+  "errorRecordMissing": "This record no longer exists.",
+  "errorFuelTypeEmpty": "Choose a fuel type.",
+  "errorOdometerBelowPrevious": "The reading is lower than the previous one: {reading} km on {date}.",
+  "@errorOdometerBelowPrevious": {
+    "placeholders": {
+      "reading": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "errorOdometerAboveNext": "The reading is higher than the next one: {reading} km on {date}.",
+  "@errorOdometerAboveNext": {
+    "placeholders": {
+      "reading": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "errorInvalidDate": "The date is not valid.",
+  "errorInvalidTime": "The time is not valid.",
+  "errorPeriodEndsBeforeStart": "The end date is earlier than the start date.",
+  "errorUnexpected": "Something went wrong. Try again.",
+  "weekDetailTitle": "Details: {range}",
+  "@weekDetailTitle": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderStartKm": "Count from mileage",
+  "deleteReminderConfirmation": "Delete this reminder?",
+  "numberMustBePositive": "Enter a number greater than zero"
 }

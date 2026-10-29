@@ -100,4 +100,23 @@ void main() {
       );
     });
   });
+
+  test('rejects zero litres when a positive value is required', () {
+    expect(
+      validateNonNegativeDecimal('0',
+          requiredMessage: 'Required',
+          invalidMessage: 'Invalid',
+          nonNegativeMessage: 'Negative',
+          positiveMessage: 'Positive'),
+      'Positive',
+    );
+    expect(
+      validateNonNegativeDecimal('0,5',
+          requiredMessage: 'Required',
+          invalidMessage: 'Invalid',
+          nonNegativeMessage: 'Negative',
+          positiveMessage: 'Positive'),
+      isNull,
+    );
+  });
 }

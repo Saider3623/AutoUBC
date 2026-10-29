@@ -9,9 +9,6 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'AutoUBC';
-
-  @override
   String get addCar => 'Add Car';
 
   @override
@@ -56,9 +53,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enterData => 'Enter Data';
 
   @override
-  String get historyAndReports => 'History and Reports';
-
-  @override
   String get date => 'Date';
 
   @override
@@ -75,11 +69,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get saveOdometerSuccess => 'Odometer reading saved';
-
-  @override
-  String saveError(String error) {
-    return 'Save error: $error';
-  }
 
   @override
   String get refuelingAdded => 'Refueling added';
@@ -327,21 +316,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noRefuels => 'No refuels';
 
   @override
-  String get averageFuelConsumption =>
-      'Average Fuel Consumption (last 30 days)';
-
-  @override
-  String averageFuelConsumptionFor(String fuelType, String consumption) {
-    return '$fuelType: $consumption L/100km';
-  }
-
-  @override
-  String get primaryFuelType => 'Primary Fuel Type';
-
-  @override
-  String get selectPrimaryFuelType => 'Select primary fuel type';
-
-  @override
   String get carName => 'Car Name';
 
   @override
@@ -369,9 +343,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteDescription => 'Description';
 
   @override
-  String get noteDateTime => 'Date and Time';
-
-  @override
   String get deleteNote => 'Delete Note';
 
   @override
@@ -391,16 +362,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncInProgress => 'Synchronizing…';
 
   @override
-  String get syncUnknown => 'Not synchronized yet';
-
-  @override
   String get syncIdle => 'Synchronized';
 
   @override
   String get syncError => 'Synchronization error';
-
-  @override
-  String get syncOk => 'Synchronized';
 
   @override
   String get workWeekSection => 'Working week mode';
@@ -518,4 +483,54 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dataLoadErrorBody =>
       'Your records are not deleted. Try again; if it repeats, restart the app.';
+
+  @override
+  String get errorCarNameEmpty => 'Enter the car name.';
+
+  @override
+  String get errorCarMissing =>
+      'This car no longer exists. Reopen the screen and try again.';
+
+  @override
+  String get errorRecordMissing => 'This record no longer exists.';
+
+  @override
+  String get errorFuelTypeEmpty => 'Choose a fuel type.';
+
+  @override
+  String errorOdometerBelowPrevious(int reading, String date) {
+    return 'The reading is lower than the previous one: $reading km on $date.';
+  }
+
+  @override
+  String errorOdometerAboveNext(int reading, String date) {
+    return 'The reading is higher than the next one: $reading km on $date.';
+  }
+
+  @override
+  String get errorInvalidDate => 'The date is not valid.';
+
+  @override
+  String get errorInvalidTime => 'The time is not valid.';
+
+  @override
+  String get errorPeriodEndsBeforeStart =>
+      'The end date is earlier than the start date.';
+
+  @override
+  String get errorUnexpected => 'Something went wrong. Try again.';
+
+  @override
+  String weekDetailTitle(String range) {
+    return 'Details: $range';
+  }
+
+  @override
+  String get reminderStartKm => 'Count from mileage';
+
+  @override
+  String get deleteReminderConfirmation => 'Delete this reminder?';
+
+  @override
+  String get numberMustBePositive => 'Enter a number greater than zero';
 }

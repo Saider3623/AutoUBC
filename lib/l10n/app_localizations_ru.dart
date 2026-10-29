@@ -9,9 +9,6 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
-  String get appTitle => 'AutoUBC';
-
-  @override
   String get addCar => 'Добавить автомобиль';
 
   @override
@@ -56,9 +53,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get enterData => 'Ввод данных';
 
   @override
-  String get historyAndReports => 'История и отчеты';
-
-  @override
   String get date => 'Дата';
 
   @override
@@ -75,11 +69,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get saveOdometerSuccess => 'Показания одометра сохранены';
-
-  @override
-  String saveError(String error) {
-    return 'Ошибка сохранения: $error';
-  }
 
   @override
   String get refuelingAdded => 'Заправка добавлена';
@@ -328,21 +317,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noRefuels => 'Нет заправок';
 
   @override
-  String get averageFuelConsumption =>
-      'Средний расход топлива (последние 30 дней)';
-
-  @override
-  String averageFuelConsumptionFor(String fuelType, String consumption) {
-    return '$fuelType: $consumption л/100км';
-  }
-
-  @override
-  String get primaryFuelType => 'Основной вид топлива';
-
-  @override
-  String get selectPrimaryFuelType => 'Выберите основной вид топлива';
-
-  @override
   String get carName => 'Название автомобиля';
 
   @override
@@ -370,9 +344,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noteDescription => 'Описание';
 
   @override
-  String get noteDateTime => 'Дата и время';
-
-  @override
   String get deleteNote => 'Удалить заметку';
 
   @override
@@ -392,16 +363,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncInProgress => 'Синхронизация…';
 
   @override
-  String get syncUnknown => 'Синхронизация еще не выполнена';
-
-  @override
   String get syncIdle => 'Синхронизировано';
 
   @override
   String get syncError => 'Ошибка синхронизации';
-
-  @override
-  String get syncOk => 'Синхронизировано';
 
   @override
   String get workWeekSection => 'Режим рабочей недели';
@@ -519,4 +484,53 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get dataLoadErrorBody =>
       'Ваши записи не удалены. Попробуйте ещё раз; если повторится — перезапустите приложение.';
+
+  @override
+  String get errorCarNameEmpty => 'Введите название автомобиля.';
+
+  @override
+  String get errorCarMissing =>
+      'Этого автомобиля больше нет. Откройте экран заново и попробуйте ещё раз.';
+
+  @override
+  String get errorRecordMissing => 'Этой записи больше нет.';
+
+  @override
+  String get errorFuelTypeEmpty => 'Выберите вид топлива.';
+
+  @override
+  String errorOdometerBelowPrevious(int reading, String date) {
+    return 'Показание меньше предыдущего: $reading км от $date.';
+  }
+
+  @override
+  String errorOdometerAboveNext(int reading, String date) {
+    return 'Показание больше следующего: $reading км от $date.';
+  }
+
+  @override
+  String get errorInvalidDate => 'Неверная дата.';
+
+  @override
+  String get errorInvalidTime => 'Неверное время.';
+
+  @override
+  String get errorPeriodEndsBeforeStart => 'Дата окончания раньше даты начала.';
+
+  @override
+  String get errorUnexpected => 'Что-то пошло не так. Попробуйте ещё раз.';
+
+  @override
+  String weekDetailTitle(String range) {
+    return 'Детализация: $range';
+  }
+
+  @override
+  String get reminderStartKm => 'Отсчёт от пробега';
+
+  @override
+  String get deleteReminderConfirmation => 'Удалить это напоминание?';
+
+  @override
+  String get numberMustBePositive => 'Введите число больше нуля';
 }

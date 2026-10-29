@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/error_messages.dart';
 import '../utils/work_schedule.dart';
 
 /// Settings card for the app-wide working-week schedule: six-day weeks by
@@ -42,7 +43,7 @@ class _WorkScheduleCardState extends State<WorkScheduleCard> {
       );
     } catch (e) {
       scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text(loc.saveError(e.toString()))),
+        SnackBar(content: Text(describeError(e, loc))),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
