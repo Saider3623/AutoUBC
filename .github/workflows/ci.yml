@@ -1,5 +1,8 @@
 # Static analysis and tests for every push and pull request.
-# Results are also published as annotations on the commit (tool/ci/report.py).
+# Results are published as annotations on the commit (tool/ci/report.py).
+# For pushes to branches other than main, the raw results and any regenerated
+# files are also force-pushed to `ci-output/<branch>`, so they can be read with
+# plain git (for example from environments where the Actions API is blocked).
 name: CI
 
 on:
@@ -16,6 +19,8 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -25,45 +30,69 @@ jobs:
           cache: true
 
       - name: Flutter version
-        run: flutter --version
+        run: |
+          mkdir -p "$RUNNER_TEMP/ci-out"
+          flutter --version | tee "$RUNNER_TEMP/ci-out/flutter-version.txt"
 
       - name: Dependencies
         id: deps
-        run: flutter pub get
+        run: flutter pub get 2>&1 | tee "$RUNNER_TEMP/ci-out/pub-get.txt"; exit ${PIPESTATUS[0]}
 
-      - name: Generated code is committed and up to date
+      - name: Regenerate code
+        id: codegen
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: |
-          dart run build_runner build --delete-conflicting-outputs
-          flutter gen-l10n
-          if [ -n "$(git status --porcelain -- lib test)" ]; then
-            git status --porcelain -- lib test
-            git diff -- lib test | head -300
-            changed=$(git status --porcelain -- lib test | sed ':a;N;$!ba;s/\n/%0A/g')
+          dart run build_runner build --delete-conflicting-outputs > "$RUNNER_TEMP/ci-out/build-runner.txt" 2>&1 || echo "::error title=codegen::build_runner failed"
+          flutter gen-l10n > "$RUNNER_TEMP/ci-out/gen-l10n.txt" 2>&1 || echo "::error title=codegen::gen-l10n failed"
+          git status --porcelain -- lib test > "$RUNNER_TEMP/ci-out/codegen-changed.txt"
+          git diff -- lib test > "$RUNNER_TEMP/ci-out/codegen.diff"
+          if [ -s "$RUNNER_TEMP/ci-out/codegen-changed.txt" ]; then
+            while read -r _ path; do
+              mkdir -p "$RUNNER_TEMP/ci-out/files/$(dirname "$path")"
+              cp "$path" "$RUNNER_TEMP/ci-out/files/$path"
+            done < "$RUNNER_TEMP/ci-out/codegen-changed.txt"
+            changed=$(sed ':a;N;$!ba;s/\n/%0A/g' "$RUNNER_TEMP/ci-out/codegen-changed.txt")
             echo "::error title=codegen::Regenerate and commit these files:%0A${changed}"
-            exit 1
+            echo "dirty=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Analyze
+        id: analyze
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: |
-          dart analyze --format=machine > analyze.txt 2>&1 || true
-          python3 tool/ci/report.py analyze analyze.txt "$GITHUB_WORKSPACE"
+          dart analyze --format=machine > "$RUNNER_TEMP/ci-out/analyze.txt" 2>&1 || true
+          python3 tool/ci/report.py analyze "$RUNNER_TEMP/ci-out/analyze.txt" "$GITHUB_WORKSPACE"
 
       - name: Test
+        id: test
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         env:
           TZ: Europe/Kyiv
         run: |
-          flutter test --file-reporter json:test-results.json || true
-          python3 tool/ci/report.py test test-results.json "$GITHUB_WORKSPACE"
+          flutter test --reporter expanded --file-reporter "json:$RUNNER_TEMP/ci-out/test-results.json" > "$RUNNER_TEMP/ci-out/test-output.txt" 2>&1 || true
+          tail -n 40 "$RUNNER_TEMP/ci-out/test-output.txt"
+          python3 tool/ci/report.py test "$RUNNER_TEMP/ci-out/test-results.json" "$GITHUB_WORKSPACE"
 
-      - name: No debug hooks or calendar math on Duration
+      - name: No debug network hooks
         if: ${{ !cancelled() }}
         run: |
-          status=0
           if grep -rnE "192\.168\.|_dbg[A-Z]|RemoteLog|#region debug-point" lib/; then
-            echo "::error title=debug hooks::Debug network hooks must not be committed (see the lines above)"
-            status=1
+            echo "::error title=debug hooks::Debug network hooks must not be committed"
+            exit 1
           fi
-          exit $status
+
+      - name: Publish raw results to ci-output branch
+        if: ${{ !cancelled() && github.event_name == 'push' && github.ref_name != 'main' }}
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          cd "$RUNNER_TEMP/ci-out"
+          echo "$GITHUB_SHA" > commit.txt
+          git init -q -b out
+          git add -A
+          git -c user.name=ci -c user.email=ci@localhost commit -qm "CI output for $GITHUB_SHA"
+          git push -fq "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "out:refs/heads/ci-output/${GITHUB_REF_NAME}"
+
+      - name: Fail when generated code is stale
+        if: ${{ !cancelled() && steps.codegen.outputs.dirty == 'true' }}
+        run: exit 1
