@@ -110,7 +110,8 @@ void _fiveDayPeriodAttach(
   object.id = id;
 }
 
-extension FiveDayPeriodQueryWhereSort on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QWhere> {
+extension FiveDayPeriodQueryWhereSort
+    on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QWhere> {
   QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterWhere> anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
@@ -118,8 +119,10 @@ extension FiveDayPeriodQueryWhereSort on QueryBuilder<FiveDayPeriod, FiveDayPeri
   }
 }
 
-extension FiveDayPeriodQueryWhere on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QWhereClause> {
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterWhereClause> idEqualTo(Id id) {
+extension FiveDayPeriodQueryWhere
+    on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QWhereClause> {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterWhereClause> idEqualTo(
+      Id id) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IdWhereClause.between(
         lower: id,
@@ -128,7 +131,8 @@ extension FiveDayPeriodQueryWhere on QueryBuilder<FiveDayPeriod, FiveDayPeriod, 
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterWhereClause> idNotEqualTo(Id id) {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterWhereClause> idNotEqualTo(
+      Id id) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
@@ -150,7 +154,8 @@ extension FiveDayPeriodQueryWhere on QueryBuilder<FiveDayPeriod, FiveDayPeriod, 
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterWhereClause> idGreaterThan(Id id,
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterWhereClause> idGreaterThan(
+      Id id,
       {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
@@ -159,7 +164,8 @@ extension FiveDayPeriodQueryWhere on QueryBuilder<FiveDayPeriod, FiveDayPeriod, 
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterWhereClause> idLessThan(Id id,
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterWhereClause> idLessThan(
+      Id id,
       {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
@@ -185,8 +191,10 @@ extension FiveDayPeriodQueryWhere on QueryBuilder<FiveDayPeriod, FiveDayPeriod, 
   }
 }
 
-extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QFilterCondition> {
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> endDateIsNull() {
+extension FiveDayPeriodQueryFilter
+    on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QFilterCondition> {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      endDateIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
         property: r'endDate',
@@ -194,7 +202,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> endDateIsNotNull() {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      endDateIsNotNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNotNull(
         property: r'endDate',
@@ -202,7 +211,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> endDateEqualTo(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      endDateEqualTo(
     String? value, {
     bool caseSensitive = true,
   }) {
@@ -215,7 +225,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> endDateGreaterThan(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      endDateGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
@@ -230,7 +241,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> endDateLessThan(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      endDateLessThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
@@ -245,7 +257,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> endDateBetween(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      endDateBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -264,7 +277,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> endDateStartsWith(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      endDateStartsWith(
     String value, {
     bool caseSensitive = true,
   }) {
@@ -277,7 +291,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> endDateEndsWith(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      endDateEndsWith(
     String value, {
     bool caseSensitive = true,
   }) {
@@ -290,9 +305,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> endDateContains(
-      String value,
-      {bool caseSensitive = true}) {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      endDateContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
         property: r'endDate',
@@ -302,9 +316,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> endDateMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      endDateMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
         property: r'endDate',
@@ -314,7 +327,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> endDateIsEmpty() {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      endDateIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'endDate',
@@ -323,7 +337,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> endDateIsNotEmpty() {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      endDateIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'endDate',
@@ -332,7 +347,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> idEqualTo(Id value) {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> idEqualTo(
+      Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'id',
@@ -341,7 +357,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> idGreaterThan(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      idGreaterThan(
     Id value, {
     bool include = false,
   }) {
@@ -384,7 +401,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> startDateEqualTo(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      startDateEqualTo(
     String value, {
     bool caseSensitive = true,
   }) {
@@ -397,7 +415,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> startDateGreaterThan(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      startDateGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -412,7 +431,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> startDateLessThan(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      startDateLessThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -427,7 +447,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> startDateBetween(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      startDateBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -446,7 +467,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> startDateStartsWith(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      startDateStartsWith(
     String value, {
     bool caseSensitive = true,
   }) {
@@ -459,7 +481,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> startDateEndsWith(
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      startDateEndsWith(
     String value, {
     bool caseSensitive = true,
   }) {
@@ -472,9 +495,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> startDateContains(
-      String value,
-      {bool caseSensitive = true}) {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      startDateContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
         property: r'startDate',
@@ -484,9 +506,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> startDateMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      startDateMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
         property: r'startDate',
@@ -496,7 +517,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> startDateIsEmpty() {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      startDateIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'startDate',
@@ -505,7 +527,8 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition> startDateIsNotEmpty() {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterFilterCondition>
+      startDateIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'startDate',
@@ -515,11 +538,14 @@ extension FiveDayPeriodQueryFilter on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
   }
 }
 
-extension FiveDayPeriodQueryObject on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QFilterCondition> {}
+extension FiveDayPeriodQueryObject
+    on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QFilterCondition> {}
 
-extension FiveDayPeriodQueryLinks on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QFilterCondition> {}
+extension FiveDayPeriodQueryLinks
+    on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QFilterCondition> {}
 
-extension FiveDayPeriodQuerySortBy on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QSortBy> {
+extension FiveDayPeriodQuerySortBy
+    on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QSortBy> {
   QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterSortBy> sortByEndDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'endDate', Sort.asc);
@@ -538,14 +564,16 @@ extension FiveDayPeriodQuerySortBy on QueryBuilder<FiveDayPeriod, FiveDayPeriod,
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterSortBy> sortByStartDateDesc() {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterSortBy>
+      sortByStartDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'startDate', Sort.desc);
     });
   }
 }
 
-extension FiveDayPeriodQuerySortThenBy on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QSortThenBy> {
+extension FiveDayPeriodQuerySortThenBy
+    on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QSortThenBy> {
   QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterSortBy> thenByEndDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'endDate', Sort.asc);
@@ -576,14 +604,16 @@ extension FiveDayPeriodQuerySortThenBy on QueryBuilder<FiveDayPeriod, FiveDayPer
     });
   }
 
-  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterSortBy> thenByStartDateDesc() {
+  QueryBuilder<FiveDayPeriod, FiveDayPeriod, QAfterSortBy>
+      thenByStartDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'startDate', Sort.desc);
     });
   }
 }
 
-extension FiveDayPeriodQueryWhereDistinct on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QDistinct> {
+extension FiveDayPeriodQueryWhereDistinct
+    on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QDistinct> {
   QueryBuilder<FiveDayPeriod, FiveDayPeriod, QDistinct> distinctByEndDate(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -599,7 +629,8 @@ extension FiveDayPeriodQueryWhereDistinct on QueryBuilder<FiveDayPeriod, FiveDay
   }
 }
 
-extension FiveDayPeriodQueryProperty on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QQueryProperty> {
+extension FiveDayPeriodQueryProperty
+    on QueryBuilder<FiveDayPeriod, FiveDayPeriod, QQueryProperty> {
   QueryBuilder<FiveDayPeriod, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');

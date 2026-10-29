@@ -883,7 +883,7 @@ abstract class AppLocalizations {
   /// No description provided for @fiveDayPeriodEndHint.
   ///
   /// In en, this message translates to:
-  /// **'If the end isn't known yet, leave it empty and set it later when management decides.'**
+  /// **'If the end isn\'t known yet, leave it empty and set it later when management decides.'**
   String get fiveDayPeriodEndHint;
 
   /// No description provided for @fiveDayPeriodOpenEnd.

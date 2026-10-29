@@ -73,6 +73,21 @@ jobs:
           tail -n 40 "$RUNNER_TEMP/ci-out/test-output.txt"
           python3 tool/ci/report.py test "$RUNNER_TEMP/ci-out/test-results.json" "$GITHUB_WORKSPACE"
 
+      - name: Formatting (informational)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: |
+          git worktree add -q "$RUNNER_TEMP/fmt" HEAD
+          cd "$RUNNER_TEMP/fmt"
+          dart format lib test > /dev/null 2>&1 || true
+          git status --porcelain -- lib test > "$RUNNER_TEMP/ci-out/format-changed.txt"
+          while read -r _ path; do
+            mkdir -p "$RUNNER_TEMP/ci-out/formatted/$(dirname "$path")"
+            cp "$path" "$RUNNER_TEMP/ci-out/formatted/$path"
+          done < "$RUNNER_TEMP/ci-out/format-changed.txt"
+          if [ -s "$RUNNER_TEMP/ci-out/format-changed.txt" ]; then
+            echo "::warning title=format::$(wc -l < "$RUNNER_TEMP/ci-out/format-changed.txt") files are not formatted with dart format"
+          fi
+
       - name: No debug network hooks
         if: ${{ !cancelled() }}
         run: |
