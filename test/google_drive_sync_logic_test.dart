@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 
@@ -54,5 +58,43 @@ void main() {
       ..modifiedTime = DateTime.utc(2026, 8, 2);
 
     expect(selectNewestBackupFile([older, newer])?.id, 'newer');
+  });
+
+  group('classifySyncError', () {
+    test('connection problems are offline', () {
+      expect(classifySyncError(const SocketException('Failed host lookup')),
+          SyncProblem.offline);
+      expect(classifySyncError(TimeoutException('stalled')),
+          SyncProblem.offline);
+      expect(classifySyncError(PlatformException(code: 'network_error')),
+          SyncProblem.offline);
+    });
+
+    test('a refused Drive request asks to sign in again', () {
+      expect(
+          classifySyncError(
+              drive.DetailedApiRequestError(403, 'Insufficient Permission')),
+          SyncProblem.accessDenied);
+      expect(
+          classifySyncError(
+              drive.DetailedApiRequestError(401, 'Invalid Credentials')),
+          SyncProblem.accessDenied);
+      expect(
+          classifySyncError(StateError('Google access token is unavailable.')),
+          SyncProblem.accessDenied);
+    });
+
+    test('a full Google storage is reported as such', () {
+      expect(
+          classifySyncError(drive.DetailedApiRequestError(
+              403, "The user's Drive storage quota has been exceeded.")),
+          SyncProblem.storageFull);
+    });
+
+    test('server errors and anything unknown stay generic', () {
+      expect(classifySyncError(drive.DetailedApiRequestError(500, 'Backend')),
+          SyncProblem.other);
+      expect(classifySyncError(Exception('?')), SyncProblem.other);
+    });
   });
 }

@@ -1461,6 +1461,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Turn on'**
   String get enableNotifications;
+
+  /// No description provided for @syncProblemOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection to Google Drive. The copy is uploaded when the connection is back.'**
+  String get syncProblemOffline;
+
+  /// No description provided for @syncProblemAccessDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Google does not allow access to Drive. Sign in again and allow access to Google Drive.'**
+  String get syncProblemAccessDenied;
+
+  /// No description provided for @syncProblemStorageFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Google storage is full, so the copy cannot be uploaded.'**
+  String get syncProblemStorageFull;
+
+  /// No description provided for @syncSignInAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again'**
+  String get syncSignInAgain;
 }
 
 class _AppLocalizationsDelegate

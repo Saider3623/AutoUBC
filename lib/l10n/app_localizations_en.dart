@@ -775,4 +775,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get enableNotifications => 'Turn on';
+
+  @override
+  String get syncProblemOffline =>
+      'No connection to Google Drive. The copy is uploaded when the connection is back.';
+
+  @override
+  String get syncProblemAccessDenied =>
+      'Google does not allow access to Drive. Sign in again and allow access to Google Drive.';
+
+  @override
+  String get syncProblemStorageFull =>
+      'Your Google storage is full, so the copy cannot be uploaded.';
+
+  @override
+  String get syncSignInAgain => 'Sign in again';
 }

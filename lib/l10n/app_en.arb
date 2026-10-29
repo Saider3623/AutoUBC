@@ -480,5 +480,9 @@
     }
   },
   "notificationsDisabledHint": "Notifications are off, so date reminders will not alert you.",
-  "enableNotifications": "Turn on"
+  "enableNotifications": "Turn on",
+  "syncProblemOffline": "No connection to Google Drive. The copy is uploaded when the connection is back.",
+  "syncProblemAccessDenied": "Google does not allow access to Drive. Sign in again and allow access to Google Drive.",
+  "syncProblemStorageFull": "Your Google storage is full, so the copy cannot be uploaded.",
+  "syncSignInAgain": "Sign in again"
 }

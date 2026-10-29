@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
@@ -24,6 +26,55 @@ SyncStatus effectiveSyncStatus({
   required int activeOperations,
 }) {
   return activeOperations > 0 ? SyncStatus.syncing : status;
+}
+
+/// Why the last Drive operation failed, in terms the user can act on.
+enum SyncProblem {
+  /// No connection, or Google did not answer in time. Retried later.
+  offline,
+
+  /// Google refused access: the Drive permission was not granted at sign-in
+  /// or was revoked. Signing in again fixes it.
+  accessDenied,
+
+  /// The Google account has no free storage left.
+  storageFull,
+
+  other,
+}
+
+/// Maps an exception of a Drive operation to a [SyncProblem].
+SyncProblem classifySyncError(Object error) {
+  if (error is SocketException ||
+      error is TimeoutException ||
+      error is HandshakeException ||
+      error is http.ClientException) {
+    return SyncProblem.offline;
+  }
+  if (error is drive.DetailedApiRequestError) {
+    final reasons = {for (final detail in error.errors) detail.reason};
+    final message = error.message?.toLowerCase() ?? '';
+    if (reasons.contains('storageQuotaExceeded') ||
+        message.contains('storage quota')) {
+      return SyncProblem.storageFull;
+    }
+    if (reasons.contains('rateLimitExceeded') ||
+        reasons.contains('userRateLimitExceeded')) {
+      return SyncProblem.other;
+    }
+    if (error.status == 401 || error.status == 403) {
+      return SyncProblem.accessDenied;
+    }
+    return SyncProblem.other;
+  }
+  if (error is PlatformException) {
+    if (error.code.contains('network')) return SyncProblem.offline;
+    return SyncProblem.accessDenied;
+  }
+  if (error is StateError && error.message.contains('access token')) {
+    return SyncProblem.accessDenied;
+  }
+  return SyncProblem.other;
 }
 
 /// Returns the newest backup candidate from Drive results.
@@ -111,6 +162,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
   SyncStatus _syncStatus = SyncStatus.unknown;
   DateTime? _lastSuccessAt;
   String? _lastError;
+  SyncProblem? _lastProblem;
 
   /// The signed-in Google account, `null` when signed out.
   GoogleSignInAccount? get currentUser => _currentUser;
@@ -133,6 +185,10 @@ class GoogleDriveSyncService extends ChangeNotifier {
   /// Technical description of the last failed Drive operation.
   String? get lastError => _lastError;
 
+  /// What went wrong in the last failed Drive operation, `null` after a
+  /// success.
+  SyncProblem? get lastProblem => _lastProblem;
+
   SyncStatus get syncStatus => effectiveSyncStatus(
         status: _syncStatus,
         activeOperations: _activeOperations,
@@ -148,8 +204,10 @@ class GoogleDriveSyncService extends ChangeNotifier {
     if (success) {
       _lastSuccessAt = DateTime.now();
       _lastError = null;
+      _lastProblem = null;
     } else {
       _lastError = error?.toString();
+      _lastProblem = error == null ? SyncProblem.other : classifySyncError(error);
     }
     if (_activeOperations == 0) {
       _syncStatus = success ? SyncStatus.idle : SyncStatus.error;
@@ -225,12 +283,25 @@ class GoogleDriveSyncService extends ChangeNotifier {
   Future<bool> signIn() async {
     try {
       final account = await _googleSignIn.signIn().timeout(_kTransferTimeout);
+      if (account != null) await _ensureDriveScope();
       _setUser(account);
       return account != null;
     } catch (e, stackTrace) {
       debugPrint('[GoogleDrive] Sign-in failed: $e');
       debugPrint('$stackTrace');
       return false;
+    }
+  }
+
+  /// The consent screen lets the user untick Google Drive. Asking for the
+  /// scope again shows that screen only when the permission is missing.
+  Future<void> _ensureDriveScope() async {
+    try {
+      final granted = await _googleSignIn
+          .requestScopes([_kDriveScope]).timeout(_kTransferTimeout);
+      if (!granted) debugPrint('[GoogleDrive] Drive access was not granted.');
+    } catch (e) {
+      debugPrint('[GoogleDrive] Drive scope check failed: $e');
     }
   }
 
@@ -243,6 +314,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
     _currentUser = account;
     _syncStatus = SyncStatus.unknown;
     _lastError = null;
+    _lastProblem = null;
     notifyListeners();
   }
 

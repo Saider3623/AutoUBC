@@ -776,4 +776,19 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get enableNotifications => 'Включить';
+
+  @override
+  String get syncProblemOffline =>
+      'Нет связи с Google Drive. Копия выгрузится, когда связь появится.';
+
+  @override
+  String get syncProblemAccessDenied =>
+      'Google не даёт доступа к Drive. Войдите снова и разрешите доступ к Google Drive.';
+
+  @override
+  String get syncProblemStorageFull =>
+      'В хранилище Google закончилось место, копия не выгружается.';
+
+  @override
+  String get syncSignInAgain => 'Войти снова';
 }

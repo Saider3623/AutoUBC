@@ -266,5 +266,9 @@
   "notNow": "Не зараз",
   "remindersDueMore": "ще {count}",
   "notificationsDisabledHint": "Сповіщення вимкнено — нагадування за датою не надійдуть.",
-  "enableNotifications": "Увімкнути"
+  "enableNotifications": "Увімкнути",
+  "syncProblemOffline": "Немає зв'язку з Google Drive. Копія вивантажиться, коли з'явиться зв'язок.",
+  "syncProblemAccessDenied": "Google не дає доступу до Drive. Увійдіть знову й дозвольте доступ до Google Drive.",
+  "syncProblemStorageFull": "У сховищі Google закінчилося місце, копія не вивантажується.",
+  "syncSignInAgain": "Увійти знову"
 }

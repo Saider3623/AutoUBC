@@ -266,5 +266,9 @@
   "notNow": "Не сейчас",
   "remindersDueMore": "ещё {count}",
   "notificationsDisabledHint": "Уведомления выключены — напоминания по дате не придут.",
-  "enableNotifications": "Включить"
+  "enableNotifications": "Включить",
+  "syncProblemOffline": "Нет связи с Google Drive. Копия выгрузится, когда связь появится.",
+  "syncProblemAccessDenied": "Google не даёт доступа к Drive. Войдите снова и разрешите доступ к Google Drive.",
+  "syncProblemStorageFull": "В хранилище Google закончилось место, копия не выгружается.",
+  "syncSignInAgain": "Войти снова"
 }
