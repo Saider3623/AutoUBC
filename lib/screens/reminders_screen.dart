@@ -14,6 +14,7 @@ import '../utils/reminder_texts.dart';
 import '../widgets/app_empty_state.dart';
 import '../widgets/inline_form_error.dart';
 import 'service_book_screen.dart';
+import '../theme/app_theme.dart';
 
 class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
@@ -399,7 +400,7 @@ class _ReminderCard extends StatelessWidget {
           reminderTitle(reminder, loc),
           style: TextStyle(
             decoration: decoration,
-            color: isOverdue ? Colors.red : null,
+            color: isOverdue ? AppColors.error : null,
           ),
         ),
         subtitle: Column(
@@ -409,7 +410,7 @@ class _ReminderCard extends StatelessWidget {
               subtitleText,
               style: TextStyle(
                 decoration: decoration,
-                color: isOverdue ? Colors.red : null,
+                color: isOverdue ? AppColors.error : null,
               ),
             ),
             if (timeLeft != null)
@@ -418,9 +419,9 @@ class _ReminderCard extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: isOverdue
-                      ? Colors.red
+                      ? AppColors.error
                       : isUpcoming
-                          ? Colors.orange.shade800
+                          ? AppColors.warning
                           : null,
                 ),
               ),
@@ -430,13 +431,13 @@ class _ReminderCard extends StatelessWidget {
                 usesKm
                     ? '${loc.repeatEvery} ${reminder.repeatKm} ${loc.km}'
                     : '${loc.repeatEvery} ${reminder.repeatMonths} ${loc.months}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(fontSize: 12, color: AppColors.muted),
               ),
             ],
           ],
         ),
         trailing: reminder.isCompleted
-            ? const Icon(Icons.check_circle, color: Colors.green)
+            ? const Icon(Icons.check_circle, color: AppColors.success)
             : IconButton(
                 icon: const Icon(Icons.check_circle_outline),
                 tooltip: loc.completed,
@@ -444,9 +445,9 @@ class _ReminderCard extends StatelessWidget {
               ),
         onTap: onEdit,
         tileColor: isOverdue
-            ? Colors.red.withValues(alpha: 0.1)
+            ? AppColors.error.withValues(alpha: 0.1)
             : isUpcoming
-                ? Colors.yellow.withValues(alpha: 0.1)
+                ? AppColors.warning.withValues(alpha: 0.1)
                 : null,
       ),
     );
@@ -549,7 +550,7 @@ class _ReminderDialogState extends State<_ReminderDialog> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(loc.delete, style: const TextStyle(color: Colors.red)),
+            child: Text(loc.delete, style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -714,12 +715,12 @@ class _ReminderDialogState extends State<_ReminderDialog> {
                 if (!usesKm) ...[
                   Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                      border: Border.all(color: AppColors.line, width: 1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: ListTile(
                       leading:
-                          const Icon(Icons.calendar_today, color: Colors.grey),
+                          const Icon(Icons.calendar_today, color: AppColors.muted),
                       title: Text(
                         DateFormat.yMMMd(languageCode).format(_dueDate),
                         style: const TextStyle(fontSize: 16),
@@ -797,7 +798,7 @@ class _ReminderDialogState extends State<_ReminderDialog> {
         if (widget.onDelete != null)
           TextButton(
             onPressed: _isSaving ? null : _delete,
-            child: Text(loc.delete, style: const TextStyle(color: Colors.red)),
+            child: Text(loc.delete, style: const TextStyle(color: AppColors.error)),
           ),
         TextButton(
           onPressed: () => Navigator.pop(context),

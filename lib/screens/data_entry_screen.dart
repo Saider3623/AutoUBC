@@ -17,6 +17,7 @@ import '../utils/validation.dart';
 import '../utils/weekly_report_utils.dart';
 import '../widgets/inline_form_error.dart';
 import 'reminders_screen.dart';
+import '../theme/app_theme.dart';
 
 /// A daily jump above this many kilometres asks for confirmation before it is
 /// saved (most often an extra digit was typed).
@@ -621,7 +622,7 @@ class _DataEntryScreenState extends State<DataEntryScreen>
                             height: 24,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.check_circle, color: Colors.green),
+                        : const Icon(Icons.check_circle, color: AppColors.success),
                     iconSize: 36,
                     tooltip: loc.save,
                   ),
@@ -826,7 +827,7 @@ class _DataEntryScreenState extends State<DataEntryScreen>
                 Text(
                   DateFormat.yMMMd(languageCode).format(note.dateTime!),
                   style: const TextStyle(
-                    color: Colors.grey,
+                    color: AppColors.muted,
                     fontSize: 14,
                   ),
                 ),
@@ -1009,7 +1010,7 @@ class _NoteDialogState extends State<_NoteDialog> {
                     TextButton(
                       onPressed: () => Navigator.pop(context, true),
                       child: Text(loc.delete,
-                          style: const TextStyle(color: Colors.red)),
+                          style: const TextStyle(color: AppColors.error)),
                     ),
                   ],
                 ),
@@ -1028,7 +1029,7 @@ class _NoteDialogState extends State<_NoteDialog> {
               }
             },
             child:
-                Text(loc.deleteNote, style: const TextStyle(color: Colors.red)),
+                Text(loc.deleteNote, style: const TextStyle(color: AppColors.error)),
           ),
         TextButton(
           onPressed: () => Navigator.pop(context),
@@ -1103,7 +1104,7 @@ class _FuelTypeButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         side: BorderSide(
           width: selected ? 2.0 : 1.0,
-          color: selected ? color : Colors.grey,
+          color: selected ? color : AppColors.muted,
         ),
         foregroundColor: selected ? color : null,
       ),

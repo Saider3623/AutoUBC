@@ -10,6 +10,7 @@ import '../utils/form_validators.dart';
 import '../utils/validation.dart';
 import '../widgets/app_empty_state.dart';
 import '../widgets/inline_form_error.dart';
+import '../theme/app_theme.dart';
 
 class ServiceBookScreen extends StatefulWidget {
   const ServiceBookScreen({super.key});
@@ -158,7 +159,7 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
                                       .textTheme
                                       .bodyMedium
                                       ?.copyWith(
-                                        color: Colors.grey.shade700,
+                                        color: AppColors.muted,
                                         fontWeight: FontWeight.w600,
                                       ),
                                 ),
@@ -166,7 +167,7 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
                                 IconButton(
                                   tooltip: loc.delete,
                                   icon: const Icon(Icons.delete_outline,
-                                      color: Colors.red, size: 20),
+                                      color: AppColors.error, size: 20),
                                   onPressed: () => _confirmDelete(context, log),
                                 ),
                               ],
@@ -224,7 +225,7 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(loc.delete, style: const TextStyle(color: Colors.red)),
+            child: Text(loc.delete, style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),

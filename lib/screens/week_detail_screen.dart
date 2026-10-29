@@ -14,6 +14,7 @@ import '../utils/weekly_report_utils.dart';
 import '../widgets/app_empty_state.dart';
 import '../widgets/inline_form_error.dart';
 import 'weekly_report_screen.dart' show formatLiters, formatReportWeekTitle;
+import '../theme/app_theme.dart';
 
 /// Entries of one day inside the week.
 class _DayEntries {
@@ -101,7 +102,7 @@ class WeekDetailScreen extends StatelessWidget {
                       for (final log in entries.odometer)
                         _EntryRow(
                           icon: Icons.speed,
-                          color: Colors.blueGrey,
+                          color: AppColors.muted,
                           text: '${loc.odometerLabel}: '
                               '${numbers.format(log.odometer)} ${loc.kilometers}',
                           onEdit: () => _editOdometer(context, log),
@@ -146,7 +147,7 @@ class WeekDetailScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(loc.delete, style: const TextStyle(color: Colors.red)),
+            child: Text(loc.delete, style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -242,7 +243,7 @@ class _EntryRow extends StatelessWidget {
             if (trailingText != null)
               Text(
                 trailingText!,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(fontSize: 12, color: AppColors.muted),
               ),
             IconButton(
               tooltip: editTooltip,
@@ -252,7 +253,7 @@ class _EntryRow extends StatelessWidget {
             IconButton(
               tooltip: deleteTooltip,
               icon: const Icon(Icons.delete_outline,
-                  size: 22, color: Colors.red),
+                  size: 22, color: AppColors.error),
               onPressed: onDelete,
             ),
           ],

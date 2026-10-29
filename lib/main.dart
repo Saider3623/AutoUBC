@@ -342,7 +342,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                         child: Row(
                           children: [
                             const Icon(Icons.directions_car,
-                                size: 20, color: Colors.blue),
+                                size: 20, color: AppColors.primary),
                             const SizedBox(width: 12),
                             Text(loc.carSettings),
                           ],
@@ -362,10 +362,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                                         : Icons.notifications_none),
                                 size: 20,
                                 color: hasOverdue
-                                    ? Colors.red
+                                    ? AppColors.error
                                     : (hasUpcoming
-                                        ? Colors.orange
-                                        : Colors.blue),
+                                        ? AppColors.warning
+                                        : AppColors.primary),
                               ),
                               const SizedBox(width: 12),
                               Text(loc.reminders),
@@ -377,7 +377,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                           child: Row(
                             children: [
                               const Icon(Icons.book,
-                                  size: 20, color: Colors.blue),
+                                  size: 20, color: AppColors.primary),
                               const SizedBox(width: 12),
                               Text(loc.serviceBook),
                             ],
@@ -391,7 +391,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                         child: Row(
                           children: [
                             const Icon(Icons.language,
-                                size: 20, color: Colors.blue),
+                                size: 20, color: AppColors.primary),
                             const SizedBox(width: 12),
                             Text(loc.language),
                           ],
@@ -404,7 +404,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                         child: Row(
                           children: [
                             const Icon(Icons.cloud_outlined,
-                                size: 20, color: Colors.blue),
+                                size: 20, color: AppColors.primary),
                             const SizedBox(width: 12),
                             Text(context.read<CloudSyncController>().isConnected
                                 ? 'Google Drive'
@@ -422,7 +422,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                         width: 12,
                         height: 12,
                         decoration: BoxDecoration(
-                          color: hasOverdue ? Colors.red : Colors.orange,
+                          color: hasOverdue ? AppColors.error : AppColors.warning,
                           shape: BoxShape.circle,
                         ),
                       ),
