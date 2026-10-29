@@ -15,3 +15,10 @@ DateTime addMonthsClamped(DateTime date, int months) {
     date.microsecond,
   );
 }
+
+/// Whole calendar days from [from] to [to], independent of clock changes.
+int calendarDaysBetween(DateTime from, DateTime to) {
+  final start = DateTime.utc(from.year, from.month, from.day);
+  final end = DateTime.utc(to.year, to.month, to.day);
+  return end.difference(start).inDays;
+}

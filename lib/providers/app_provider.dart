@@ -386,6 +386,20 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateFuelLog(FuelLog log) async {
+    try {
+      await _markLocalMutationPending();
+      await _db.updateFuelLog(log);
+      if (_selectedCar != null) {
+        await loadLogsForCar(_selectedCar!.id);
+        await _scheduleBackupAndSync();
+      }
+    } catch (e) {
+      debugPrint('[Data] Updating a refuel failed: $e');
+      rethrow;
+    }
+  }
+
   Future<void> deleteFuelLog(FuelLog log) async {
     try {
       await _markLocalMutationPending();

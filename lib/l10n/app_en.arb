@@ -101,7 +101,6 @@
   "invalidWholeNumber": "Enter a whole number",
   "invalidNumber": "Enter a valid number",
   "numberMustBeNonNegative": "Number cannot be negative",
-  "reportLoadError": "Could not load report",
   "retry": "Retry",
   "english": "English",
   "russian": "Russian",
@@ -138,16 +137,6 @@
   "fuelTypesHint": "Add or remove fuel types used by this car.",
   "atLeastOneFuelType": "Keep at least one fuel type.",
   "newFuelTypeHint": "New type (e.g., Diesel, 98, Electric)",
-  "weeklyReportDistance": "Distance: {distance} km",
-  "@weeklyReportDistance": {
-    "description": "Weekly report distance display",
-    "placeholders": {
-      "distance": {
-        "type": "int",
-        "description": "Distance in kilometers"
-      }
-    }
-  },
   "weeklyReportNoMileage": "No mileage",
   "weeklyReportNoActivity": "No mileage recorded during this period",
   "odometerSection": "ODOMETER",
@@ -255,5 +244,41 @@
   },
   "reminderStartKm": "Count from mileage",
   "deleteReminderConfirmation": "Delete this reminder?",
-  "numberMustBePositive": "Enter a number greater than zero"
+  "numberMustBePositive": "Enter a number greater than zero",
+  "weeklyReportDistanceText": "Distance: {distance} km",
+  "@weeklyReportDistanceText": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "monthSummaryTitle": "MONTH TOTAL",
+  "monthTotalDistance": "Mileage: {distance} km",
+  "@monthTotalDistance": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "monthDaysWithoutReading": "Working days without a reading: {days}",
+  "@monthDaysWithoutReading": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "weekIncludesGap": "The mileage also covers days without readings since {date}",
+  "@weekIncludesGap": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "editOdometerTitle": "Edit reading",
+  "editRefuelTitle": "Edit refuel",
+  "timeLabel": "Time"
 }

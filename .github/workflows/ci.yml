@@ -103,6 +103,16 @@ jobs:
           fi
           exit $status
 
+      - name: Fetch Roboto Bold (temporary)
+        if: ${{ !cancelled() }}
+        run: |
+          sudo apt-get update -q > /dev/null
+          sudo apt-get install -y -q fonts-roboto-unhinted > /dev/null
+          mkdir -p "$RUNNER_TEMP/ci-out/fonts"
+          find /usr/share/fonts -name 'Roboto-Bold.ttf' -exec cp {} "$RUNNER_TEMP/ci-out/fonts/" \;
+          find /usr/share/doc/fonts-roboto-unhinted -maxdepth 1 -type f -exec cp {} "$RUNNER_TEMP/ci-out/fonts/" \; || true
+          ls -la "$RUNNER_TEMP/ci-out/fonts"
+
       - name: Publish raw results to ci-output branch
         if: ${{ !cancelled() && github.event_name == 'push' && github.ref_name != 'main' }}
         env:

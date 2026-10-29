@@ -381,6 +381,31 @@ class DatabaseService {
     });
   }
 
+  /// Updates the type, litres, date and time of an existing refuel.
+  Future<void> updateFuelLog(FuelLog log) async {
+    final db = await isar;
+    final carId = log.carId;
+    if (carId == null) {
+      throw const DataValidationException(
+          ValidationCode.recordWithoutCar, 'Refuel must have a car.');
+    }
+    await _requireCar(db, carId);
+    validateDateString(log.dateString);
+    validateTimeString(log.timeString);
+    validateNonNegativeNumber(log.liters, 'Liters');
+    log.fuelType = log.fuelType.trim();
+    if (log.fuelType.isEmpty) {
+      throw const DataValidationException(
+          ValidationCode.fuelTypeEmpty, 'Fuel type cannot be empty.');
+    }
+    final existing = await db.fuelLogs.get(log.id);
+    if (existing == null) {
+      throw const DataValidationException(
+          ValidationCode.recordMissing, 'Refuel no longer exists.');
+    }
+    await db.writeTxn(() => db.fuelLogs.put(log));
+  }
+
   Future<void> deleteFuelLog(FuelLog log) async {
     final db = await isar;
     await db.writeTxn(() => db.fuelLogs.delete(log.id));

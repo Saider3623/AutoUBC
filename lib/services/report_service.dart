@@ -5,12 +5,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import '../models/car.dart';
-import '../models/odometer_log.dart';
-import '../models/fuel_log.dart';
 import '../db/database_service.dart';
-import '../utils/report_status.dart';
-import '../utils/fuel_summary.dart';
+import '../domain/week_summary.dart';
+import '../models/car.dart';
 import '../utils/weekly_report_utils.dart';
 import '../utils/work_schedule.dart';
 
@@ -41,26 +38,6 @@ String _capitalizeFirstLetter(String value) {
   return '${firstLetter.toUpperCase()}${value.substring(firstLetter.length)}';
 }
 
-/// Дані по одному тижню для звіту
-class _WeekData {
-  final DateTime weekStart;
-  final DateTime weekEnd;
-  final int?
-      odometerStart; // показання на початок тижня (перша запис в тижні або ближня до нього)
-  final int? odometerEnd; // показання на кінець тижня
-  final int mileage; // пробіг за тиждень
-  final List<FuelTypeSummary> fuelSummaries;
-
-  _WeekData({
-    required this.weekStart,
-    required this.weekEnd,
-    required this.odometerStart,
-    required this.odometerEnd,
-    required this.mileage,
-    required this.fuelSummaries,
-  });
-}
-
 class _PdfTranslations {
   final String reportTitle;
   final String weekLabel;
@@ -68,17 +45,29 @@ class _PdfTranslations {
   final String odometerEnd;
   final String mileage;
   final String noMileage;
+  final String monthTotal;
+  final String monthMileage;
+  final String daysWithoutReading;
+  final String gapNote;
+  final String generated;
+  final String page;
   final String km;
   final String l;
   final String shareText;
 
-  _PdfTranslations({
+  const _PdfTranslations({
     required this.reportTitle,
     required this.weekLabel,
     required this.odometerStart,
     required this.odometerEnd,
     required this.mileage,
     required this.noMileage,
+    required this.monthTotal,
+    required this.monthMileage,
+    required this.daysWithoutReading,
+    required this.gapNote,
+    required this.generated,
+    required this.page,
     required this.km,
     required this.l,
     required this.shareText,
@@ -87,38 +76,56 @@ class _PdfTranslations {
   factory _PdfTranslations.of(String languageCode) {
     switch (languageCode) {
       case 'ru':
-        return _PdfTranslations(
+        return const _PdfTranslations(
           reportTitle: 'Отчет по автомобилю {carName}',
           weekLabel: 'Неделя:  {dateRange}',
           odometerStart: 'Начало недели',
           odometerEnd: 'Конец недели',
           mileage: 'Пробег за неделю',
           noMileage: 'Без пробега',
+          monthTotal: 'Итог месяца',
+          monthMileage: 'Пробег за месяц',
+          daysWithoutReading: 'Рабочих дней без показаний',
+          gapNote: 'Пробег включает дни без показаний с {date}',
+          generated: 'Сформирован {date}',
+          page: 'Страница {page} из {pages}',
           km: 'км',
           l: 'л',
           shareText: 'Отчет AutoUBC',
         );
       case 'en':
-        return _PdfTranslations(
+        return const _PdfTranslations(
           reportTitle: 'Report for car {carName}',
           weekLabel: 'Week:  {dateRange}',
           odometerStart: 'Week start',
           odometerEnd: 'Week end',
           mileage: 'Weekly mileage',
           noMileage: 'No mileage',
+          monthTotal: 'Month total',
+          monthMileage: 'Mileage this month',
+          daysWithoutReading: 'Working days without a reading',
+          gapNote: 'The mileage includes days without readings since {date}',
+          generated: 'Generated {date}',
+          page: 'Page {page} of {pages}',
           km: 'km',
           l: 'L',
           shareText: 'AutoUBC Report',
         );
       case 'uk':
       default:
-        return _PdfTranslations(
+        return const _PdfTranslations(
           reportTitle: 'Звіт по автомобілю {carName}',
           weekLabel: 'Тиждень:  {dateRange}',
           odometerStart: 'Початок тижня',
           odometerEnd: 'Кінець тижня',
           mileage: 'Пробіг за тиждень',
           noMileage: 'Без пробігу',
+          monthTotal: 'Підсумок місяця',
+          monthMileage: 'Пробіг за місяць',
+          daysWithoutReading: 'Робочих днів без показань',
+          gapNote: 'Пробіг включає дні без показань від {date}',
+          generated: 'Сформовано {date}',
+          page: 'Сторінка {page} з {pages}',
           km: 'км',
           l: 'л',
           shareText: 'Звіт AutoUBC',
@@ -130,7 +137,10 @@ class _PdfTranslations {
 class ReportService {
   final DatabaseService _db = DatabaseService();
 
-  /// Генерує тижневий PDF-звіт за обраний місяць
+  /// Builds the weekly PDF report of the month that contains [startDate].
+  ///
+  /// Weeks are computed with the same [summarizeWeek] function as the weekly
+  /// report screen, so both always show the same numbers.
   Future<File> generatePdfReport(
     Car car,
     DateTime startDate,
@@ -141,53 +151,75 @@ class ReportService {
     final t = _PdfTranslations.of(languageCode);
     final pdf = pw.Document();
 
-    final fontData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
-    final ttf = pw.Font.ttf(fontData);
-    // Bold variant: same font with pw.FontWeight.bold
-    final ttfBold = ttf;
+    final regular =
+        pw.Font.ttf(await rootBundle.load('assets/fonts/Roboto-Regular.ttf'));
+    final bold =
+        pw.Font.ttf(await rootBundle.load('assets/fonts/Roboto-Bold.ttf'));
+    final theme = pw.ThemeData.withFont(base: regular, bold: bold);
 
-    final startStr = DateFormat('yyyy-MM-dd').format(startDate);
-    final endStr = DateFormat('yyyy-MM-dd').format(endDate);
-
-    final odometerLogs =
-        await _db.getOdometerLogsInRange(car.id, startStr, endStr);
-    odometerLogs.sort((a, b) => a.dateString.compareTo(b.dateString));
-
-    final fuelLogs = await _db.getFuelLogsInRange(car.id, startStr, endStr);
-    fuelLogs.sort((a, b) => a.dateString.compareTo(b.dateString));
-
-    final weeks = await _buildWeeks(car.id, startDate, endDate, odometerLogs,
-        fuelLogs, languageCode, t, schedule);
+    final odometerLogs = await _db.getOdometerLogsForCar(car.id);
+    final fuelLogs = await _db.getFuelLogsForCar(car.id);
+    final weeks = [
+      for (final week in buildReportWeeks(startDate, schedule))
+        summarizeWeek(week, odometerLogs: odometerLogs, fuelLogs: fuelLogs),
+    ];
+    final now = DateTime.now();
+    final month = summarizeMonth(
+      weeks,
+      odometerLogs: odometerLogs,
+      today: now,
+      isWorkingDay: (day) =>
+          day.weekday != DateTime.sunday && !schedule.isNonWorkingSaturday(day),
+    );
+    final numbers = NumberFormat.decimalPattern(languageCode);
 
     pdf.addPage(
       pw.MultiPage(
+        theme: theme,
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(32),
+        footer: (context) => pw.Container(
+          alignment: pw.Alignment.centerRight,
+          margin: const pw.EdgeInsets.only(top: 8),
+          child: pw.Text(
+            t.page
+                .replaceFirst('{page}', '${context.pageNumber}')
+                .replaceFirst('{pages}', '${context.pagesCount}'),
+            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+          ),
+        ),
         build: (pw.Context context) => [
-          // ── Заголовок ──────────────────────────────────────────────────
           pw.Inseparable(
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
                   t.reportTitle.replaceFirst('{carName}', car.name),
-                  style: pw.TextStyle(font: ttfBold, fontSize: 22),
+                  style: pw.TextStyle(
+                      fontSize: 22, fontWeight: pw.FontWeight.bold),
                 ),
                 pw.SizedBox(height: 6),
                 pw.Text(
                   DateFormat.yMMMM(languageCode).format(startDate),
-                  style: pw.TextStyle(
-                      font: ttf, fontSize: 14, color: PdfColors.grey700),
+                  style:
+                      const pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
+                ),
+                pw.Text(
+                  t.generated.replaceFirst(
+                    '{date}',
+                    DateFormat.yMMMd(languageCode).add_Hm().format(now),
+                  ),
+                  style:
+                      const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
                 ),
                 pw.Divider(thickness: 1.5, color: PdfColors.blueGrey800),
-                pw.SizedBox(height: 16),
+                pw.SizedBox(height: 8),
               ],
             ),
           ),
-
-          // ── Тижні: кожен блок не розривається ──────────────────────────
+          pw.Inseparable(child: _buildMonthSection(month, numbers, t)),
           ...weeks.map((week) => pw.Inseparable(
-                child: _buildWeekSection(week, ttf, ttfBold, languageCode, t),
+                child: _buildWeekSection(week, numbers, languageCode, t),
               )),
         ],
       ),
@@ -200,102 +232,62 @@ class ReportService {
     return file;
   }
 
-  /// Розбити діапазон дат на тижні, обмежені межами місяця
-  Future<List<_WeekData>> _buildWeeks(
-    int carId,
-    DateTime monthStart,
-    DateTime monthEnd,
-    List<OdometerLog> odometerLogs,
-    List<FuelLog> fuelLogs,
-    String languageCode,
+  pw.Widget _buildMonthSection(
+    MonthSummary month,
+    NumberFormat numbers,
     _PdfTranslations t,
-    WorkSchedule schedule,
-  ) async {
-    final weeks = <_WeekData>[];
-
-    DateTime current = monthStart;
-
-    while (!current.isAfter(monthEnd)) {
-      DateTime weekEnd = reportWeekEnd(current, schedule);
-      if (weekEnd.isAfter(monthEnd)) weekEnd = monthEnd;
-
-      // Одометр: всі записи в межах тижня
-      final weekOdoLogs = odometerLogs.where((log) {
-        final d = DateTime.parse(log.dateString);
-        return !d.isBefore(current) && !d.isAfter(weekEnd);
-      }).toList();
-      weekOdoLogs.sort((a, b) => a.dateString.compareTo(b.dateString));
-
-      // Заправки в межах тижня
-      final weekFuelLogs = fuelLogs.where((log) {
-        final d = DateTime.parse(log.dateString);
-        return !d.isBefore(current) && !d.isAfter(weekEnd);
-      }).toList();
-
-      // Get the latest odometer entry before the current week.
-      final startString = DateFormat('yyyy-MM-dd').format(current);
-      final previousWeekLog =
-          await _db.getLastOdometerLogBeforeDate(carId, startString);
-
-      int? odoStart;
-      int? odoEnd;
-      int mileage = 0;
-
-      if (weekOdoLogs.isNotEmpty) {
-        // Use the previous week's reading when available; otherwise use the first reading in the current week.
-        odoStart = previousWeekLog?.odometer ?? weekOdoLogs.first.odometer;
-        odoEnd = weekOdoLogs.last.odometer;
-        mileage = odoEnd - odoStart;
-        if (mileage < 0) mileage = 0;
-      } else if (previousWeekLog != null) {
-        // If the current week has no entries, reuse the previous reading.
-        odoStart = previousWeekLog.odometer;
-        odoEnd = previousWeekLog.odometer;
-        mileage = 0;
-      }
-
-      final fuelSummaries = summarizeFuelLogsByType(weekFuelLogs);
-
-      weeks.add(_WeekData(
-        weekStart: current,
-        weekEnd: weekEnd,
-        odometerStart: odoStart,
-        odometerEnd: odoEnd,
-        mileage: mileage,
-        fuelSummaries: fuelSummaries,
-      ));
-
-      // Calendar-day step: a 24-hour step never leaves the DST fall-back day.
-      current = addCalendarDays(weekEnd, 1);
-    }
-
-    return weeks;
+  ) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(t.monthTotal,
+            style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
+        pw.SizedBox(height: 6),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.5),
+          columnWidths: const {
+            0: pw.FlexColumnWidth(2.5),
+            1: pw.FlexColumnWidth(2),
+          },
+          children: [
+            _tableRow(t.monthMileage,
+                '${numbers.format(month.distance)} ${t.km}',
+                header: true),
+            ...month.fuelSummaries.map(
+              (fuel) => _tableRow(
+                '${fuel.fuelType} (${fuel.refuelCount})',
+                _formatLiters(fuel.totalLiters, t),
+              ),
+            ),
+            if (month.daysWithoutReading > 0)
+              _tableRow(t.daysWithoutReading, '${month.daysWithoutReading}'),
+          ],
+        ),
+        pw.SizedBox(height: 20),
+      ],
+    );
   }
 
-  /// Будує блок PDF для одного тижня
   pw.Widget _buildWeekSection(
-    _WeekData week,
-    pw.Font ttf,
-    pw.Font ttfBold,
+    WeekSummary week,
+    NumberFormat numbers,
     String languageCode,
     _PdfTranslations t,
   ) {
     final dateRange =
-        '${DateFormat('d MMM', languageCode).format(week.weekStart)} – ${DateFormat('d MMM yyyy', languageCode).format(week.weekEnd)}';
-    final isNoMileage = classifyWeeklyReportStatus(week.mileage).isNoMileage;
+        '${DateFormat('EEE d MMM', languageCode).format(week.week.start)} – '
+        '${DateFormat('EEE d MMM yyyy', languageCode).format(week.week.end)}';
+    String km(int? value) =>
+        value == null ? '—' : '${numbers.format(value)} ${t.km}';
 
-    final odoStartStr =
-        week.odometerStart != null ? '${week.odometerStart} ${t.km}' : '—';
-    final odoEndStr =
-        week.odometerEnd != null ? '${week.odometerEnd} ${t.km}' : '—';
-    final mileageStr =
-        week.odometerStart != null ? '${week.mileage} ${t.km}' : '—';
+    final gapDate = week.includesGap && week.odometerStartDate != null
+        ? DateTime.tryParse(week.odometerStartDate!)
+        : null;
 
     return pw.Column(
       mainAxisSize: pw.MainAxisSize.min,
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // Заголовок тижня
         pw.Container(
           width: double.infinity,
           padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -303,11 +295,13 @@ class ReportService {
           child: pw.Text(
             t.weekLabel.replaceFirst('{dateRange}', dateRange),
             style: pw.TextStyle(
-                font: ttfBold, fontSize: 13, color: PdfColors.white),
+              fontSize: 13,
+              color: PdfColors.white,
+              fontWeight: pw.FontWeight.bold,
+            ),
           ),
         ),
-
-        if (isNoMileage)
+        if (!week.hasEntries)
           pw.Container(
             width: double.infinity,
             padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -317,40 +311,46 @@ class ReportService {
             ),
             child: pw.Text(
               t.noMileage,
-              style: pw.TextStyle(
-                font: ttf,
+              style: const pw.TextStyle(
                 fontSize: 11,
                 color: PdfColors.blueGrey700,
               ),
             ),
           )
         else
-          // Одна таблиця: одометр і літри за типами пального; кількість чеків
-          // наводиться поруч із кожним типом у дужках.
+          // One table: odometer and litres by fuel type; the number of
+          // receipts is shown in brackets next to each fuel type.
           pw.Table(
             border:
                 pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.5),
-            columnWidths: {
-              0: const pw.FlexColumnWidth(2.5),
-              1: const pw.FlexColumnWidth(2),
+            columnWidths: const {
+              0: pw.FlexColumnWidth(2.5),
+              1: pw.FlexColumnWidth(2),
             },
             children: [
-              _tableRow(t.odometerStart, odoStartStr, ttf, ttfBold,
-                  header: true),
-              _tableRow(t.odometerEnd, odoEndStr, ttf, ttfBold),
-              _tableRow(t.mileage, mileageStr, ttf, ttfBold),
-              // Кількість чеків показується поруч із кожним типом пального.
+              _tableRow(t.odometerStart, km(week.odometerStart), header: true),
+              _tableRow(t.odometerEnd, km(week.odometerEnd)),
+              _tableRow(
+                t.mileage,
+                week.odometerStart == null ? '—' : km(week.distance),
+              ),
               ...week.fuelSummaries.map(
                 (summary) => _tableRow(
                   '${summary.fuelType} (${summary.refuelCount})',
                   _formatLiters(summary.totalLiters, t),
-                  ttf,
-                  ttfBold,
                 ),
               ),
             ],
           ),
-
+        if (gapDate != null)
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(top: 4),
+            child: pw.Text(
+              t.gapNote.replaceFirst(
+                  '{date}', DateFormat.yMMMd(languageCode).format(gapDate)),
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+            ),
+          ),
         pw.SizedBox(height: 20),
       ],
     );
@@ -362,25 +362,20 @@ class ReportService {
     return '$value ${t.l}';
   }
 
-  pw.TableRow _tableRow(
-    String label,
-    String value,
-    pw.Font ttf,
-    pw.Font ttfBold, {
-    bool header = false,
-  }) {
+  pw.TableRow _tableRow(String label, String value, {bool header = false}) {
     final bg = header ? PdfColors.blueGrey50 : PdfColors.white;
     return pw.TableRow(
       decoration: pw.BoxDecoration(color: bg),
       children: [
         pw.Padding(
           padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          child: pw.Text(label, style: pw.TextStyle(font: ttf, fontSize: 11)),
+          child: pw.Text(label, style: const pw.TextStyle(fontSize: 11)),
         ),
         pw.Padding(
           padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          child:
-              pw.Text(value, style: pw.TextStyle(font: ttfBold, fontSize: 11)),
+          child: pw.Text(value,
+              style:
+                  pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
         ),
       ],
     );

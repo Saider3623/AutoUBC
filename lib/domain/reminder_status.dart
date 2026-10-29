@@ -1,5 +1,6 @@
 import '../models/odometer_log.dart';
 import '../models/reminder.dart';
+import '../utils/date_utils.dart';
 
 /// How urgent a reminder is, from the most to the least urgent.
 enum ReminderUrgency { overdue, upcoming, scheduled, completed }
@@ -23,13 +24,6 @@ int currentMileage(Iterable<OdometerLog> logs) {
     if (log.odometer > highest) highest = log.odometer;
   }
   return highest;
-}
-
-/// Whole calendar days from [from] to [to], independent of clock changes.
-int calendarDaysBetween(DateTime from, DateTime to) {
-  final start = DateTime.utc(from.year, from.month, from.day);
-  final end = DateTime.utc(to.year, to.month, to.day);
-  return end.difference(start).inDays;
 }
 
 class ReminderStatus {

@@ -466,12 +466,6 @@ abstract class AppLocalizations {
   /// **'Number cannot be negative'**
   String get numberMustBeNonNegative;
 
-  /// No description provided for @reportLoadError.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load report'**
-  String get reportLoadError;
-
   /// No description provided for @retry.
   ///
   /// In en, this message translates to:
@@ -633,12 +627,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New type (e.g., Diesel, 98, Electric)'**
   String get newFuelTypeHint;
-
-  /// Weekly report distance display
-  ///
-  /// In en, this message translates to:
-  /// **'Distance: {distance} km'**
-  String weeklyReportDistance(int distance);
 
   /// No description provided for @weeklyReportNoMileage.
   ///
@@ -1083,6 +1071,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a number greater than zero'**
   String get numberMustBePositive;
+
+  /// No description provided for @weeklyReportDistanceText.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance: {distance} km'**
+  String weeklyReportDistanceText(String distance);
+
+  /// No description provided for @monthSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MONTH TOTAL'**
+  String get monthSummaryTitle;
+
+  /// No description provided for @monthTotalDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage: {distance} km'**
+  String monthTotalDistance(String distance);
+
+  /// No description provided for @monthDaysWithoutReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Working days without a reading: {days}'**
+  String monthDaysWithoutReading(int days);
+
+  /// No description provided for @weekIncludesGap.
+  ///
+  /// In en, this message translates to:
+  /// **'The mileage also covers days without readings since {date}'**
+  String weekIncludesGap(String date);
+
+  /// No description provided for @editOdometerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit reading'**
+  String get editOdometerTitle;
+
+  /// No description provided for @editRefuelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit refuel'**
+  String get editRefuelTitle;
+
+  /// No description provided for @timeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get timeLabel;
 }
 
 class _AppLocalizationsDelegate

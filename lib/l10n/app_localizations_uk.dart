@@ -201,9 +201,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get numberMustBeNonNegative => 'Число не може бути від’ємним';
 
   @override
-  String get reportLoadError => 'Не вдалося завантажити звіт';
-
-  @override
   String get retry => 'Повторити';
 
   @override
@@ -289,11 +286,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get newFuelTypeHint => 'Новий тип (напр., Дизель, 98, Електрика)';
-
-  @override
-  String weeklyReportDistance(int distance) {
-    return 'Пробіг: $distance км';
-  }
 
   @override
   String get weeklyReportNoMileage => 'Без пробігу';
@@ -534,4 +526,36 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get numberMustBePositive => 'Введіть число, більше за нуль';
+
+  @override
+  String weeklyReportDistanceText(String distance) {
+    return 'Пробіг: $distance км';
+  }
+
+  @override
+  String get monthSummaryTitle => 'ПІДСУМОК МІСЯЦЯ';
+
+  @override
+  String monthTotalDistance(String distance) {
+    return 'Пробіг: $distance км';
+  }
+
+  @override
+  String monthDaysWithoutReading(int days) {
+    return 'Робочих днів без показань: $days';
+  }
+
+  @override
+  String weekIncludesGap(String date) {
+    return 'Пробіг включає дні без показань від $date';
+  }
+
+  @override
+  String get editOdometerTitle => 'Змінити показання';
+
+  @override
+  String get editRefuelTitle => 'Змінити заправку';
+
+  @override
+  String get timeLabel => 'Час';
 }
