@@ -39,18 +39,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get add => 'Add';
 
   @override
-  String deleteConfirmation(String carName) {
-    return 'Are you sure you want to delete the car \"$carName\"? All related mileage and refueling records will also be deleted.';
-  }
-
-  @override
   String get delete => 'Delete';
-
-  @override
-  String get confirm => 'Confirm';
-
-  @override
-  String get enterData => 'Enter Data';
 
   @override
   String get date => 'Date';
@@ -244,9 +233,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get history => 'History';
 
   @override
-  String get weeklyReport => 'Weekly Report';
-
-  @override
   String get selectCarGeneric => 'Select a car';
 
   @override
@@ -311,13 +297,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get carName => 'Car Name';
 
   @override
-  String get editCar => 'Edit Car';
-
-  @override
   String get carAdded => 'Car added successfully!';
-
-  @override
-  String get carUpdated => 'Car updated successfully!';
 
   @override
   String get search => 'Search';
@@ -340,9 +320,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteNoteConfirmation =>
       'Are you sure you want to delete this note?';
-
-  @override
-  String get noNotes => 'No notes yet';
 
   @override
   String get chooseDate => 'Choose Date';
@@ -614,4 +591,113 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get storageExplanation =>
       'Your data is stored on this phone; Google Drive keeps a backup copy.';
+
+  @override
+  String get settingsCarSection => 'Car';
+
+  @override
+  String get settingsAppSection => 'App';
+
+  @override
+  String get plateNumber => 'Registration plate';
+
+  @override
+  String get driverName => 'Driver';
+
+  @override
+  String get printedInReport => 'Shown in the PDF report';
+
+  @override
+  String get renameFuelType => 'Rename fuel type';
+
+  @override
+  String get renameFuelTypeHint =>
+      'Existing refuels of this car move to the new name when you save.';
+
+  @override
+  String fuelTypeExists(String name) {
+    return 'The fuel type $name already exists';
+  }
+
+  @override
+  String get discardChangesQuestion => 'Discard unsaved changes?';
+
+  @override
+  String get discardChanges => 'Discard';
+
+  @override
+  String deleteCarWillRemove(String carName) {
+    return '\"$carName\" and all its records will be deleted:';
+  }
+
+  @override
+  String get deleteCarTypeName => 'Type the car name to confirm:';
+
+  @override
+  String get backupsTitle => 'Backups';
+
+  @override
+  String get backupsCloudSection => 'Google Drive';
+
+  @override
+  String get backupsLocalSection => 'On this phone';
+
+  @override
+  String get backupsCloudSignedOut =>
+      'Sign in to Google Drive to see its copies';
+
+  @override
+  String get backupsLocalEmpty => 'No local backups yet';
+
+  @override
+  String get backupCurrentCloudCopy => 'Current copy';
+
+  @override
+  String backupDatedCopy(String date) {
+    return 'Copy of $date';
+  }
+
+  @override
+  String get backupAutomatic => 'Automatic';
+
+  @override
+  String get backupBeforeRestore => 'Before a restore';
+
+  @override
+  String get backupBeforeDelete => 'Before a car was deleted';
+
+  @override
+  String get backupColumn => 'Backup';
+
+  @override
+  String get backupOpenFailed => 'Could not open this copy';
+
+  @override
+  String get backupRestored => 'Data restored from the copy';
+
+  @override
+  String get backupsExplanation =>
+      'Before any restore the current data is saved as a separate copy, so a restore can be undone from this list. Local copies are removed together with the app.';
+
+  @override
+  String get syncPanelSignedOut =>
+      'Google Drive is not connected. The data stays only on this phone.';
+
+  @override
+  String get syncPanelError =>
+      'The last sync failed. Check the connection and try again.';
+
+  @override
+  String get syncPendingChanges => 'Changes are waiting to be uploaded';
+
+  @override
+  String syncLastSuccess(String date) {
+    return 'Last synced $date';
+  }
+
+  @override
+  String get syncChooseCopy => 'Choose the copy';
+
+  @override
+  String get syncNow => 'Sync now';
 }

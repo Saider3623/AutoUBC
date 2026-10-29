@@ -51,6 +51,8 @@ class _PdfTranslations {
   final String gapNote;
   final String generated;
   final String page;
+  final String plate;
+  final String driver;
   final String km;
   final String l;
   final String shareText;
@@ -68,6 +70,8 @@ class _PdfTranslations {
     required this.gapNote,
     required this.generated,
     required this.page,
+    required this.plate,
+    required this.driver,
     required this.km,
     required this.l,
     required this.shareText,
@@ -89,6 +93,8 @@ class _PdfTranslations {
           gapNote: 'Пробег включает дни без показаний с {date}',
           generated: 'Сформирован {date}',
           page: 'Страница {page} из {pages}',
+          plate: 'Госномер',
+          driver: 'Водитель',
           km: 'км',
           l: 'л',
           shareText: 'Отчет AutoUBC',
@@ -107,6 +113,8 @@ class _PdfTranslations {
           gapNote: 'The mileage includes days without readings since {date}',
           generated: 'Generated {date}',
           page: 'Page {page} of {pages}',
+          plate: 'Plate',
+          driver: 'Driver',
           km: 'km',
           l: 'L',
           shareText: 'AutoUBC Report',
@@ -126,6 +134,8 @@ class _PdfTranslations {
           gapNote: 'Пробіг включає дні без показань від {date}',
           generated: 'Сформовано {date}',
           page: 'Сторінка {page} з {pages}',
+          plate: 'Держномер',
+          driver: 'Водій',
           km: 'км',
           l: 'л',
           shareText: 'Звіт AutoUBC',
@@ -199,6 +209,19 @@ class ReportService {
                       fontSize: 22, fontWeight: pw.FontWeight.bold),
                 ),
                 pw.SizedBox(height: 6),
+                if (car.plateNumber != null || car.driverName != null)
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 4),
+                    child: pw.Text(
+                      [
+                        if (car.plateNumber != null)
+                          '${t.plate}: ${car.plateNumber}',
+                        if (car.driverName != null)
+                          '${t.driver}: ${car.driverName}',
+                      ].join('   ·   '),
+                      style: const pw.TextStyle(fontSize: 12),
+                    ),
+                  ),
                 pw.Text(
                   DateFormat.yMMMM(languageCode).format(startDate),
                   style:

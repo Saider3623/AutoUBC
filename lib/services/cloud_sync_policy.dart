@@ -223,3 +223,27 @@ List<String> localBackupsToDelete(
 
 final RegExp _localBackupPattern = RegExp(
     r'^autoubc_backup_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(_[a-z-]+)?\.isar$');
+
+/// Time and tag of a local backup file name, `null` for other names.
+({DateTime time, String? tag})? parseLocalBackupName(String name) {
+  final match = _localBackupPattern.firstMatch(name);
+  if (match == null) return null;
+  final tag = match.group(6);
+  return (
+    time: DateTime(
+      int.parse(match.group(1)!),
+      int.parse(match.group(2)!),
+      int.parse(match.group(3)!),
+      int.parse(match.group(4)!),
+      int.parse(match.group(5)!),
+    ),
+    tag: tag?.substring(1),
+  );
+}
+
+/// Date of a dated cloud copy name, `null` for other names.
+DateTime? parseDatedCopyDate(String name) {
+  final date = _copyDate(name);
+  return date == null ? null : DateTime.tryParse(date);
+}
+

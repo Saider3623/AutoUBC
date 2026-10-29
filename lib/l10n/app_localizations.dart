@@ -160,29 +160,11 @@ abstract class AppLocalizations {
   /// **'Add'**
   String get add;
 
-  /// Confirmation message before deleting a car
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete the car \"{carName}\"? All related mileage and refueling records will also be deleted.'**
-  String deleteConfirmation(String carName);
-
   /// No description provided for @delete.
   ///
   /// In en, this message translates to:
   /// **'Delete'**
   String get delete;
-
-  /// No description provided for @confirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm'**
-  String get confirm;
-
-  /// No description provided for @enterData.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter Data'**
-  String get enterData;
 
   /// No description provided for @date.
   ///
@@ -550,12 +532,6 @@ abstract class AppLocalizations {
   /// **'History'**
   String get history;
 
-  /// No description provided for @weeklyReport.
-  ///
-  /// In en, this message translates to:
-  /// **'Weekly Report'**
-  String get weeklyReport;
-
   /// No description provided for @selectCarGeneric.
   ///
   /// In en, this message translates to:
@@ -676,23 +652,11 @@ abstract class AppLocalizations {
   /// **'Car Name'**
   String get carName;
 
-  /// No description provided for @editCar.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit Car'**
-  String get editCar;
-
   /// No description provided for @carAdded.
   ///
   /// In en, this message translates to:
   /// **'Car added successfully!'**
   String get carAdded;
-
-  /// No description provided for @carUpdated.
-  ///
-  /// In en, this message translates to:
-  /// **'Car updated successfully!'**
-  String get carUpdated;
 
   /// No description provided for @search.
   ///
@@ -735,12 +699,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to delete this note?'**
   String get deleteNoteConfirmation;
-
-  /// No description provided for @noNotes.
-  ///
-  /// In en, this message translates to:
-  /// **'No notes yet'**
-  String get noNotes;
 
   /// No description provided for @chooseDate.
   ///
@@ -1203,6 +1161,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your data is stored on this phone; Google Drive keeps a backup copy.'**
   String get storageExplanation;
+
+  /// No description provided for @settingsCarSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Car'**
+  String get settingsCarSection;
+
+  /// No description provided for @settingsAppSection.
+  ///
+  /// In en, this message translates to:
+  /// **'App'**
+  String get settingsAppSection;
+
+  /// No description provided for @plateNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration plate'**
+  String get plateNumber;
+
+  /// No description provided for @driverName.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver'**
+  String get driverName;
+
+  /// No description provided for @printedInReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown in the PDF report'**
+  String get printedInReport;
+
+  /// No description provided for @renameFuelType.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename fuel type'**
+  String get renameFuelType;
+
+  /// No description provided for @renameFuelTypeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing refuels of this car move to the new name when you save.'**
+  String get renameFuelTypeHint;
+
+  /// No description provided for @fuelTypeExists.
+  ///
+  /// In en, this message translates to:
+  /// **'The fuel type {name} already exists'**
+  String fuelTypeExists(String name);
+
+  /// No description provided for @discardChangesQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unsaved changes?'**
+  String get discardChangesQuestion;
+
+  /// No description provided for @discardChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discardChanges;
+
+  /// No description provided for @deleteCarWillRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{carName}\" and all its records will be deleted:'**
+  String deleteCarWillRemove(String carName);
+
+  /// No description provided for @deleteCarTypeName.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the car name to confirm:'**
+  String get deleteCarTypeName;
+
+  /// No description provided for @backupsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backups'**
+  String get backupsTitle;
+
+  /// No description provided for @backupsCloudSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive'**
+  String get backupsCloudSection;
+
+  /// No description provided for @backupsLocalSection.
+  ///
+  /// In en, this message translates to:
+  /// **'On this phone'**
+  String get backupsLocalSection;
+
+  /// No description provided for @backupsCloudSignedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to Google Drive to see its copies'**
+  String get backupsCloudSignedOut;
+
+  /// No description provided for @backupsLocalEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No local backups yet'**
+  String get backupsLocalEmpty;
+
+  /// No description provided for @backupCurrentCloudCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Current copy'**
+  String get backupCurrentCloudCopy;
+
+  /// No description provided for @backupDatedCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy of {date}'**
+  String backupDatedCopy(String date);
+
+  /// No description provided for @backupAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get backupAutomatic;
+
+  /// No description provided for @backupBeforeRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Before a restore'**
+  String get backupBeforeRestore;
+
+  /// No description provided for @backupBeforeDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Before a car was deleted'**
+  String get backupBeforeDelete;
+
+  /// No description provided for @backupColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get backupColumn;
+
+  /// No description provided for @backupOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this copy'**
+  String get backupOpenFailed;
+
+  /// No description provided for @backupRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Data restored from the copy'**
+  String get backupRestored;
+
+  /// No description provided for @backupsExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Before any restore the current data is saved as a separate copy, so a restore can be undone from this list. Local copies are removed together with the app.'**
+  String get backupsExplanation;
+
+  /// No description provided for @syncPanelSignedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive is not connected. The data stays only on this phone.'**
+  String get syncPanelSignedOut;
+
+  /// No description provided for @syncPanelError.
+  ///
+  /// In en, this message translates to:
+  /// **'The last sync failed. Check the connection and try again.'**
+  String get syncPanelError;
+
+  /// No description provided for @syncPendingChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes are waiting to be uploaded'**
+  String get syncPendingChanges;
+
+  /// No description provided for @syncLastSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Last synced {date}'**
+  String syncLastSuccess(String date);
+
+  /// No description provided for @syncChooseCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the copy'**
+  String get syncChooseCopy;
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
 }
 
 class _AppLocalizationsDelegate

@@ -50,11 +50,13 @@ Future<ConflictChoice?> showCloudConflictDialog(
   );
 }
 
-/// Confirms replacing the phone data with the Google Drive copy.
+/// Confirms replacing the phone data with a copy. [sourceColumn] names the
+/// copy's column (Google Drive by default, "Backup" for a local backup).
 Future<bool> showCloudRestoreDialog(
   BuildContext context,
-  CloudComparison comparison,
-) async {
+  CloudComparison comparison, {
+  String? sourceColumn,
+}) async {
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (context) {
@@ -68,7 +70,10 @@ Future<bool> showCloudRestoreDialog(
             children: [
               Text(loc.cloudRestoreBody),
               const SizedBox(height: 16),
-              CloudComparisonTable(comparison: comparison),
+              CloudComparisonTable(
+                comparison: comparison,
+                sourceColumn: sourceColumn,
+              ),
             ],
           ),
         ),
@@ -125,8 +130,13 @@ Future<T> runWithProgress<T>(
 /// Side-by-side summary of the phone and Google Drive copies.
 class CloudComparisonTable extends StatelessWidget {
   final CloudComparison comparison;
+  final String? sourceColumn;
 
-  const CloudComparisonTable({super.key, required this.comparison});
+  const CloudComparisonTable({
+    super.key,
+    required this.comparison,
+    this.sourceColumn,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +203,7 @@ class CloudComparisonTable extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6),
-                  child: Text(loc.cloudColumnDrive,
+                  child: Text(sourceColumn ?? loc.cloudColumnDrive,
                       textAlign: TextAlign.end, style: header),
                 ),
               ],
@@ -207,7 +217,7 @@ class CloudComparisonTable extends StatelessWidget {
                 date(cloud.lastEntryDate)),
           ],
         ),
-        if (modified != null) ...[
+        if (modified != null && sourceColumn == null) ...[
           const SizedBox(height: 8),
           Text(
             loc.cloudModifiedAt(

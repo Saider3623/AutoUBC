@@ -17,18 +17,28 @@ const CarSchema = CollectionSchema(
   name: r'Car',
   id: -8398112620925430914,
   properties: {
-    r'fuelTypes': PropertySchema(
+    r'driverName': PropertySchema(
       id: 0,
+      name: r'driverName',
+      type: IsarType.string,
+    ),
+    r'fuelTypes': PropertySchema(
+      id: 1,
       name: r'fuelTypes',
       type: IsarType.stringList,
     ),
     r'name': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'name',
       type: IsarType.string,
     ),
+    r'plateNumber': PropertySchema(
+      id: 3,
+      name: r'plateNumber',
+      type: IsarType.string,
+    ),
     r'selectedFuelTypesForConsumption': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'selectedFuelTypesForConsumption',
       type: IsarType.stringList,
     )
@@ -54,6 +64,12 @@ int _carEstimateSize(
 ) {
   var bytesCount = offsets.last;
   {
+    final value = object.driverName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final list = object.fuelTypes;
     if (list != null) {
       bytesCount += 3 + list.length * 3;
@@ -66,6 +82,12 @@ int _carEstimateSize(
     }
   }
   bytesCount += 3 + object.name.length * 3;
+  {
+    final value = object.plateNumber;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   {
     final list = object.selectedFuelTypesForConsumption;
     if (list != null) {
@@ -87,9 +109,11 @@ void _carSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeStringList(offsets[0], object.fuelTypes);
-  writer.writeString(offsets[1], object.name);
-  writer.writeStringList(offsets[2], object.selectedFuelTypesForConsumption);
+  writer.writeString(offsets[0], object.driverName);
+  writer.writeStringList(offsets[1], object.fuelTypes);
+  writer.writeString(offsets[2], object.name);
+  writer.writeString(offsets[3], object.plateNumber);
+  writer.writeStringList(offsets[4], object.selectedFuelTypesForConsumption);
 }
 
 Car _carDeserialize(
@@ -99,10 +123,12 @@ Car _carDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Car();
-  object.fuelTypes = reader.readStringList(offsets[0]);
+  object.driverName = reader.readStringOrNull(offsets[0]);
+  object.fuelTypes = reader.readStringList(offsets[1]);
   object.id = id;
-  object.name = reader.readString(offsets[1]);
-  object.selectedFuelTypesForConsumption = reader.readStringList(offsets[2]);
+  object.name = reader.readString(offsets[2]);
+  object.plateNumber = reader.readStringOrNull(offsets[3]);
+  object.selectedFuelTypesForConsumption = reader.readStringList(offsets[4]);
   return object;
 }
 
@@ -114,10 +140,14 @@ P _carDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readStringList(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringList(offset)) as P;
     case 2:
+      return (reader.readString(offset)) as P;
+    case 3:
+      return (reader.readStringOrNull(offset)) as P;
+    case 4:
       return (reader.readStringList(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -212,6 +242,151 @@ extension CarQueryWhere on QueryBuilder<Car, Car, QWhereClause> {
 }
 
 extension CarQueryFilter on QueryBuilder<Car, Car, QFilterCondition> {
+  QueryBuilder<Car, Car, QAfterFilterCondition> driverNameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'driverName',
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> driverNameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'driverName',
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> driverNameEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'driverName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> driverNameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'driverName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> driverNameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'driverName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> driverNameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'driverName',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> driverNameStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'driverName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> driverNameEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'driverName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> driverNameContains(String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'driverName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> driverNameMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'driverName',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> driverNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'driverName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> driverNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'driverName',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Car, Car, QAfterFilterCondition> fuelTypesIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -622,6 +797,152 @@ extension CarQueryFilter on QueryBuilder<Car, Car, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Car, Car, QAfterFilterCondition> plateNumberIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'plateNumber',
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> plateNumberIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'plateNumber',
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> plateNumberEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'plateNumber',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> plateNumberGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'plateNumber',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> plateNumberLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'plateNumber',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> plateNumberBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'plateNumber',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> plateNumberStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'plateNumber',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> plateNumberEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'plateNumber',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> plateNumberContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'plateNumber',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> plateNumberMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'plateNumber',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> plateNumberIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'plateNumber',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterFilterCondition> plateNumberIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'plateNumber',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Car, Car, QAfterFilterCondition>
       selectedFuelTypesForConsumptionIsNull() {
     return QueryBuilder.apply(this, (query) {
@@ -873,6 +1194,18 @@ extension CarQueryObject on QueryBuilder<Car, Car, QFilterCondition> {}
 extension CarQueryLinks on QueryBuilder<Car, Car, QFilterCondition> {}
 
 extension CarQuerySortBy on QueryBuilder<Car, Car, QSortBy> {
+  QueryBuilder<Car, Car, QAfterSortBy> sortByDriverName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'driverName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterSortBy> sortByDriverNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'driverName', Sort.desc);
+    });
+  }
+
   QueryBuilder<Car, Car, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -884,9 +1217,33 @@ extension CarQuerySortBy on QueryBuilder<Car, Car, QSortBy> {
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<Car, Car, QAfterSortBy> sortByPlateNumber() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'plateNumber', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterSortBy> sortByPlateNumberDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'plateNumber', Sort.desc);
+    });
+  }
 }
 
 extension CarQuerySortThenBy on QueryBuilder<Car, Car, QSortThenBy> {
+  QueryBuilder<Car, Car, QAfterSortBy> thenByDriverName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'driverName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterSortBy> thenByDriverNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'driverName', Sort.desc);
+    });
+  }
+
   QueryBuilder<Car, Car, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -910,9 +1267,28 @@ extension CarQuerySortThenBy on QueryBuilder<Car, Car, QSortThenBy> {
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<Car, Car, QAfterSortBy> thenByPlateNumber() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'plateNumber', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Car, Car, QAfterSortBy> thenByPlateNumberDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'plateNumber', Sort.desc);
+    });
+  }
 }
 
 extension CarQueryWhereDistinct on QueryBuilder<Car, Car, QDistinct> {
+  QueryBuilder<Car, Car, QDistinct> distinctByDriverName(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'driverName', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Car, Car, QDistinct> distinctByFuelTypes() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'fuelTypes');
@@ -923,6 +1299,13 @@ extension CarQueryWhereDistinct on QueryBuilder<Car, Car, QDistinct> {
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Car, Car, QDistinct> distinctByPlateNumber(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'plateNumber', caseSensitive: caseSensitive);
     });
   }
 
@@ -941,6 +1324,12 @@ extension CarQueryProperty on QueryBuilder<Car, Car, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Car, String?, QQueryOperations> driverNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'driverName');
+    });
+  }
+
   QueryBuilder<Car, List<String>?, QQueryOperations> fuelTypesProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'fuelTypes');
@@ -950,6 +1339,12 @@ extension CarQueryProperty on QueryBuilder<Car, Car, QQueryProperty> {
   QueryBuilder<Car, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<Car, String?, QQueryOperations> plateNumberProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'plateNumber');
     });
   }
 

@@ -18,6 +18,7 @@ import 'services/google_drive_sync_service.dart';
 import 'theme/app_theme.dart';
 import 'widgets/app_empty_state.dart';
 import 'widgets/cloud_comparison_dialog.dart';
+import 'widgets/sync_panel.dart';
 import 'widgets/sync_status_indicator.dart';
 
 Future<void> main() async {
@@ -265,7 +266,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 const SizedBox(width: 10),
                 SyncStatusIndicator(
                   cloud: cloud,
-                  onTap: cloud.needsDecision ? _showDecision : null,
+                  onTap: cloud.isConnected ? _openSyncPanel : null,
                 ),
               ],
             );
@@ -352,43 +353,20 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                         ),
                       ),
                       const PopupMenuDivider(),
-                      // Google Drive section.
-                      if (!context.read<CloudSyncController>().isConnected)
-                        PopupMenuItem(
-                          value: 'google_sign_in',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.login,
-                                  size: 20, color: Colors.blue),
-                              const SizedBox(width: 12),
-                              Text(loc.signInToGoogleDrive),
-                            ],
-                          ),
-                        )
-                      else ...[
-                        PopupMenuItem(
-                          value: 'restore_from_drive',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.cloud_download_outlined,
-                                  size: 20, color: Colors.blue),
-                              const SizedBox(width: 12),
-                              Text(loc.restoreFromDriveMenu),
-                            ],
-                          ),
+                      // Google Drive: account, sync state and all actions.
+                      PopupMenuItem(
+                        value: 'google_drive',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.cloud_outlined,
+                                size: 20, color: Colors.blue),
+                            const SizedBox(width: 12),
+                            Text(context.read<CloudSyncController>().isConnected
+                                ? 'Google Drive'
+                                : loc.signInToGoogleDrive),
+                          ],
                         ),
-                        PopupMenuItem(
-                          value: 'google_sign_out',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.logout,
-                                  size: 20, color: Colors.grey),
-                              const SizedBox(width: 12),
-                              Text(loc.signOutFromGoogle),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
                   ),
                   if (hasOverdue || hasUpcoming)
@@ -568,6 +546,15 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _openSyncPanel() {
+    return showSyncPanel(
+      context,
+      onSignIn: _signInToGoogle,
+      onRestore: _restoreFromDrive,
+      onDecision: _showDecision,
+    );
+  }
+
   /// Restores the Google Drive copy after the user has compared both copies.
   Future<void> _restoreFromDrive() async {
     final cloud = context.read<CloudSyncController>();
@@ -640,16 +627,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       case 'language':
         _showLanguageDialog();
         break;
-      case 'google_sign_in':
-        await _signInToGoogle();
-        break;
-      case 'restore_from_drive':
-        await _restoreFromDrive();
-        break;
-      case 'google_sign_out':
-        // The controller uploads pending local changes before disconnecting,
-        // so recent edits do not remain only on this phone.
-        await cloud.signOut();
+      case 'google_drive':
+        if (cloud.isConnected) {
+          await _openSyncPanel();
+        } else {
+          await _signInToGoogle();
+        }
         break;
     }
   }

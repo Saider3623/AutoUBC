@@ -39,18 +39,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get add => 'Додати';
 
   @override
-  String deleteConfirmation(String carName) {
-    return 'Ви впевнені, що хочете видалити автомобіль \"$carName\"? Усі пов\'язані записи пробігу та заправок також будуть видалені.';
-  }
-
-  @override
   String get delete => 'Видалити';
-
-  @override
-  String get confirm => 'Підтвердити';
-
-  @override
-  String get enterData => 'Введення даних';
 
   @override
   String get date => 'Дата';
@@ -244,9 +233,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get history => 'Історія';
 
   @override
-  String get weeklyReport => 'Тижневий звіт';
-
-  @override
   String get selectCarGeneric => 'Виберіть автомобіль';
 
   @override
@@ -312,13 +298,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get carName => 'Назва автомобіля';
 
   @override
-  String get editCar => 'Редагувати автомобіль';
-
-  @override
   String get carAdded => 'Автомобіль успішно додано!';
-
-  @override
-  String get carUpdated => 'Автомобіль успішно оновлено!';
 
   @override
   String get search => 'Пошук';
@@ -341,9 +321,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get deleteNoteConfirmation =>
       'Ви впевнені, що хочете видалити цю нотатку?';
-
-  @override
-  String get noNotes => 'Нотаток ще немає';
 
   @override
   String get chooseDate => 'Вибрати дату';
@@ -615,4 +592,113 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get storageExplanation =>
       'Дані зберігаються на телефоні, Google Drive зберігає резервну копію.';
+
+  @override
+  String get settingsCarSection => 'Автомобіль';
+
+  @override
+  String get settingsAppSection => 'Застосунок';
+
+  @override
+  String get plateNumber => 'Держномер';
+
+  @override
+  String get driverName => 'Водій';
+
+  @override
+  String get printedInReport => 'Друкується в PDF-звіті';
+
+  @override
+  String get renameFuelType => 'Перейменувати вид пального';
+
+  @override
+  String get renameFuelTypeHint =>
+      'Наявні заправки цього автомобіля перейдуть на нову назву після збереження.';
+
+  @override
+  String fuelTypeExists(String name) {
+    return 'Вид пального $name уже є';
+  }
+
+  @override
+  String get discardChangesQuestion => 'Скасувати незбережені зміни?';
+
+  @override
+  String get discardChanges => 'Скасувати зміни';
+
+  @override
+  String deleteCarWillRemove(String carName) {
+    return 'Буде видалено «$carName» і всі його записи:';
+  }
+
+  @override
+  String get deleteCarTypeName => 'Введіть назву автомобіля для підтвердження:';
+
+  @override
+  String get backupsTitle => 'Резервні копії';
+
+  @override
+  String get backupsCloudSection => 'Google Drive';
+
+  @override
+  String get backupsLocalSection => 'На телефоні';
+
+  @override
+  String get backupsCloudSignedOut =>
+      'Увійдіть у Google Drive, щоб побачити його копії';
+
+  @override
+  String get backupsLocalEmpty => 'Локальних копій поки немає';
+
+  @override
+  String get backupCurrentCloudCopy => 'Поточна копія';
+
+  @override
+  String backupDatedCopy(String date) {
+    return 'Копія за $date';
+  }
+
+  @override
+  String get backupAutomatic => 'Автоматична';
+
+  @override
+  String get backupBeforeRestore => 'Перед відновленням';
+
+  @override
+  String get backupBeforeDelete => 'Перед видаленням автомобіля';
+
+  @override
+  String get backupColumn => 'Копія';
+
+  @override
+  String get backupOpenFailed => 'Не вдалося відкрити цю копію';
+
+  @override
+  String get backupRestored => 'Дані відновлено з копії';
+
+  @override
+  String get backupsExplanation =>
+      'Перед будь-яким відновленням поточні дані зберігаються окремою копією, тож відновлення можна скасувати з цього списку. Локальні копії видаляються разом із застосунком.';
+
+  @override
+  String get syncPanelSignedOut =>
+      'Google Drive не підключено. Дані зберігаються лише на цьому телефоні.';
+
+  @override
+  String get syncPanelError =>
+      'Остання синхронізація не вдалася. Перевірте підключення й спробуйте знову.';
+
+  @override
+  String get syncPendingChanges => 'Зміни чекають на відправлення';
+
+  @override
+  String syncLastSuccess(String date) {
+    return 'Остання синхронізація $date';
+  }
+
+  @override
+  String get syncChooseCopy => 'Обрати копію';
+
+  @override
+  String get syncNow => 'Синхронізувати зараз';
 }

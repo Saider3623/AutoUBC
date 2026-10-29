@@ -469,6 +469,34 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  /// Saves the car settings; [renames] maps old fuel type names to new ones
+  /// so existing refuels follow the rename.
+  Future<void> updateCarSettings(Car car, Map<String, String> renames) async {
+    try {
+      await _markLocalMutationPending();
+      if (car.fuelTypes == null || car.fuelTypes!.isEmpty) {
+        car.fuelTypes = ['ГАЗ', '95'];
+      }
+      await _db.updateCarWithFuelRenames(car, renames);
+      await loadCars();
+      await _scheduleBackupAndSync();
+    } catch (e) {
+      debugPrint('[Data] Saving car settings failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<({int odometer, int fuel, int reminders, int service, int notes})>
+      countCarRecords(int carId) => _db.countCarRecords(carId);
+
+  /// Reloads everything after a local backup replaced the database and
+  /// schedules its upload: the restored data is now the reference copy.
+  Future<void> afterLocalRestore() async {
+    await _markLocalMutationPending();
+    await loadCars();
+    await _scheduleBackupAndSync();
+  }
+
   Future<void> updateCar(Car car) async {
     try {
       await _markLocalMutationPending();

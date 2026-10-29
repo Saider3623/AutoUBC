@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/car.dart';
 import '../providers/app_provider.dart';
 import '../utils/error_messages.dart';
 import '../widgets/app_version_text.dart';
 import '../widgets/work_schedule_card.dart';
+import 'backups_screen.dart';
 
+/// Settings: the selected car (name, plate, driver, fuel types, deletion) and
+/// app-wide options (working week, backups, version).
 class ManageCarsScreen extends StatefulWidget {
   final bool autoOpenAddCar;
 
@@ -17,9 +21,22 @@ class ManageCarsScreen extends StatefulWidget {
 }
 
 class _ManageCarsScreenState extends State<ManageCarsScreen> {
+  final _nameController = TextEditingController();
+  final _plateController = TextEditingController();
+  final _driverController = TextEditingController();
+  final _newFuelController = TextEditingController();
+  List<String> _localFuelTypes = [];
+
+  /// Original fuel type name → its new name, applied to existing refuels.
+  final Map<String, String> _renames = {};
+  int? _loadedCarId;
+  Car? _loadedCar;
+  bool _isSaving = false;
+
   @override
   void initState() {
     super.initState();
+    _loadCurrentCarData();
     if (widget.autoOpenAddCar) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -31,156 +48,219 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
     }
   }
 
-  final TextEditingController _addCarController = TextEditingController();
-  final TextEditingController _newFuelController = TextEditingController();
-  List<String> _localFuelTypes = [];
-  int? _loadedCarId;
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Any AppProvider notification (e.g. a saved working-week period) lands
-    // here. Reload fuel types only when the selected car actually changed so
-    // unsaved fuel-type edits are kept.
     final provider = Provider.of<AppProvider>(context, listen: false);
-    if (provider.selectedCar?.id != _loadedCarId) {
-      _loadCurrentCarData();
-    }
+    if (provider.selectedCar?.id != _loadedCarId) _loadCurrentCarData();
   }
 
   void _loadCurrentCarData() {
-    final provider = Provider.of<AppProvider>(context, listen: false);
-    _loadedCarId = provider.selectedCar?.id;
-    if (provider.selectedCar != null) {
-      _localFuelTypes =
-          List.from(provider.selectedCar!.fuelTypes ?? ['ГАЗ', '95']);
-    }
+    final car = Provider.of<AppProvider>(context, listen: false).selectedCar;
+    _loadedCarId = car?.id;
+    _loadedCar = car;
+    _renames.clear();
+    _nameController.text = car?.name ?? '';
+    _plateController.text = car?.plateNumber ?? '';
+    _driverController.text = car?.driverName ?? '';
+    _localFuelTypes = List.of(car?.fuelTypes ?? const ['ГАЗ', '95']);
+  }
+
+  bool get _isDirty {
+    final car = _loadedCar;
+    if (car == null) return false;
+    final savedTypes = car.fuelTypes ?? const ['ГАЗ', '95'];
+    return _nameController.text.trim() != car.name ||
+        _plateController.text.trim() != (car.plateNumber ?? '') ||
+        _driverController.text.trim() != (car.driverName ?? '') ||
+        _localFuelTypes.length != savedTypes.length ||
+        !_localFuelTypes.every(savedTypes.contains);
   }
 
   @override
   void dispose() {
-    _addCarController.dispose();
+    _nameController.dispose();
+    _plateController.dispose();
+    _driverController.dispose();
     _newFuelController.dispose();
     super.dispose();
+  }
+
+  Future<bool> _confirmDiscard(AppLocalizations loc) async {
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(loc.discardChangesQuestion),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(loc.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(loc.discardChanges),
+          ),
+        ],
+      ),
+    );
+    return discard == true;
+  }
+
+  Future<void> _save(AppLocalizations loc) async {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final selected = appProvider.selectedCar;
+    if (selected == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    if (_nameController.text.trim().isEmpty) {
+      messenger.showSnackBar(SnackBar(content: Text(loc.errorCarNameEmpty)));
+      return;
+    }
+    if (_localFuelTypes.isEmpty) {
+      messenger.showSnackBar(SnackBar(content: Text(loc.atLeastOneFuelType)));
+      return;
+    }
+    // Save a copy: the car held by the provider changes only when the
+    // database write succeeds.
+    final car = Car()
+      ..id = selected.id
+      ..name = _nameController.text.trim()
+      ..plateNumber = _plateController.text.trim()
+      ..driverName = _driverController.text.trim()
+      ..fuelTypes = List.of(_localFuelTypes)
+      ..selectedFuelTypesForConsumption =
+          selected.selectedFuelTypesForConsumption;
+    setState(() => _isSaving = true);
+    try {
+      await appProvider.updateCarSettings(car, Map.of(_renames));
+      if (!mounted) return;
+      _loadCurrentCarData();
+      navigator.pop();
+    } catch (error) {
+      messenger.showSnackBar(SnackBar(content: Text(describeError(error, loc))));
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final appProvider = Provider.of<AppProvider>(context);
+    final selectedCar = appProvider.selectedCar;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.carSettings),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final navigator = Navigator.of(context);
+        if (await _confirmDiscard(loc) && mounted) {
+          setState(_loadCurrentCarData);
+          navigator.pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(loc.carSettings),
+          actions: [
+            if (selectedCar != null)
+              IconButton(
+                icon: const Icon(Icons.check),
+                onPressed: _isSaving ? null : () => _save(loc),
+                tooltip: loc.saveTooltip,
+              ),
+          ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: () async {
-              if (appProvider.selectedCar != null) {
-                if (_localFuelTypes.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(loc.atLeastOneFuelType)),
-                  );
-                  return;
-                }
-                final navigator = Navigator.of(context);
-                final messenger = ScaffoldMessenger.of(context);
-                final selected = appProvider.selectedCar!;
-                // Save a copy: the car held by the provider changes only when
-                // the database write succeeds.
-                final car = Car()
-                  ..id = selected.id
-                  ..name = selected.name
-                  ..fuelTypes = List.of(_localFuelTypes)
-                  ..selectedFuelTypesForConsumption =
-                      selected.selectedFuelTypesForConsumption;
-                try {
-                  await appProvider.updateCar(car);
-                  if (mounted) navigator.pop();
-                } catch (error) {
-                  messenger.showSnackBar(
-                    SnackBar(content: Text(describeError(error, loc))),
-                  );
-                }
-              }
-            },
-            tooltip: loc.saveTooltip,
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(16.0),
             children: [
-              // Car selector with add and delete actions.
+              _SectionTitle(loc.settingsCarSection),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<int>(
+                      key: ValueKey(selectedCar?.id),
                       isExpanded: true,
-                      initialValue: appProvider.selectedCar?.id,
+                      initialValue: selectedCar?.id,
                       decoration: InputDecoration(
                         labelText: loc.selectCar,
                         border: const OutlineInputBorder(),
                       ),
-                      items: appProvider.cars.map((car) {
-                        return DropdownMenuItem<int>(
-                          value: car.id,
-                          child: Text(car.name),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          final car =
-                              appProvider.cars.firstWhere((c) => c.id == value);
-                          appProvider.selectCar(car);
-                          _loadCurrentCarData();
+                      items: [
+                        for (final car in appProvider.cars)
+                          DropdownMenuItem<int>(
+                            value: car.id,
+                            child: Text(car.name),
+                          ),
+                      ],
+                      onChanged: (value) async {
+                        if (value == null || value == selectedCar?.id) return;
+                        if (_isDirty && !await _confirmDiscard(loc)) {
+                          // Rebuild so the dropdown shows the kept car again.
+                          if (mounted) setState(() {});
+                          return;
                         }
+                        final car =
+                            appProvider.cars.firstWhere((c) => c.id == value);
+                        await appProvider.selectCar(car);
+                        if (mounted) setState(_loadCurrentCarData);
                       },
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Add-car action.
                   IconButton(
                     onPressed: () => _showAddCarDialog(appProvider, loc),
                     icon: const Icon(Icons.add_circle, color: Colors.green),
                     iconSize: 36,
+                    tooltip: loc.addCar,
                   ),
-                  // Delete-car action.
-                  if (appProvider.selectedCar != null) ...[
-                    IconButton(
-                      onPressed: () => _showDeleteCarDialog(appProvider, loc),
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
-                      iconSize: 36,
-                    ),
-                  ],
                 ],
               ),
-              const SizedBox(height: 24),
-              // Working-week schedule (app-wide setting).
-              const WorkScheduleCard(),
-              const SizedBox(height: 24),
-              if (appProvider.selectedCar != null) ...[
-                // Fuel types.
-                Text(
-                  loc.fuelTypesForCar(appProvider.selectedCar!.name),
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  loc.fuelTypesHint,
-                  style: const TextStyle(color: Colors.grey),
-                ),
+              if (selectedCar != null) ...[
                 const SizedBox(height: 16),
+                TextField(
+                  controller: _nameController,
+                  textCapitalization: TextCapitalization.sentences,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    labelText: loc.carName,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _plateController,
+                  textCapitalization: TextCapitalization.characters,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    labelText: loc.plateNumber,
+                    helperText: loc.printedInReport,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _driverController,
+                  textCapitalization: TextCapitalization.words,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    labelText: loc.driverName,
+                    helperText: loc.printedInReport,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  loc.fuelTypesForCar(selectedCar.name),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(loc.fuelTypesHint,
+                    style: const TextStyle(color: Colors.grey)),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -201,25 +281,62 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
-                // Fuel type list.
-                ..._localFuelTypes.map((fuelType) {
-                  return Card(
+                const SizedBox(height: 12),
+                for (final fuelType in _localFuelTypes)
+                  Card(
                     child: ListTile(
                       title: Text(fuelType),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          setState(() {
-                            _localFuelTypes.remove(fuelType);
-                          });
-                        },
+                      onTap: () => _renameFuelType(fuelType, loc),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: loc.renameFuelType,
+                            icon: const Icon(Icons.edit_outlined),
+                            onPressed: () => _renameFuelType(fuelType, loc),
+                          ),
+                          IconButton(
+                            tooltip: loc.delete,
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              setState(() => _localFuelTypes.remove(fuelType));
+                            },
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                }),
+                  ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                    onPressed: () => _showDeleteCarDialog(appProvider, loc),
+                    icon: const Icon(Icons.delete_outline),
+                    label: Text(loc.deleteCar),
+                  ),
+                ),
               ],
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
+              _SectionTitle(loc.settingsAppSection),
+              const SizedBox(height: 8),
+              const WorkScheduleCard(),
+              const SizedBox(height: 8),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.backup_outlined),
+                  title: Text(loc.backupsTitle),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const BackupsScreen()),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
               const AppVersionText(),
             ],
           ),
@@ -228,104 +345,192 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
     );
   }
 
-  // Add a new fuel type.
   void _addFuelType() {
-    if (_newFuelController.text.trim().isNotEmpty) {
-      final newFuel = _newFuelController.text.trim();
-      if (!_localFuelTypes.contains(newFuel)) {
-        setState(() {
-          _localFuelTypes.add(newFuel);
-        });
-      }
-      _newFuelController.clear();
+    final newFuel = _newFuelController.text.trim();
+    if (newFuel.isEmpty) return;
+    if (!_localFuelTypes.contains(newFuel)) {
+      setState(() => _localFuelTypes.add(newFuel));
     }
+    _newFuelController.clear();
   }
 
-  // Show the add-car dialog.
+  Future<void> _renameFuelType(String current, AppLocalizations loc) async {
+    final controller = TextEditingController(text: current);
+    final messenger = ScaffoldMessenger.of(context);
+    final renamed = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(loc.renameFuelType),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(controller: controller, autofocus: true),
+            const SizedBox(height: 8),
+            Text(loc.renameFuelTypeHint,
+                style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(loc.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: Text(loc.save),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (!mounted || renamed == null || renamed.isEmpty || renamed == current) {
+      return;
+    }
+    if (_localFuelTypes.contains(renamed)) {
+      messenger.showSnackBar(
+          SnackBar(content: Text(loc.fuelTypeExists(renamed))));
+      return;
+    }
+    setState(() {
+      final index = _localFuelTypes.indexOf(current);
+      _localFuelTypes[index] = renamed;
+      // Follow a chain of renames back to the name stored in the refuels.
+      final original = _renames.entries
+          .firstWhere((entry) => entry.value == current,
+              orElse: () => MapEntry(current, current))
+          .key;
+      _renames[original] = renamed;
+    });
+  }
+
   Future<void> _showAddCarDialog(
       AppProvider appProvider, AppLocalizations loc) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    _addCarController.clear();
+    final controller = TextEditingController();
 
-    final confirmed = await showDialog<bool>(
+    final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(loc.addCar),
         content: TextField(
-          controller: _addCarController,
-          decoration: InputDecoration(
-            labelText: loc.enterCarName,
-          ),
+          controller: controller,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(labelText: loc.enterCarName),
           autofocus: true,
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(context),
             child: Text(loc.cancel),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
             child: Text(loc.add),
           ),
         ],
       ),
     );
+    controller.dispose();
 
-    if (confirmed == true &&
-        _addCarController.text.trim().isNotEmpty &&
-        mounted) {
-      try {
-        await appProvider.addCar(_addCarController.text.trim());
-        _loadCurrentCarData();
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text(loc.carAdded)),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text(describeError(e, loc))),
-          );
-        }
-      }
+    if (name == null || name.isEmpty || !mounted) return;
+    try {
+      await appProvider.addCar(name);
+      if (!mounted) return;
+      setState(_loadCurrentCarData);
+      scaffoldMessenger.showSnackBar(SnackBar(content: Text(loc.carAdded)));
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text(describeError(e, loc))),
+      );
     }
   }
 
-  // Show the delete-car confirmation dialog.
+  /// Deleting a car removes its whole history, so the dialog lists what goes
+  /// and asks for the car name to be typed.
   Future<void> _showDeleteCarDialog(
       AppProvider appProvider, AppLocalizations loc) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final carName = appProvider.selectedCar!.name;
+    final car = appProvider.selectedCar!;
+    final counts = await appProvider.countCarRecords(car.id);
+    if (!mounted) return;
+    final controller = TextEditingController();
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(loc.confirm),
-        content: Text(loc.deleteConfirmation(carName)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(loc.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(loc.delete, style: const TextStyle(color: Colors.red)),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final matches = controller.text.trim() == car.name;
+          return AlertDialog(
+            title: Text(loc.deleteCar),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(loc.deleteCarWillRemove(car.name)),
+                  const SizedBox(height: 8),
+                  Text('• ${loc.cloudRowOdometer}: ${counts.odometer}'),
+                  Text('• ${loc.cloudRowFuel}: ${counts.fuel}'),
+                  Text('• ${loc.reminders}: ${counts.reminders}'),
+                  Text('• ${loc.serviceBook}: ${counts.service}'),
+                  Text('• ${loc.notes}: ${counts.notes}'),
+                  const SizedBox(height: 12),
+                  Text(loc.deleteCarTypeName),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    onChanged: (_) => setDialogState(() {}),
+                    decoration: InputDecoration(hintText: car.name),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(loc.cancel),
+              ),
+              TextButton(
+                onPressed: matches ? () => Navigator.pop(context, true) : null,
+                child: Text(
+                  loc.delete,
+                  style: TextStyle(color: matches ? Colors.red : null),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
+    controller.dispose();
 
-    if (confirmed == true && mounted) {
-      try {
-        await appProvider.deleteCar(appProvider.selectedCar!);
-      } catch (e) {
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text(describeError(e, loc))),
-          );
-        }
-      }
+    if (confirmed != true || !mounted) return;
+    try {
+      await appProvider.deleteCar(car);
+      if (mounted) setState(_loadCurrentCarData);
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text(describeError(e, loc))),
+      );
     }
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String text;
+
+  const _SectionTitle(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+    );
   }
 }
