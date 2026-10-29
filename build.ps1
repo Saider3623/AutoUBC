@@ -84,19 +84,8 @@ function Clear-StaleGradleArtifacts {
     }
 }
 
-# Optional remote logging: .secrets/remote_log.json holds LOG_GITHUB_TOKEN and is
-# never committed. Without the file the APK is built with logging disabled.
-$remoteLogConfig = Join-Path $PSScriptRoot ".secrets\remote_log.json"
-$extraBuildArgs = @()
-if (Test-Path -LiteralPath $remoteLogConfig) {
-    Write-Host "Remote logging: enabled (.secrets\remote_log.json)" -ForegroundColor Green
-    $extraBuildArgs += "--dart-define-from-file=$remoteLogConfig"
-} else {
-    Write-Host "Remote logging: disabled (no .secrets\remote_log.json)" -ForegroundColor DarkGray
-}
-
 function Invoke-ApkBuild {
-    flutter build apk --release --split-per-abi --android-skip-build-dependency-validation @extraBuildArgs | Out-Host
+    flutter build apk --release --split-per-abi --android-skip-build-dependency-validation | Out-Host
     $buildExitCode = [int]$LASTEXITCODE
     return $buildExitCode
 }

@@ -1,9 +1,13 @@
-# Каждый пуш в main форка fesh-biz/AutoUBC автоматически отправляется в main оригинала Saider3623/AutoUBC.
-# Нужен секрет UPSTREAM_TOKEN: Personal Access Token аккаунта fesh-biz с правом записи в Saider3623/AutoUBC.
+# Pushes main of the fork fesh-biz/AutoUBC to main of Saider3623/AutoUBC, but
+# only after the CI workflow has passed for that exact commit.
+# Needs the UPSTREAM_TOKEN secret: a fine-grained token of fesh-biz limited to
+# Saider3623/AutoUBC with "Contents: Read and write".
 name: Sync to Saider3623/AutoUBC
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -13,11 +17,16 @@ concurrency:
 
 jobs:
   sync:
-    if: github.repository == 'fesh-biz/AutoUBC'
+    if: >-
+      github.repository == 'fesh-biz/AutoUBC' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -26,7 +35,7 @@ jobs:
           UPSTREAM_TOKEN: ${{ secrets.UPSTREAM_TOKEN }}
         run: |
           if [ -z "$UPSTREAM_TOKEN" ]; then
-            echo "::error::Секрет UPSTREAM_TOKEN не задан в настройках форка"
+            echo "::error::The UPSTREAM_TOKEN secret is not set in the fork settings"
             exit 1
           fi
           git push "https://x-access-token:${UPSTREAM_TOKEN}@github.com/Saider3623/AutoUBC.git" HEAD:refs/heads/main

@@ -1,0 +1,69 @@
+# Static analysis and tests for every push and pull request.
+# Results are also published as annotations on the commit (tool/ci/report.py).
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Dependencies
+        id: deps
+        run: flutter pub get
+
+      - name: Generated code is committed and up to date
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          flutter gen-l10n
+          if [ -n "$(git status --porcelain -- lib test)" ]; then
+            git status --porcelain -- lib test
+            git diff -- lib test | head -300
+            changed=$(git status --porcelain -- lib test | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error title=codegen::Regenerate and commit these files:%0A${changed}"
+            exit 1
+          fi
+
+      - name: Analyze
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: |
+          dart analyze --format=machine > analyze.txt 2>&1 || true
+          python3 tool/ci/report.py analyze analyze.txt "$GITHUB_WORKSPACE"
+
+      - name: Test
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        env:
+          TZ: Europe/Kyiv
+        run: |
+          flutter test --file-reporter json:test-results.json || true
+          python3 tool/ci/report.py test test-results.json "$GITHUB_WORKSPACE"
+
+      - name: No debug hooks or calendar math on Duration
+        if: ${{ !cancelled() }}
+        run: |
+          status=0
+          if grep -rnE "192\.168\.|_dbg[A-Z]|RemoteLog|#region debug-point" lib/; then
+            echo "::error title=debug hooks::Debug network hooks must not be committed (see the lines above)"
+            status=1
+          fi
+          exit $status

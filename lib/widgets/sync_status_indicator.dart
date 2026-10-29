@@ -1,34 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 import '../l10n/app_localizations.dart';
 import '../services/google_drive_sync_service.dart';
 import '../theme/app_theme.dart';
-import '../services/remote_log_service.dart';
-
-// #region debug-point D6:reporter
-void _dbgIndicator(String h, String loc, String msg,
-    [Map<String, Object?> data = const {}]) {
-  RemoteLog.add('[DEBUG][$h] $loc: $msg${data.isEmpty ? '' : ' $data'}');
-  http
-      .post(
-        Uri.parse('http://192.168.31.107:7777/event'),
-        headers: const {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'sessionId': 'startup-freeze-google-auth',
-          'runId': 'pre-fix',
-          'hypothesisId': h,
-          'location': loc,
-          'msg': '[DEBUG] $msg',
-          'data': data,
-        }),
-      )
-      .catchError((_) => http.Response('', 0));
-}
-// #endregion
 
 class SyncStatusIndicator extends StatefulWidget {
   final GoogleDriveSyncService sync;
@@ -43,10 +19,6 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
   bool _showSuccess = false;
   Timer? _successTimer;
   SyncStatus? _lastStatus;
-  // #region debug-point C:indicator
-  int _buildCount = 0;
-  Timer? _heartbeat;
-  // #endregion
 
   @override
   void initState() {
@@ -54,25 +26,10 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
     _lastStatus = widget.sync.syncStatus;
     widget.sync.addListener(_onSyncChanged);
     _applyInitialStatus();
-    // #region debug-point C:indicator
-    _dbgIndicator('C', 'sync_status_indicator.dart:initState',
-        'init status=${widget.sync.syncStatus} connected=${widget.sync.isConnected}');
-    _heartbeat = Timer.periodic(const Duration(seconds: 1), (_) {
-      _dbgIndicator(
-          'C',
-          'sync_status_indicator.dart:heartbeat',
-          'ui alive builds=$_buildCount status=${widget.sync.syncStatus} '
-              'connected=${widget.sync.isConnected}');
-    });
-    // #endregion
   }
 
   @override
   void dispose() {
-    // #region debug-point C:indicator
-    _heartbeat?.cancel();
-    _dbgIndicator('C', 'sync_status_indicator.dart:dispose', 'disposed');
-    // #endregion
     widget.sync.removeListener(_onSyncChanged);
     _successTimer?.cancel();
     super.dispose();
@@ -90,10 +47,6 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
     final SyncStatus newStatus = widget.sync.syncStatus;
     final SyncStatus previous = _lastStatus ?? SyncStatus.unknown;
     _lastStatus = newStatus;
-    // #region debug-point C:indicator
-    _dbgIndicator('C', 'sync_status_indicator.dart:_onSyncChanged',
-        'status $previous -> $newStatus');
-    // #endregion
 
     if (!mounted) return;
 
@@ -132,9 +85,6 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
 
   @override
   Widget build(BuildContext context) {
-    // #region debug-point C:indicator
-    _buildCount++;
-    // #endregion
     final loc = AppLocalizations.of(context)!;
     final status = widget.sync.syncStatus;
 
