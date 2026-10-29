@@ -558,4 +558,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get timeLabel => 'Час';
+
+  @override
+  String appVersion(String version, String build) {
+    return 'Версія $version ($build)';
+  }
 }

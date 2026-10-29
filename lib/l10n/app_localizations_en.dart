@@ -557,4 +557,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timeLabel => 'Time';
+
+  @override
+  String appVersion(String version, String build) {
+    return 'Version $version ($build)';
+  }
 }

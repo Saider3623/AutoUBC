@@ -32,20 +32,57 @@ is packaged, such as an integration/device test target.
 
 ## Data safety
 
-Before local backups, Isar creates a compact snapshot with `copyToFile()`. Cloud
-downloads are written to a temporary file, schema-checked, and atomically
-swapped into place. The app uses a local-first policy: an existing local
-database is never replaced by a remote copy during a normal launch.
+The phone database is the working copy; Google Drive (`appDataFolder`) keeps a
+backup per Google account.
+
+- Before its first upload for an account, a device compares the local and the
+  cloud copies (cars, records, last entry date). An empty phone restores the
+  cloud copy; a missing or empty cloud copy is replaced; identical copies need
+  nothing. When the copies differ, nothing is uploaded until the user chooses
+  which copy to keep (`lib/services/cloud_sync_policy.dart`).
+- Before the cloud backup is replaced, Drive keeps a dated copy
+  (`autoubc_backup_YYYY-MM-DD.isar`: the 14 newest plus one per month for six
+  months). Before the local database is replaced, the current file is copied
+  to the local backup folder.
+- Downloads go to a temporary file and are opened with the current schemas
+  before the short, exclusive file swap.
+- Local backups (`AutoUBC_Backups`): the 3 newest, one per day for 7 days, one
+  per week for 4 weeks, and 5 copies made before a restore or a car deletion.
+- Uploads run 30 seconds after the last change and when the app goes to the
+  background.
 
 Android system backup explicitly excludes `files/autoubc`, the active Isar
-database directory. If the local database file is missing, the first authorized
-startup silently restores the latest copy from Google Drive when one exists. If
-there is no cloud copy, the app continues with an empty local database.
+database directory, so a reinstall restores data only through the in-app
+Google Drive flow.
 
-After interactive authorization, local data is preserved and uploaded rather
-than overwritten. Every local mutation persists a pending-sync marker before the
-write and uploads the newest snapshot silently; failed uploads remain pending
-for a later retry.
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request: it checks that
+generated code (`build_runner`, `gen-l10n`, `pubspec.lock`) is committed and up
+to date, runs `dart analyze` and `flutter test` (with `TZ=Europe/Kyiv`, so the
+daylight-saving tests are meaningful) and builds a debug APK. Results appear as
+annotations on the commit; for branches other than `main` the raw output is
+also pushed to `ci-output/<branch>`.
+
+## Release signing
+
+Release APKs must be signed with the project's own key, not the debug key:
+
+1. Create the keystore once and fill in `android/key.properties` as described
+   in `android/key.properties.example`. Never commit either file; keep both in
+   a password manager or another safe place. Without them no update can be
+   installed over a released APK.
+2. Add the SHA-1 of the release certificate to the Android OAuth client of
+   `com.driver.autoubc` in Google Cloud Console, otherwise Google sign-in fails
+   in release builds.
+3. Increase `version` in `pubspec.yaml` (for example `1.1.0+2` → `1.1.1+3`)
+   for every APK that is handed out.
+
+`build.ps1` refuses to build without `android/key.properties`;
+`build.ps1 -AllowDebugSigning` builds a test APK with the debug key. An APK
+signed with another key cannot be installed over the existing app: the old app
+has to be removed first, so make sure its data is in Google Drive (the sync
+dot shows green) before switching.
 
 The Windows `build.ps1` script builds separate release APKs for each Android
 ABI and copies them directly into the root `release` directory:

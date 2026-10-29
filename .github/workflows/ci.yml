@@ -44,8 +44,8 @@ jobs:
         run: |
           dart run build_runner build --delete-conflicting-outputs > "$RUNNER_TEMP/ci-out/build-runner.txt" 2>&1 || echo "::error title=codegen::build_runner failed"
           flutter gen-l10n > "$RUNNER_TEMP/ci-out/gen-l10n.txt" 2>&1 || echo "::error title=codegen::gen-l10n failed"
-          git status --porcelain -- lib test > "$RUNNER_TEMP/ci-out/codegen-changed.txt"
-          git diff -- lib test > "$RUNNER_TEMP/ci-out/codegen.diff"
+          git status --porcelain -- lib test pubspec.lock > "$RUNNER_TEMP/ci-out/codegen-changed.txt"
+          git diff -- lib test pubspec.lock > "$RUNNER_TEMP/ci-out/codegen.diff"
           if [ -s "$RUNNER_TEMP/ci-out/codegen-changed.txt" ]; then
             while read -r _ path; do
               mkdir -p "$RUNNER_TEMP/ci-out/files/$(dirname "$path")"
@@ -117,4 +117,56 @@ jobs:
 
       - name: Fail when generated code is stale
         if: ${{ !cancelled() && steps.codegen.outputs.dirty == 'true' }}
+        run: exit 1
+
+  android:
+    # Builds a debug APK so Gradle, manifest and plugin problems show up
+    # before a release build on a developer machine.
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build debug APK
+        id: build
+        run: |
+          mkdir -p "$RUNNER_TEMP/ci-out"
+          flutter pub get > "$RUNNER_TEMP/ci-out/pub-get.txt" 2>&1
+          set +e
+          flutter build apk --debug > "$RUNNER_TEMP/ci-out/build-apk.txt" 2>&1
+          status=$?
+          set -e
+          tail -n 60 "$RUNNER_TEMP/ci-out/build-apk.txt"
+          if [ $status -ne 0 ]; then
+            errors=$(grep -E "error|Error|FAILURE|What went wrong" -A3 "$RUNNER_TEMP/ci-out/build-apk.txt" | head -n 40 | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error title=android build::${errors}"
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Publish raw results to ci-output branch
+        if: ${{ !cancelled() && github.event_name == 'push' && github.ref_name != 'main' }}
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          cd "$RUNNER_TEMP/ci-out"
+          echo "$GITHUB_SHA" > commit.txt
+          git init -q -b out
+          git add -A
+          git -c user.name=ci -c user.email=ci@localhost commit -qm "Android build output for $GITHUB_SHA"
+          git push -fq "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "out:refs/heads/ci-output/${GITHUB_REF_NAME}-android"
+
+      - name: Fail when the build failed
+        if: ${{ steps.build.outputs.status != '0' }}
         run: exit 1

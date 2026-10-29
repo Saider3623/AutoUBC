@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../models/car.dart';
 import '../providers/app_provider.dart';
 import '../utils/error_messages.dart';
+import '../widgets/app_version_text.dart';
 import '../widgets/work_schedule_card.dart';
 
 class ManageCarsScreen extends StatefulWidget {
@@ -218,6 +219,8 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                   );
                 }),
               ],
+              const SizedBox(height: 32),
+              const AppVersionText(),
             ],
           ),
         ),
