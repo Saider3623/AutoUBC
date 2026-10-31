@@ -1,32 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
-import 'remote_log_service.dart';
-
-// #region debug-point D6:reporter
-void _dbgSync(String h, String loc, String msg,
-    [Map<String, Object?> data = const {}]) {
-  RemoteLog.add('[DEBUG][$h] $loc: $msg${data.isEmpty ? '' : ' $data'}');
-  http
-      .post(
-        Uri.parse('http://192.168.31.107:7777/event'),
-        headers: const {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'sessionId': 'startup-freeze-google-auth',
-          'runId': 'pre-fix',
-          'hypothesisId': h,
-          'location': loc,
-          'msg': '[DEBUG] $msg',
-          'data': data,
-        }),
-      )
-      .catchError((_) => http.Response('', 0));
-}
-// #endregion
 
 /// The action selected during startup or after the first authorization.
 enum SyncStartupAction { none, download, upload, error }
@@ -160,10 +137,6 @@ class GoogleDriveSyncService extends ChangeNotifier {
   void _beginOperation() {
     _activeOperations++;
     _syncStatus = SyncStatus.syncing;
-    // #region debug-point C:ops
-    _dbgSync('C', 'google_drive_sync_service.dart:_beginOperation',
-        'active=$_activeOperations');
-    // #endregion
     notifyListeners();
   }
 
@@ -177,10 +150,6 @@ class GoogleDriveSyncService extends ChangeNotifier {
       _syncStatus =
           terminalStatus ?? (success ? SyncStatus.idle : SyncStatus.error);
     }
-    // #region debug-point C:ops
-    _dbgSync('C', 'google_drive_sync_service.dart:_endOperation',
-        'active=$_activeOperations success=$success status=$_syncStatus');
-    // #endregion
     notifyListeners();
   }
 
@@ -198,15 +167,8 @@ class GoogleDriveSyncService extends ChangeNotifier {
   /// Не показує жодних діалогів, якщо акаунт вже прив'язаний.
   Future<bool> signInSilently() async {
     try {
-      // #region debug-point D:signin
-      _dbgSync('D', 'google_drive_sync_service.dart:signInSilently', 'begin');
-      // #endregion
       final account =
           await _googleSignIn.signInSilently().timeout(_kAuthTimeout);
-      // #region debug-point D:signin
-      _dbgSync('D', 'google_drive_sync_service.dart:signInSilently',
-          'done account=${account?.email}');
-      // #endregion
       _currentUser = account;
       _syncStatus = SyncStatus.unknown;
       _lastSyncFailed = false;
@@ -404,10 +366,6 @@ class GoogleDriveSyncService extends ChangeNotifier {
   }) async {
     if (_currentUser == null) return false;
     _beginOperation();
-    // #region debug-point D:download
-    _dbgSync('D', 'google_drive_sync_service.dart:_downloadBackup',
-        'begin target=$targetFilePath');
-    // #endregion
 
     _DriveSession? session;
     File? tempFile;
@@ -416,17 +374,9 @@ class GoogleDriveSyncService extends ChangeNotifier {
       if (session == null) {
         throw StateError('Не вдалося ініціалізувати Drive API');
       }
-      // #region debug-point D:download
-      _dbgSync('D', 'google_drive_sync_service.dart:_downloadBackup',
-          'drive session ready');
-      // #endregion
 
       final api = session.api;
       final remoteFile = await _findBackupFile(api);
-      // #region debug-point D:download
-      _dbgSync('D', 'google_drive_sync_service.dart:_downloadBackup',
-          'remote file=${remoteFile?.id}');
-      // #endregion
       if (remoteFile == null || remoteFile.id == null) {
         debugPrint('[GoogleDrive] Бекап на Диску не знайдено.');
         _endOperation(success: true, terminalStatus: SyncStatus.unknown);
@@ -452,15 +402,7 @@ class GoogleDriveSyncService extends ChangeNotifier {
 
       final sink = tempFile.openWrite();
       try {
-        // #region debug-point D:download
-        _dbgSync('D', 'google_drive_sync_service.dart:_downloadBackup',
-            'transferring media');
-        // #endregion
         await sink.addStream(response.stream).timeout(_kTransferTimeout);
-        // #region debug-point D:download
-        _dbgSync('D', 'google_drive_sync_service.dart:_downloadBackup',
-            'transfer done');
-        // #endregion
       } catch (_) {
         // Abort a stalled transfer: closing the HTTP client ends the media
         // stream, so the sink can be closed and the temporary file removed
@@ -477,10 +419,6 @@ class GoogleDriveSyncService extends ChangeNotifier {
       if (validateFile != null && !await validateFile(tempFile.path)) {
         throw StateError('Downloaded backup failed schema validation.');
       }
-      // #region debug-point D:download
-      _dbgSync('D', 'google_drive_sync_service.dart:_downloadBackup',
-          'validated, replacing target');
-      // #endregion
 
       if (await targetFile.exists()) {
         if (await previousFile.exists()) await previousFile.delete();

@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'l10n/app_localizations.dart';
@@ -20,34 +18,12 @@ import 'models/reminder.dart';
 import 'services/google_drive_sync_service.dart';
 import 'theme/app_theme.dart';
 import 'widgets/sync_status_indicator.dart';
-import 'services/remote_log_service.dart';
 
 Future<void> _deleteFileIfExists(String path) async {
   try {
     await File(path).delete();
   } catch (_) {}
 }
-
-// #region debug-point D6:reporter
-void _dbgMain(String h, String loc, String msg,
-    [Map<String, Object?> data = const {}]) {
-  RemoteLog.add('[DEBUG][$h] $loc: $msg${data.isEmpty ? '' : ' $data'}');
-  http
-      .post(
-        Uri.parse('http://192.168.31.107:7777/event'),
-        headers: const {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'sessionId': 'startup-freeze-google-auth',
-          'runId': 'pre-fix',
-          'hypothesisId': h,
-          'location': loc,
-          'msg': '[DEBUG] $msg',
-          'data': data,
-        }),
-      )
-      .catchError((_) => http.Response('', 0));
-}
-// #endregion
 
 Future<SyncStartupAction> _initializeCloudSync({
   required GoogleDriveSyncService sync,
@@ -59,23 +35,12 @@ Future<SyncStartupAction> _initializeCloudSync({
 
   // AppProvider starts loading immediately in its constructor. Await that
   // exact operation before deciding whether the local database is usable.
-  // #region debug-point A:cloudinit
-  _dbgMain(
-      'A', 'main.dart:_initializeCloudSync', 'begin, await initialization');
-  // #endregion
   await appProvider.initialization;
-  // #region debug-point A:cloudinit
-  _dbgMain('A', 'main.dart:_initializeCloudSync',
-      'initialization done, cars=${appProvider.cars.length}');
-  // #endregion
   final action = await sync.decideStartupAction(
     hasLocalData: appProvider.cars.isNotEmpty,
     hasPendingLocalChanges: appProvider.hasPendingSync,
     restoreIfEmpty: restoreIfEmpty,
   );
-  // #region debug-point A:cloudinit
-  _dbgMain('A', 'main.dart:_initializeCloudSync', 'action=$action');
-  // #endregion
 
   switch (action) {
     case SyncStartupAction.download:
@@ -91,9 +56,6 @@ Future<SyncStartupAction> _initializeCloudSync({
           validateFile: dbService.verifyDatabaseSnapshot,
         ),
       );
-      // #region debug-point A:download
-      _dbgMain('A', 'main.dart:_initializeCloudSync', 'download=$downloaded');
-      // #endregion
       if (downloaded) {
         await appProvider.refreshAll();
         await appProvider.markSyncCompleted();
@@ -118,26 +80,8 @@ Future<SyncStartupAction> _initializeCloudSync({
   return action;
 }
 
-void main() {
-  // Captures all logs and uploads them when the build provides a log token;
-  // otherwise it just runs the app.
-  RemoteLog.run(_runApp);
-}
-
-Future<void> _runApp() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // #region debug-point A:startup
-  _dbgMain('A', 'main.dart:main', 'app main started');
-  // #endregion
-  // #region debug-point G:heartbeat
-  // UI-isolate liveness probe. Runs for the whole process lifetime, so if these
-  // events stop while the process is still alive the UI thread is blocked.
-  var hbTick = 0;
-  Timer.periodic(const Duration(seconds: 1), (_) {
-    hbTick++;
-    _dbgMain('G', 'main.dart:heartbeat', 'ui alive elapsed=${hbTick}s');
-  });
-  // #endregion
   Intl.defaultLocale = 'uk';
   final localeProvider = LocaleProvider();
   await localeProvider.loadSavedLocale();
@@ -225,9 +169,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
     // Тихий вхід у Google при старті
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // #region debug-point A:startup
-      _dbgMain('A', 'main.dart:initState', 'postFrame begin');
-      // #endregion
       final sync = Provider.of<GoogleDriveSyncService>(context, listen: false);
       final appProvider = Provider.of<AppProvider>(context, listen: false);
       _syncService = sync;
@@ -246,10 +187,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       };
 
       await sync.signInSilently();
-      // #region debug-point A:startup
-      _dbgMain('A', 'main.dart:initState',
-          'signInSilently done, connected=${sync.isConnected}');
-      // #endregion
       if (mounted) {
         final syncAction = await _runGuardedCloudInit(
           () => _initializeCloudSync(
@@ -259,9 +196,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             restoreIfEmpty: !dbService.hadDatabaseAtStartup,
           ),
         );
-        // #region debug-point A:startup
-        _dbgMain('A', 'main.dart:initState', 'cloud init finished=$syncAction');
-        // #endregion
         await _promptForFirstCarIfNeeded(
           sync: sync,
           appProvider: appProvider,

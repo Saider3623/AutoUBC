@@ -1,7 +1,4 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
@@ -12,28 +9,6 @@ import '../models/note.dart';
 import '../utils/form_validators.dart';
 import '../utils/weekly_report_utils.dart';
 import '../widgets/inline_form_error.dart';
-import '../services/remote_log_service.dart';
-
-// #region debug-point F6:reporter
-void _dbgEntry(String h, String loc, String msg,
-    [Map<String, Object?> data = const {}]) {
-  RemoteLog.add('[DEBUG][$h] $loc: $msg${data.isEmpty ? '' : ' $data'}');
-  http
-      .post(
-        Uri.parse('http://192.168.31.107:7777/event'),
-        headers: const {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'sessionId': 'startup-freeze-google-auth',
-          'runId': 'pre-fix',
-          'hypothesisId': h,
-          'location': loc,
-          'msg': '[DEBUG] $msg',
-          'data': data,
-        }),
-      )
-      .catchError((_) => http.Response('', 0));
-}
-// #endregion
 
 class DataEntryScreen extends StatefulWidget {
   const DataEntryScreen({super.key});
@@ -58,18 +33,10 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
   // Set when yesterday had a refuel but no odometer reading. Highlights the
   // odometer field until the missing past reading is saved.
   bool _odometerMissingForPast = false;
-  // #region debug-point F:counters
-  int _depsCount = 0;
-  int _checkCount = 0;
-  int _loadCount = 0;
-  // #endregion
 
   @override
   void initState() {
     super.initState();
-    // #region debug-point F:lifecycle
-    _dbgEntry('F', 'data_entry_screen.dart:initState', 'initState');
-    // #endregion
     _checkMissedOdometerForYesterday();
   }
 
@@ -83,11 +50,6 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final carId = Provider.of<AppProvider>(context).selectedCar?.id;
-    // #region debug-point F:lifecycle
-    _depsCount++;
-    _dbgEntry('F', 'data_entry_screen.dart:didChangeDependencies',
-        'deps #$_depsCount carId=$carId loadedCarId=$_loadedCarId');
-    // #endregion
     if (carId != _loadedCarId) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _checkMissedOdometerForYesterday();
@@ -98,19 +60,10 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
   /// If yesterday has a refueling entry but no odometer reading, pre-select
   /// yesterday and flag the odometer field so the user can fill the gap.
   Future<void> _checkMissedOdometerForYesterday() async {
-    // #region debug-point F:check
-    final checkNo = ++_checkCount;
-    _dbgEntry('F', 'data_entry_screen.dart:_checkMissedOdometerForYesterday',
-        'check #$checkNo begin');
-    // #endregion
     final provider = Provider.of<AppProvider>(context, listen: false);
     final carId = provider.selectedCar?.id;
     if (carId == null) {
       _loadedCarId = null;
-      // #region debug-point F:check
-      _dbgEntry('F', 'data_entry_screen.dart:_checkMissedOdometerForYesterday',
-          'check #$checkNo end (no car)');
-      // #endregion
       return;
     }
 
@@ -129,11 +82,6 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
       if (!mounted) return;
       shouldFlag = fuelLogs.isNotEmpty;
     }
-
-    // #region debug-point F:check
-    _dbgEntry('F', 'data_entry_screen.dart:_checkMissedOdometerForYesterday',
-        'check #$checkNo end shouldFlag=$shouldFlag');
-    // #endregion
 
     if (shouldFlag && !_odometerMissingForPast) {
       setState(() {
@@ -156,27 +104,14 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
       _loadedCarId = null;
       return;
     }
-    // #region debug-point F:loadodo
-    final loadNo = ++_loadCount;
-    _dbgEntry('F', 'data_entry_screen.dart:_loadCurrentOdometer',
-        'loadOdo #$loadNo begin carId=$carId');
-    // #endregion
     final dateString = DateFormat('yyyy-MM-dd').format(_selectedDate);
     final log = await _db.getOdometerLog(carId, dateString);
     if (!mounted ||
         Provider.of<AppProvider>(context, listen: false).selectedCar?.id !=
             carId) {
-      // #region debug-point F:loadodo
-      _dbgEntry('F', 'data_entry_screen.dart:_loadCurrentOdometer',
-          'loadOdo #$loadNo aborted (unmounted or car changed)');
-      // #endregion
       return;
     }
     _loadedCarId = carId;
-    // #region debug-point F:loadodo
-    _dbgEntry('F', 'data_entry_screen.dart:_loadCurrentOdometer',
-        'loadOdo #$loadNo end found=${log != null}');
-    // #endregion
     setState(() {
       if (log != null) {
         _odometerController.text = log.odometer.toString();
