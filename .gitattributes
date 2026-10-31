@@ -1,2 +1,9 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# `flutter pub get` writes these files with LF. Keeping them LF in the working
+# tree on Windows too (instead of CRLF from core.autocrlf) stops every build
+# from showing them as changed with "No content changes found".
+**/GeneratedPluginRegistrant.* text eol=lf
+**/generated_plugin_registrant.* text eol=lf
+**/generated_plugins.cmake text eol=lf
