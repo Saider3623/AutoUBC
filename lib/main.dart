@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
@@ -13,72 +12,13 @@ import 'screens/export_report_screen.dart';
 import 'screens/reminders_screen.dart';
 import 'screens/service_book_screen.dart';
 import 'screens/manage_cars_screen.dart';
-import 'db/database_service.dart';
 import 'models/reminder.dart';
+import 'services/cloud_sync_controller.dart';
 import 'services/google_drive_sync_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/app_empty_state.dart';
+import 'widgets/cloud_comparison_dialog.dart';
 import 'widgets/sync_status_indicator.dart';
-
-Future<void> _deleteFileIfExists(String path) async {
-  try {
-    await File(path).delete();
-  } catch (_) {}
-}
-
-Future<SyncStartupAction> _initializeCloudSync({
-  required GoogleDriveSyncService sync,
-  required AppProvider appProvider,
-  required DatabaseService dbService,
-  required bool restoreIfEmpty,
-}) async {
-  if (!sync.isConnected) return SyncStartupAction.none;
-
-  // AppProvider starts loading immediately in its constructor. Await that
-  // exact operation before deciding whether the local database is usable.
-  await appProvider.initialization;
-  final action = await sync.decideStartupAction(
-    hasLocalData: appProvider.cars.isNotEmpty,
-    hasPendingLocalChanges: appProvider.hasPendingSync,
-    restoreIfEmpty: restoreIfEmpty,
-  );
-
-  switch (action) {
-    case SyncStartupAction.download:
-      final dbPath = await dbService.getDatabasePath();
-      // The database stays closed for the whole download and is reopened before
-      // any other queued request can run. Keeping the replacement inside a
-      // single lifecycle operation stops the UI from reopening the database
-      // while its file is being swapped, which deadlocks Isar and freezes the
-      // app right after the first authorization.
-      final downloaded = await dbService.withClosedDatabase(
-        () => sync.downloadBackup(
-          dbPath,
-          validateFile: dbService.verifyDatabaseSnapshot,
-        ),
-      );
-      if (downloaded) {
-        await appProvider.refreshAll();
-        await appProvider.markSyncCompleted();
-      }
-      break;
-    case SyncStartupAction.upload:
-      final snapshotPath = await dbService.createDatabaseSnapshot();
-      try {
-        final uploaded = await sync.uploadBackup(snapshotPath);
-        if (uploaded) await appProvider.markSyncCompleted();
-      } finally {
-        await _deleteFileIfExists(snapshotPath);
-      }
-      break;
-    case SyncStartupAction.error:
-    case SyncStartupAction.none:
-      // Sync errors remain silent. Pending state is durable and will retry on
-      // the next local mutation, lifecycle flush, or application launch.
-      break;
-  }
-
-  return action;
-}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -103,6 +43,12 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => AppProvider()),
         ChangeNotifierProvider(create: (_) => GoogleDriveSyncService()),
+        ChangeNotifierProvider(
+          create: (context) => CloudSyncController(
+            app: context.read<AppProvider>(),
+            drive: context.read<GoogleDriveSyncService>(),
+          ),
+        ),
       ],
       child: Consumer<LocaleProvider>(
         builder: (context, localeProvider, child) {
@@ -139,26 +85,14 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   late PageController _pageController;
-  final DatabaseService _db = DatabaseService();
   AppProvider? _appProvider;
-  GoogleDriveSyncService? _syncService;
+  CloudSyncController? _cloud;
   final int _totalPages = 2;
-  static const int _initialPage = 1000; // Велике число для кругової прокрутки
+  static const int _initialPage = 1000; // A large index for circular paging.
   int _currentDisplayPage = 0;
   bool _isInteractiveSignIn = false;
   bool _isLifecycleSyncInProgress = false;
-  // Serializes cloud initialization so two overlapping flows (automatic
-  // startup sync and the manual "restore from Drive" action) can never close
-  // and reopen the database at the same time. Concurrent close/reopen calls
-  // deadlock Isar and freeze the UI thread (ANR).
-  Future<void> _cloudInitQueue = Future<void>.value();
-
-  /// Runs [operation] after any in-flight cloud initialization has finished.
-  Future<T> _runGuardedCloudInit<T>(Future<T> Function() operation) {
-    final result = _cloudInitQueue.then((_) => operation());
-    _cloudInitQueue = result.then<void>((_) {}, onError: (_, __) {});
-    return result;
-  }
+  bool _isDecisionDialogOpen = false;
 
   @override
   void initState() {
@@ -167,58 +101,69 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     _pageController =
         PageController(initialPage: _initialPage + _currentDisplayPage);
 
-    // Тихий вхід у Google при старті
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final sync = Provider.of<GoogleDriveSyncService>(context, listen: false);
-      final appProvider = Provider.of<AppProvider>(context, listen: false);
-      _syncService = sync;
-      _appProvider = appProvider;
-      final dbService = DatabaseService();
-
-      // Налаштовуємо авто-синхронізацію при кожному збереженні даних
-      appProvider.onDataSaved = () async {
-        if (!sync.isConnected) return false;
-        final snapshotPath = await dbService.createDatabaseSnapshot();
-        try {
-          return await sync.uploadBackup(snapshotPath);
-        } finally {
-          await _deleteFileIfExists(snapshotPath);
-        }
-      };
-
-      await sync.signInSilently();
-      if (mounted) {
-        final syncAction = await _runGuardedCloudInit(
-          () => _initializeCloudSync(
-            sync: sync,
-            appProvider: appProvider,
-            dbService: dbService,
-            restoreIfEmpty: !dbService.hadDatabaseAtStartup,
-          ),
-        );
-        await _promptForFirstCarIfNeeded(
-          sync: sync,
-          appProvider: appProvider,
-          syncAction: syncAction,
-        );
-      }
+      final cloud = context.read<CloudSyncController>();
+      _appProvider = context.read<AppProvider>();
+      _cloud = cloud;
+      cloud.addListener(_onCloudChanged);
+      final result = await cloud.start();
+      await _promptForFirstCarIfNeeded(result);
     });
   }
 
-  Future<void> _promptForFirstCarIfNeeded({
-    required GoogleDriveSyncService sync,
-    required AppProvider appProvider,
-    required SyncStartupAction syncAction,
-  }) async {
-    if (!mounted ||
-        !shouldPromptForFirstCarSetup(
-          isConnected: sync.isConnected,
-          hasCars: appProvider.cars.isNotEmpty,
-          syncAction: syncAction,
-        )) {
+  /// Opens the decision dialog as soon as the copies are found to differ.
+  void _onCloudChanged() {
+    final cloud = _cloud;
+    if (cloud == null || !mounted) return;
+    if (cloud.needsDecision && !_isDecisionDialogOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showDecision());
+    }
+  }
+
+  Future<void> _showDecision() async {
+    final cloud = _cloud;
+    final comparison = cloud?.comparison;
+    if (cloud == null ||
+        comparison == null ||
+        !cloud.needsDecision ||
+        _isDecisionDialogOpen ||
+        !mounted) {
       return;
     }
+    _isDecisionDialogOpen = true;
+    final loc = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final choice = await showCloudConflictDialog(context, comparison);
+      if (choice == null) return;
+      final resolved = await cloud.resolveConflict(choice);
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(
+        content: Text(resolved
+            ? (choice == ConflictChoice.useCloud
+                ? loc.cloudRestored
+                : loc.cloudUploaded)
+            : loc.cloudOperationFailed),
+      ));
+      if (resolved) await _promptForFirstCarIfNeeded(CloudFlowResult.restored);
+    } finally {
+      _isDecisionDialogOpen = false;
+    }
+  }
 
+  Future<void> _promptForFirstCarIfNeeded(CloudFlowResult result) async {
+    final cloud = _cloud;
+    final appProvider = _appProvider;
+    if (!mounted || cloud == null || appProvider == null) return;
+    final settled = result == CloudFlowResult.inSync ||
+        result == CloudFlowResult.restored ||
+        result == CloudFlowResult.uploaded;
+    if (!cloud.isConnected ||
+        !settled ||
+        appProvider.loadError != null ||
+        appProvider.cars.isNotEmpty) {
+      return;
+    }
     await _openManageCars(autoOpenAddCar: true);
   }
 
@@ -230,7 +175,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
 
     final appProvider = _appProvider;
-    if (_syncService?.isConnected == true &&
+    if (_cloud?.isConnected == true &&
         appProvider != null &&
         appProvider.hasPendingSync &&
         !_isLifecycleSyncInProgress) {
@@ -250,6 +195,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _cloud?.removeListener(_onCloudChanged);
     _pageController.dispose();
     super.dispose();
   }
@@ -298,8 +244,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
     return Scaffold(
       appBar: AppBar(
-        title: Consumer2<AppProvider, GoogleDriveSyncService>(
-          builder: (context, provider, sync, child) {
+        title: Consumer2<AppProvider, CloudSyncController>(
+          builder: (context, provider, cloud, child) {
             return Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -312,7 +258,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 // The indicator slot keeps a fixed width so its appearance or
                 // disappearance never shifts the car name.
                 const SizedBox(width: 10),
-                SyncStatusIndicator(sync: sync),
+                SyncStatusIndicator(
+                  cloud: cloud,
+                  onTap: cloud.needsDecision ? _showDecision : null,
+                ),
               ],
             );
           },
@@ -398,10 +347,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                         ),
                       ),
                       const PopupMenuDivider(),
-                      // Google Drive секція
-                      if (!Provider.of<GoogleDriveSyncService>(context,
-                              listen: false)
-                          .isConnected)
+                      // Google Drive section.
+                      if (!context.read<CloudSyncController>().isConnected)
                         PopupMenuItem(
                           value: 'google_sign_in',
                           child: Row(
@@ -414,6 +361,17 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                           ),
                         )
                       else ...[
+                        PopupMenuItem(
+                          value: 'restore_from_drive',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.cloud_download_outlined,
+                                  size: 20, color: Colors.blue),
+                              const SizedBox(width: 12),
+                              Text(loc.restoreFromDriveMenu),
+                            ],
+                          ),
+                        ),
                         PopupMenuItem(
                           value: 'google_sign_out',
                           child: Row(
@@ -451,6 +409,17 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         builder: (context, provider, child) {
           if (provider.isLoading && provider.cars.isEmpty) {
             return const Center(child: CircularProgressIndicator());
+          }
+          if (provider.loadError != null && provider.cars.isEmpty) {
+            return AppEmptyState(
+              icon: Icons.error_outline,
+              title: loc.dataLoadErrorTitle,
+              message: loc.dataLoadErrorBody,
+              action: FilledButton(
+                onPressed: provider.loadCars,
+                child: Text(loc.retry),
+              ),
+            );
           }
           if (provider.cars.isEmpty) {
             return _buildEmptyState(loc);
@@ -510,7 +479,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   Widget _buildEmptyState(AppLocalizations loc) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final sync = Provider.of<GoogleDriveSyncService>(context);
+    final sync = context.watch<CloudSyncController>();
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -602,33 +571,67 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     if (_isInteractiveSignIn) return;
 
     setState(() => _isInteractiveSignIn = true);
-    final sync = Provider.of<GoogleDriveSyncService>(context, listen: false);
-    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final cloud = context.read<CloudSyncController>();
+    final loc = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
 
     try {
-      final success = await sync.signIn();
+      final result = await cloud.signIn();
       if (!mounted) return;
-
-      if (success) {
-        final syncAction = await _runGuardedCloudInit(
-          () => _initializeCloudSync(
-            sync: sync,
-            appProvider: appProvider,
-            dbService: _db,
-            restoreIfEmpty: true,
-          ),
+      if (result == CloudFlowResult.failed) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(loc.cloudOperationFailed)),
         );
-        await _promptForFirstCarIfNeeded(
-          sync: sync,
-          appProvider: appProvider,
-          syncAction: syncAction,
-        );
+      } else if (result == CloudFlowResult.restored) {
+        messenger.showSnackBar(SnackBar(content: Text(loc.cloudRestored)));
       }
+      await _promptForFirstCarIfNeeded(result);
     } finally {
       if (mounted) {
         setState(() => _isInteractiveSignIn = false);
       }
     }
+  }
+
+  /// Restores the Google Drive copy after the user has compared both copies.
+  Future<void> _restoreFromDrive() async {
+    final cloud = context.read<CloudSyncController>();
+    final loc = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+
+    CloudComparison? comparison;
+    try {
+      comparison = await runWithProgress(
+        context,
+        loc.cloudCheckingDrive,
+        cloud.prepareRestore,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(loc.cloudOperationFailed)));
+      return;
+    }
+    if (!mounted) return;
+    if (comparison == null) {
+      messenger.showSnackBar(SnackBar(content: Text(loc.cloudNoBackup)));
+      return;
+    }
+
+    final confirmed = await showCloudRestoreDialog(context, comparison);
+    if (!mounted) return;
+    if (!confirmed) {
+      cloud.cancelRestore();
+      return;
+    }
+    final restored = await runWithProgress(
+      context,
+      loc.cloudRestoring,
+      cloud.confirmRestore,
+    );
+    if (!mounted) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text(restored ? loc.cloudRestored : loc.cloudOperationFailed),
+    ));
   }
 
   Future<void> _openManageCars({bool autoOpenAddCar = false}) async {
@@ -641,8 +644,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _handleMenuAction(String action) async {
-    final sync = Provider.of<GoogleDriveSyncService>(context, listen: false);
-    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final cloud = context.read<CloudSyncController>();
 
     switch (action) {
       case 'manage_cars':
@@ -666,11 +668,13 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       case 'google_sign_in':
         await _signInToGoogle();
         break;
+      case 'restore_from_drive':
+        await _restoreFromDrive();
+        break;
       case 'google_sign_out':
-        // Flush the latest local state before disconnecting the account. This
-        // keeps deletions and other recent edits from remaining only locally.
-        await appProvider.flushPendingSync();
-        await sync.signOut();
+        // The controller uploads pending local changes before disconnecting,
+        // so recent edits do not remain only on this phone.
+        await cloud.signOut();
         break;
     }
   }

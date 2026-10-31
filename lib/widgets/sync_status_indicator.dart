@@ -3,13 +3,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../services/cloud_sync_controller.dart';
 import '../services/google_drive_sync_service.dart';
 import '../theme/app_theme.dart';
 
+/// Small dot next to the car name that shows the Google Drive state.
+///
+/// Blue with a spinner while syncing, green for two seconds after success,
+/// red after a failure and orange when the user must choose between the phone
+/// and the cloud data. [onTap] makes the dot tappable (used for the orange
+/// state, which opens the decision dialog).
 class SyncStatusIndicator extends StatefulWidget {
-  final GoogleDriveSyncService sync;
+  final CloudSyncController cloud;
+  final VoidCallback? onTap;
 
-  const SyncStatusIndicator({super.key, required this.sync});
+  const SyncStatusIndicator({super.key, required this.cloud, this.onTap});
 
   @override
   State<SyncStatusIndicator> createState() => _SyncStatusIndicatorState();
@@ -23,104 +31,94 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
   @override
   void initState() {
     super.initState();
-    _lastStatus = widget.sync.syncStatus;
-    widget.sync.addListener(_onSyncChanged);
-    _applyInitialStatus();
+    _lastStatus = widget.cloud.status;
+    widget.cloud.addListener(_onSyncChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant SyncStatusIndicator oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.cloud, widget.cloud)) {
+      oldWidget.cloud.removeListener(_onSyncChanged);
+      widget.cloud.addListener(_onSyncChanged);
+    }
   }
 
   @override
   void dispose() {
-    widget.sync.removeListener(_onSyncChanged);
+    widget.cloud.removeListener(_onSyncChanged);
     _successTimer?.cancel();
     super.dispose();
   }
 
-  void _applyInitialStatus() {
-    final status = widget.sync.syncStatus;
-    if (status == SyncStatus.error) {
-      _showSuccess = false;
-      _successTimer?.cancel();
-    }
-  }
-
   void _onSyncChanged() {
-    final SyncStatus newStatus = widget.sync.syncStatus;
-    final SyncStatus previous = _lastStatus ?? SyncStatus.unknown;
+    final newStatus = widget.cloud.status;
+    final previous = _lastStatus ?? SyncStatus.unknown;
     _lastStatus = newStatus;
 
     if (!mounted) return;
 
-    if (newStatus == SyncStatus.error) {
-      setState(() {
-        _showSuccess = false;
-        _successTimer?.cancel();
-      });
-      return;
-    }
-
-    if (newStatus == SyncStatus.idle &&
-        (previous == SyncStatus.syncing || previous == SyncStatus.unknown)) {
+    if (newStatus == SyncStatus.idle && previous == SyncStatus.syncing) {
       setState(() {
         _showSuccess = true;
         _successTimer?.cancel();
         _successTimer = Timer(const Duration(seconds: 2), () {
-          if (mounted && widget.sync.syncStatus == SyncStatus.idle) {
-            setState(() {
-              _showSuccess = false;
-            });
-          }
+          if (mounted) setState(() => _showSuccess = false);
         });
       });
       return;
     }
 
-    if (newStatus == SyncStatus.syncing) {
-      setState(() {
-        _showSuccess = false;
-        _successTimer?.cancel();
-      });
-      return;
+    if (newStatus != SyncStatus.idle) {
+      _successTimer?.cancel();
+      setState(() => _showSuccess = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final status = widget.sync.syncStatus;
+    final status = widget.cloud.status;
 
     Widget child;
-    if (!widget.sync.isConnected || status == SyncStatus.unknown) {
-      // No account and no sync activity: keep the slot empty but reserved.
+    if (!widget.cloud.isConnected) {
+      // No account: keep the slot empty but reserved.
       child = const SizedBox.shrink();
-    } else if (status == SyncStatus.idle) {
-      if (_showSuccess) {
-        child = _buildIndicator(
-          color: AppColors.success,
-          label: loc.syncIdle,
-        );
-      } else {
-        child = const SizedBox.shrink();
-      }
-    } else if (status == SyncStatus.error) {
-      child = _buildIndicator(
-        color: AppColors.error,
-        label: loc.syncError,
-        isError: true,
-      );
-    } else if (status == SyncStatus.syncing) {
-      child = _buildIndicator(
-        color: AppColors.primary,
-        label: loc.syncInProgress,
-        isSyncing: true,
-      );
     } else {
-      child = const SizedBox.shrink();
+      switch (status) {
+        case SyncStatus.syncing:
+          child = _buildIndicator(
+            color: AppColors.primary,
+            label: loc.syncInProgress,
+            isSyncing: true,
+          );
+        case SyncStatus.error:
+          child = _buildIndicator(
+            color: AppColors.error,
+            label: loc.syncError,
+            emphasized: true,
+          );
+        case SyncStatus.attention:
+          child = _buildIndicator(
+            color: AppColors.warning,
+            label: loc.syncNeedsDecision,
+            emphasized: true,
+          );
+        case SyncStatus.idle:
+          child = _showSuccess
+              ? _buildIndicator(color: AppColors.success, label: loc.syncIdle)
+              : const SizedBox.shrink();
+        case SyncStatus.unknown:
+          child = const SizedBox.shrink();
+      }
     }
 
-    return SizedBox(
-      width: 12,
-      height: 12,
-      child: child,
+    final dot = SizedBox(width: 12, height: 12, child: child);
+    if (widget.onTap == null) return dot;
+    return InkResponse(
+      onTap: widget.onTap,
+      radius: 20,
+      child: Padding(padding: const EdgeInsets.all(6), child: dot),
     );
   }
 
@@ -128,7 +126,7 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
     required Color color,
     required String label,
     bool isSyncing = false,
-    bool isError = false,
+    bool emphasized = false,
   }) {
     final indicator = Container(
       width: 12,
@@ -136,7 +134,7 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        boxShadow: isSyncing
+        boxShadow: isSyncing || emphasized
             ? [
                 BoxShadow(
                   color: color.withValues(alpha: 0.4),
@@ -144,15 +142,7 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
                   spreadRadius: 1.5,
                 ),
               ]
-            : isError
-                ? [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.35),
-                      blurRadius: 5,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
+            : null,
       ),
       child: isSyncing
           ? const CircularProgressIndicator(
@@ -166,7 +156,7 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
       message: label,
       child: Semantics(
         label: label,
-        liveRegion: isSyncing || isError,
+        liveRegion: isSyncing || emphasized,
         child: indicator,
       ),
     );

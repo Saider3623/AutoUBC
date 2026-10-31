@@ -435,4 +435,88 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get clearDate => 'Очистить дату';
+
+  @override
+  String get cloudConflictTitle => 'В Google Drive другие данные';
+
+  @override
+  String get cloudConflictBody =>
+      'На телефоне и в Google Drive разные данные. Выберите, какую копию оставить. Вторая копия сохранится как резервная и не пропадёт.';
+
+  @override
+  String get cloudRestoreTitle => 'Восстановить из Google Drive?';
+
+  @override
+  String get cloudRestoreBody =>
+      'Данные на телефоне будут заменены копией из Google Drive. Текущие данные телефона сначала сохранятся в локальную резервную копию.';
+
+  @override
+  String get cloudColumnPhone => 'Телефон';
+
+  @override
+  String get cloudColumnDrive => 'Google Drive';
+
+  @override
+  String get cloudRowCars => 'Автомобили';
+
+  @override
+  String get cloudRowOdometer => 'Записи пробега';
+
+  @override
+  String get cloudRowFuel => 'Заправки';
+
+  @override
+  String get cloudRowOther => 'Другие записи';
+
+  @override
+  String get cloudRowLastEntry => 'Последняя запись';
+
+  @override
+  String cloudModifiedAt(String date) {
+    return 'Копия в Google Drive сохранена $date';
+  }
+
+  @override
+  String get cloudUseDrive => 'Взять из Google Drive';
+
+  @override
+  String get cloudUsePhone => 'Оставить данные телефона';
+
+  @override
+  String get cloudDecideLater => 'Позже';
+
+  @override
+  String get cloudRestoreAction => 'Восстановить';
+
+  @override
+  String get restoreFromDriveMenu => 'Восстановить из Google Drive';
+
+  @override
+  String get cloudNoBackup => 'В Google Drive ещё нет копии';
+
+  @override
+  String get cloudOperationFailed =>
+      'Не удалось связаться с Google Drive. Ничего не изменено. Проверьте подключение и попробуйте ещё раз.';
+
+  @override
+  String get cloudRestored => 'Данные восстановлены из Google Drive';
+
+  @override
+  String get cloudUploaded => 'Данные телефона сохранены в Google Drive';
+
+  @override
+  String get cloudCheckingDrive => 'Проверяем Google Drive…';
+
+  @override
+  String get cloudRestoring => 'Восстанавливаем данные…';
+
+  @override
+  String get syncNeedsDecision => 'Выберите, какие данные оставить';
+
+  @override
+  String get dataLoadErrorTitle => 'Не удалось открыть данные';
+
+  @override
+  String get dataLoadErrorBody =>
+      'Ваши записи не удалены. Попробуйте ещё раз; если повторится — перезапустите приложение.';
 }

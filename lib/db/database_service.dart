@@ -9,8 +9,19 @@ import '../models/reminder.dart';
 import '../models/service_log.dart';
 import '../models/note.dart';
 import '../models/five_day_period.dart';
+import '../services/cloud_sync_policy.dart';
 import '../utils/date_utils.dart';
 import '../utils/validation.dart';
+
+const List<CollectionSchema<dynamic>> _schemas = [
+  CarSchema,
+  OdometerLogSchema,
+  FuelLogSchema,
+  ReminderSchema,
+  ServiceLogSchema,
+  NoteSchema,
+  FiveDayPeriodSchema,
+];
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -20,11 +31,7 @@ class DatabaseService {
   Isar? _isar;
   Future<void>? _initialization;
   Future<void> _lifecycleQueue = Future<void>.value();
-  bool? _hadDatabaseAtStartup;
-
-  /// Whether the database file existed before the first local open.
-  /// A missing file is the only startup condition that permits cloud restore.
-  bool get hadDatabaseAtStartup => _hadDatabaseAtStartup ?? false;
+  String? _databaseFilePath;
 
   Future<T> _enqueueLifecycle<T>(Future<T> Function() operation) {
     final result = _lifecycleQueue.then((_) => operation());
@@ -32,18 +39,25 @@ class DatabaseService {
     return result;
   }
 
-  Future<Isar> get isar {
-    return _enqueueLifecycle(() async {
-      if (_isar == null) {
-        _initialization ??= _init();
-        try {
-          await _initialization;
-        } finally {
-          _initialization = null;
-        }
+  Future<Isar> get isar => _enqueueLifecycle(_openInQueue);
+
+  /// Opens the database if needed. Must only run inside the lifecycle queue.
+  Future<Isar> _openInQueue() async {
+    if (_isar == null) {
+      _initialization ??= _init();
+      try {
+        await _initialization;
+      } finally {
+        _initialization = null;
       }
-      return _isar!;
-    });
+    }
+    return _isar!;
+  }
+
+  /// Runs [action] inside the lifecycle queue, so the database cannot be
+  /// closed or replaced while it reads the open instance.
+  Future<T> runExclusive<T>(Future<T> Function(Isar db) action) {
+    return _enqueueLifecycle(() async => action(await _openInQueue()));
   }
 
   Future<void> _init() async {
@@ -76,20 +90,17 @@ class DatabaseService {
       throw StateError('Could not find a writable directory for the database');
     }
 
-    _hadDatabaseAtStartup ??=
-        await File('${appDir.path}${Platform.pathSeparator}autoubc.isar')
-            .exists();
+    final databasePath = '${appDir.path}${Platform.pathSeparator}autoubc.isar';
+    _databaseFilePath = databasePath;
+    // A replacement interrupted after the old file was moved aside leaves only
+    // the `.previous` copy: put it back before opening.
+    final previous = File('$databasePath.previous');
+    if (!await File(databasePath).exists() && await previous.exists()) {
+      await previous.rename(databasePath);
+    }
 
     _isar = await Isar.open(
-      [
-        CarSchema,
-        OdometerLogSchema,
-        FuelLogSchema,
-        ReminderSchema,
-        ServiceLogSchema,
-        NoteSchema,
-        FiveDayPeriodSchema,
-      ],
+      _schemas,
       directory: appDir.path,
       name: 'autoubc',
     );
@@ -690,43 +701,34 @@ class DatabaseService {
   }
 
   // Backup and restore operations.
-  Future<String> getDatabasePath() async {
-    final db = await isar;
-    return db.path!;
-  }
 
-  /// Opens a downloaded snapshot with the current schemas before it replaces
-  /// the active database file.
-  Future<bool> verifyDatabaseSnapshot(String filePath) async {
+  /// Summary of the active database, compared with the cloud copy before
+  /// either of them is replaced.
+  Future<DatabaseSummary> summarizeLocal() => runExclusive(_summarize);
+
+  /// Opens a downloaded snapshot with the current schemas and summarizes it.
+  /// Returns `null` when the file is missing, empty or not a valid database.
+  Future<DatabaseSummary?> summarizeSnapshot(String filePath) async {
     final file = File(filePath);
-    if (!await file.exists() || await file.length() == 0) return false;
+    if (!await file.exists() || await file.length() == 0) return null;
 
     final fileName = filePath.split(RegExp(r'[/\\]')).last;
-    if (!fileName.endsWith('.isar')) return false;
+    if (!fileName.endsWith('.isar')) return null;
     final databaseName =
         fileName.substring(0, fileName.length - '.isar'.length);
     Isar? checkDb;
     try {
       checkDb = await Isar.open(
-        [
-          CarSchema,
-          OdometerLogSchema,
-          FuelLogSchema,
-          ReminderSchema,
-          ServiceLogSchema,
-          NoteSchema,
-          FiveDayPeriodSchema,
-        ],
+        _schemas,
         directory: file.parent.path,
         name: databaseName,
       );
-      final cars = await checkDb.cars.where().findAll();
-      debugPrint(
-          '[Database] Snapshot verified: ${file.path}, cars=${cars.length}');
-      return true;
+      final summary = await _summarize(checkDb);
+      debugPrint('[Database] Snapshot verified: $summary');
+      return summary;
     } catch (error) {
       debugPrint('[Database] Snapshot validation failed: $error');
-      return false;
+      return null;
     } finally {
       await checkDb?.close();
       final lockFile = File('$filePath.lock');
@@ -734,43 +736,107 @@ class DatabaseService {
     }
   }
 
+  Future<DatabaseSummary> _summarize(Isar db) async {
+    final odometerDates =
+        await db.odometerLogs.where().dateStringProperty().findAll();
+    final fuelDates = await db.fuelLogs.where().dateStringProperty().findAll();
+    String? lastEntryDate;
+    for (final date in [...odometerDates, ...fuelDates]) {
+      if (lastEntryDate == null || date.compareTo(lastEntryDate) > 0) {
+        lastEntryDate = date;
+      }
+    }
+    return DatabaseSummary(
+      cars: await db.cars.count(),
+      odometerLogs: odometerDates.length,
+      fuelLogs: fuelDates.length,
+      reminders: await db.reminders.count(),
+      serviceLogs: await db.serviceLogs.count(),
+      notes: await db.notes.count(),
+      lastEntryDate: lastEntryDate,
+    );
+  }
+
+  /// Replaces the active database with a verified snapshot.
+  ///
+  /// The current file is first copied to the local backup folder, and the
+  /// replacement happens while the database is closed, inside one lifecycle
+  /// operation: no other request can read a half-written file. The snapshot
+  /// itself must be downloaded and verified before this call, so the closed
+  /// window lasts only for the file copy.
+  Future<void> replaceWithSnapshot(String snapshotPath) async {
+    await isar; // Makes sure the database path is known.
+    final targetPath = _databaseFilePath!;
+    await withClosedDatabase(() async {
+      final target = File(targetPath);
+      final previous = File('$targetPath.previous');
+      if (await target.exists() && await target.length() > 0) {
+        await _copyToBackupFolder(target, tag: 'before-restore');
+      }
+      if (await previous.exists()) await previous.delete();
+      if (await target.exists()) await target.rename(previous.path);
+      try {
+        await File(snapshotPath).copy(targetPath);
+        if (await previous.exists()) await previous.delete();
+      } catch (_) {
+        if (await target.exists()) await target.delete();
+        if (await previous.exists()) await previous.rename(targetPath);
+        rethrow;
+      }
+    });
+  }
+
   /// Creates a compact snapshot for cloud upload without reading the live DB
   /// file while it may still be changing.
   Future<String> createDatabaseSnapshot() async {
-    final db = await isar;
     final directory = await getTemporaryDirectory();
     final snapshot = File(
       '${directory.path}/autoubc_sync_${DateTime.now().microsecondsSinceEpoch}.isar',
     );
-    await db.copyToFile(snapshot.path);
+    await runExclusive((db) => db.copyToFile(snapshot.path));
     return snapshot.path;
   }
 
-  Future<void> createAutoLocalBackup() async {
-    await _createAutoLocalBackup(await isar);
+  /// Path for a temporary file that receives a downloaded cloud snapshot.
+  Future<String> temporarySnapshotPath() async {
+    final directory = await getTemporaryDirectory();
+    return '${directory.path}/autoubc_cloud_${DateTime.now().microsecondsSinceEpoch}.isar';
   }
 
-  Future<void> _createAutoLocalBackup(Isar db) async {
+  /// Saves a local backup. A [tag] (for example `before-delete`) marks a copy
+  /// made before a destructive action; tagged copies have their own quota in
+  /// the rotation, so routine backups never push them out.
+  Future<void> createAutoLocalBackup({String? tag}) {
+    return runExclusive((db) => _createAutoLocalBackup(db, tag: tag));
+  }
+
+  Future<Directory> _backupDirectory() async {
+    Directory directory;
+    if (Platform.isAndroid) {
+      directory = await getExternalStorageDirectory() ??
+          await getApplicationDocumentsDirectory();
+    } else {
+      directory = await getApplicationDocumentsDirectory();
+    }
+    final backupDir = Directory('${directory.path}/AutoUBC_Backups');
+    if (!await backupDir.exists()) {
+      await backupDir.create(recursive: true);
+    }
+    return backupDir;
+  }
+
+  String _backupFileName(DateTime now, String? tag) {
+    String two(int value) => value.toString().padLeft(2, '0');
+    final suffix = tag == null ? '' : '_$tag';
+    return 'autoubc_backup_${now.year}${two(now.month)}${two(now.day)}_'
+        '${two(now.hour)}${two(now.minute)}$suffix.isar';
+  }
+
+  Future<void> _createAutoLocalBackup(Isar db, {String? tag}) async {
     try {
-      // Resolve the directory used for local backups.
-      Directory directory;
-      if (Platform.isAndroid) {
-        directory = await getExternalStorageDirectory() ??
-            await getApplicationDocumentsDirectory();
-      } else {
-        directory = await getApplicationDocumentsDirectory();
-      }
-
-      final backupDir = Directory('${directory.path}/AutoUBC_Backups');
-      if (!await backupDir.exists()) {
-        await backupDir.create(recursive: true);
-      }
-
-      // Create a timestamped backup filename.
-      final now = DateTime.now();
-      final backupFileName =
-          'autoubc_backup_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}.isar';
-      final backupFile = File('${backupDir.path}/$backupFileName');
+      final backupDir = await _backupDirectory();
+      final backupFile =
+          File('${backupDir.path}/${_backupFileName(DateTime.now(), tag)}');
       final tempBackupFile = File('${backupFile.path}.tmp');
 
       // Isar creates a compact, transaction-safe snapshot for backups.
@@ -783,30 +849,35 @@ class DatabaseService {
       if (await backupFile.exists()) await backupFile.delete();
       await tempBackupFile.rename(backupFile.path);
 
-      // Remove old backups and keep only the seven newest files.
       await _cleanOldBackups(backupDir);
     } catch (e) {
-      debugPrint('Помилка створення автобэкапу: $e');
+      debugPrint('[Database] Local backup failed: $e');
+    }
+  }
+
+  /// Copies a closed database file into the backup folder as is.
+  Future<void> _copyToBackupFolder(File file, {required String tag}) async {
+    try {
+      final backupDir = await _backupDirectory();
+      await file.copy('${backupDir.path}/${_backupFileName(DateTime.now(), tag)}');
+      await _cleanOldBackups(backupDir);
+    } catch (e) {
+      debugPrint('[Database] Copy before replacement failed: $e');
     }
   }
 
   Future<void> _cleanOldBackups(Directory backupDir) async {
     try {
       final files = await backupDir.list().toList();
-      final backupFiles = files
-          .whereType<File>()
-          .where((file) => file.path.endsWith('.isar'))
-          .toList()
-        ..sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
-
-      // Remove every backup except the seven newest files.
-      if (backupFiles.length > 7) {
-        for (int i = 7; i < backupFiles.length; i++) {
-          await backupFiles[i].delete();
-        }
+      final byName = <String, File>{
+        for (final file in files.whereType<File>())
+          file.uri.pathSegments.last: file,
+      };
+      for (final name in localBackupsToDelete(byName.keys)) {
+        await byName[name]!.delete();
       }
     } catch (e) {
-      debugPrint('Помилка очистки старих бэкапів: $e');
+      debugPrint('[Database] Backup cleanup failed: $e');
     }
   }
 }

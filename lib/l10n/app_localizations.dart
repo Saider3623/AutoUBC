@@ -903,6 +903,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear date'**
   String get clearDate;
+
+  /// No description provided for @cloudConflictTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Different data in Google Drive'**
+  String get cloudConflictTitle;
+
+  /// No description provided for @cloudConflictBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The phone and Google Drive hold different data. Choose which copy to keep. The other copy is saved as a backup and is not lost.'**
+  String get cloudConflictBody;
+
+  /// No description provided for @cloudRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from Google Drive?'**
+  String get cloudRestoreTitle;
+
+  /// No description provided for @cloudRestoreBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Data on this phone will be replaced with the Google Drive copy. The current phone data is saved to a local backup first.'**
+  String get cloudRestoreBody;
+
+  /// No description provided for @cloudColumnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get cloudColumnPhone;
+
+  /// No description provided for @cloudColumnDrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive'**
+  String get cloudColumnDrive;
+
+  /// No description provided for @cloudRowCars.
+  ///
+  /// In en, this message translates to:
+  /// **'Cars'**
+  String get cloudRowCars;
+
+  /// No description provided for @cloudRowOdometer.
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer entries'**
+  String get cloudRowOdometer;
+
+  /// No description provided for @cloudRowFuel.
+  ///
+  /// In en, this message translates to:
+  /// **'Refuels'**
+  String get cloudRowFuel;
+
+  /// No description provided for @cloudRowOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other records'**
+  String get cloudRowOther;
+
+  /// No description provided for @cloudRowLastEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Last entry'**
+  String get cloudRowLastEntry;
+
+  /// No description provided for @cloudModifiedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive copy saved {date}'**
+  String cloudModifiedAt(String date);
+
+  /// No description provided for @cloudUseDrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Google Drive'**
+  String get cloudUseDrive;
+
+  /// No description provided for @cloudUsePhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep phone data'**
+  String get cloudUsePhone;
+
+  /// No description provided for @cloudDecideLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get cloudDecideLater;
+
+  /// No description provided for @cloudRestoreAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get cloudRestoreAction;
+
+  /// No description provided for @restoreFromDriveMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from Google Drive'**
+  String get restoreFromDriveMenu;
+
+  /// No description provided for @cloudNoBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no copy in Google Drive yet'**
+  String get cloudNoBackup;
+
+  /// No description provided for @cloudOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach Google Drive. Nothing was changed. Check the connection and try again.'**
+  String get cloudOperationFailed;
+
+  /// No description provided for @cloudRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Data restored from Google Drive'**
+  String get cloudRestored;
+
+  /// No description provided for @cloudUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone data saved to Google Drive'**
+  String get cloudUploaded;
+
+  /// No description provided for @cloudCheckingDrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking Google Drive…'**
+  String get cloudCheckingDrive;
+
+  /// No description provided for @cloudRestoring.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring data…'**
+  String get cloudRestoring;
+
+  /// No description provided for @syncNeedsDecision.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which data to keep'**
+  String get syncNeedsDecision;
+
+  /// No description provided for @dataLoadErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the data'**
+  String get dataLoadErrorTitle;
+
+  /// No description provided for @dataLoadErrorBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your records are not deleted. Try again; if it repeats, restart the app.'**
+  String get dataLoadErrorBody;
 }
 
 class _AppLocalizationsDelegate

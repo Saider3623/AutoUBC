@@ -213,5 +213,38 @@
   "fiveDayPeriodEndHint": "If the end isn't known yet, leave it empty and set it later when management decides.",
   "fiveDayPeriodOpenEnd": "Until management decides",
   "fiveDayPeriodSaved": "Working week schedule saved",
-  "clearDate": "Clear date"
+  "clearDate": "Clear date",
+  "cloudConflictTitle": "Different data in Google Drive",
+  "cloudConflictBody": "The phone and Google Drive hold different data. Choose which copy to keep. The other copy is saved as a backup and is not lost.",
+  "cloudRestoreTitle": "Restore from Google Drive?",
+  "cloudRestoreBody": "Data on this phone will be replaced with the Google Drive copy. The current phone data is saved to a local backup first.",
+  "cloudColumnPhone": "Phone",
+  "cloudColumnDrive": "Google Drive",
+  "cloudRowCars": "Cars",
+  "cloudRowOdometer": "Odometer entries",
+  "cloudRowFuel": "Refuels",
+  "cloudRowOther": "Other records",
+  "cloudRowLastEntry": "Last entry",
+  "cloudModifiedAt": "Google Drive copy saved {date}",
+  "@cloudModifiedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "cloudUseDrive": "Use Google Drive",
+  "cloudUsePhone": "Keep phone data",
+  "cloudDecideLater": "Later",
+  "cloudRestoreAction": "Restore",
+  "restoreFromDriveMenu": "Restore from Google Drive",
+  "cloudNoBackup": "There is no copy in Google Drive yet",
+  "cloudOperationFailed": "Could not reach Google Drive. Nothing was changed. Check the connection and try again.",
+  "cloudRestored": "Data restored from Google Drive",
+  "cloudUploaded": "Phone data saved to Google Drive",
+  "cloudCheckingDrive": "Checking Google Drive…",
+  "cloudRestoring": "Restoring data…",
+  "syncNeedsDecision": "Choose which data to keep",
+  "dataLoadErrorTitle": "Could not open the data",
+  "dataLoadErrorBody": "Your records are not deleted. Try again; if it repeats, restart the app."
 }
