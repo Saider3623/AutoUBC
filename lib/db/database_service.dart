@@ -13,6 +13,24 @@ import '../services/cloud_sync_policy.dart';
 import '../utils/date_utils.dart';
 import '../utils/validation.dart';
 
+/// A local backup file in the `AutoUBC_Backups` folder.
+class LocalBackup {
+  final String path;
+  final DateTime time;
+
+  /// `before-restore` or `before-delete` for copies made before those
+  /// actions, `null` for routine backups.
+  final String? tag;
+  final int size;
+
+  const LocalBackup({
+    required this.path,
+    required this.time,
+    required this.size,
+    this.tag,
+  });
+}
+
 const List<CollectionSchema<dynamic>> _schemas = [
   CarSchema,
   OdometerLogSchema,
@@ -190,8 +208,53 @@ class DatabaseService {
     await db.writeTxn(() => db.cars.put(car));
   }
 
+  /// Saves [car] and renames fuel types in its existing refuels in one
+  /// transaction. [renames] maps an old fuel type name to the new one, so
+  /// "95" → "А-95" keeps the history under one fuel type.
+  Future<void> updateCarWithFuelRenames(
+    Car car,
+    Map<String, String> renames,
+  ) async {
+    final db = await isar;
+    _validateCar(car);
+    await db.writeTxn(() async {
+      await db.cars.put(car);
+      for (final entry in renames.entries) {
+        final from = entry.key.trim();
+        final to = entry.value.trim();
+        if (from.isEmpty || to.isEmpty || from == to) continue;
+        final logs = await db.fuelLogs
+            .filter()
+            .carIdEqualTo(car.id)
+            .fuelTypeEqualTo(from)
+            .findAll();
+        for (final log in logs) {
+          log.fuelType = to;
+        }
+        await db.fuelLogs.putAll(logs);
+      }
+    });
+  }
+
+  /// Number of records that a deletion of the car would remove.
+  Future<({int odometer, int fuel, int reminders, int service, int notes})>
+      countCarRecords(int carId) async {
+    final db = await isar;
+    return (
+      odometer: await db.odometerLogs.filter().carIdEqualTo(carId).count(),
+      fuel: await db.fuelLogs.filter().carIdEqualTo(carId).count(),
+      reminders: await db.reminders.filter().carIdEqualTo(carId).count(),
+      service: await db.serviceLogs.filter().carIdEqualTo(carId).count(),
+      notes: await db.notes.filter().carIdEqualTo(carId).count(),
+    );
+  }
+
   void _validateCar(Car car) {
     car.name = car.name.trim();
+    final plate = car.plateNumber?.trim();
+    car.plateNumber = (plate == null || plate.isEmpty) ? null : plate;
+    final driver = car.driverName?.trim();
+    car.driverName = (driver == null || driver.isEmpty) ? null : driver;
     if (car.name.isEmpty) {
       throw const DataValidationException(
           ValidationCode.carNameEmpty, 'Car name cannot be empty.');
@@ -841,6 +904,33 @@ class DatabaseService {
     );
     await runExclusive((db) => db.copyToFile(snapshot.path));
     return snapshot.path;
+  }
+
+  /// Local backups, newest first.
+  Future<List<LocalBackup>> listLocalBackups() async {
+    final dir = await _backupDirectory();
+    final backups = <LocalBackup>[];
+    await for (final entity in dir.list()) {
+      if (entity is! File) continue;
+      final parsed = parseLocalBackupName(entity.uri.pathSegments.last);
+      if (parsed == null) continue;
+      backups.add(LocalBackup(
+        path: entity.path,
+        time: parsed.time,
+        tag: parsed.tag,
+        size: await entity.length(),
+      ));
+    }
+    backups.sort((a, b) => b.time.compareTo(a.time));
+    return backups;
+  }
+
+  /// Copies a local backup to a temporary file, so opening it for a summary
+  /// never changes the backup itself.
+  Future<String> copyBackupToTemporary(String backupPath) async {
+    final target = await temporarySnapshotPath();
+    await File(backupPath).copy(target);
+    return target;
   }
 
   /// Path for a temporary file that receives a downloaded cloud snapshot.

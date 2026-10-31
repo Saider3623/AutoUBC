@@ -60,8 +60,9 @@ class CloudSyncController extends ChangeNotifier {
     required this.drive,
     DatabaseService? database,
   }) : db = database ?? DatabaseService() {
-    drive.addListener(notifyListeners);
+    drive.addListener(_onDriveChanged);
     app.onDataSaved = uploadNow;
+    _loadLastSynced();
   }
 
   final AppProvider app;
@@ -69,16 +70,46 @@ class CloudSyncController extends ChangeNotifier {
   final DatabaseService db;
 
   static const _baselineKey = 'cloud_baseline_account';
+  static const _lastSyncedKey = 'cloud_last_synced';
 
   bool _needsDecision = false;
   CloudComparison? _comparison;
-  String? _cloudSnapshotPath;
+  String? _preparedSnapshotPath;
   Future<CloudFlowResult>? _baselineCheck;
   bool _disposed = false;
+  DateTime? _lastSyncedAt;
+  DateTime? _seenDriveSuccess;
 
   bool get isConnected => drive.isConnected;
 
   String? get accountEmail => drive.accountEmail;
+
+  /// Time of the last successful Drive operation, kept across launches.
+  DateTime? get lastSyncedAt => _lastSyncedAt;
+
+  /// Technical description of the last failed Drive operation.
+  String? get lastError => drive.lastError;
+
+  Future<void> _loadLastSynced() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getString(_lastSyncedKey);
+    final parsed = stored == null ? null : DateTime.tryParse(stored);
+    if (parsed != null && (_lastSyncedAt == null || parsed.isAfter(_lastSyncedAt!))) {
+      _lastSyncedAt = parsed;
+      _notify();
+    }
+  }
+
+  void _onDriveChanged() {
+    final success = drive.lastSuccessAt;
+    if (success != null && success != _seenDriveSuccess) {
+      _seenDriveSuccess = success;
+      _lastSyncedAt = success;
+      unawaited(SharedPreferences.getInstance().then(
+          (prefs) => prefs.setString(_lastSyncedKey, success.toIso8601String())));
+    }
+    _notify();
+  }
 
   /// Whether the copies differ and uploads wait for the user's choice.
   bool get needsDecision => _needsDecision;
@@ -97,7 +128,7 @@ class CloudSyncController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
-    drive.removeListener(notifyListeners);
+    drive.removeListener(_onDriveChanged);
     if (app.onDataSaved == uploadNow) app.onDataSaved = null;
     _discardCloudSnapshot();
     super.dispose();
@@ -169,7 +200,7 @@ class CloudSyncController extends ChangeNotifier {
 
   /// Replaces the local data with the copy prepared by [prepareRestore].
   Future<bool> confirmRestore() async {
-    final path = _cloudSnapshotPath;
+    final path = _preparedSnapshotPath;
     if (path == null) return false;
     try {
       await _restoreFrom(path);
@@ -182,6 +213,69 @@ class CloudSyncController extends ChangeNotifier {
     } finally {
       _discardCloudSnapshot();
     }
+  }
+
+  /// The main cloud backup and its dated copies, newest first.
+  Future<List<RemoteBackup>> listCloudBackups() async {
+    final main = await drive.findBackup();
+    final copies = await drive.listDatedCopies();
+    return [if (main != null) main, ...copies];
+  }
+
+  /// Like [prepareRestore], for a chosen cloud copy.
+  Future<CloudComparison> prepareRestoreFrom(RemoteBackup remote) async {
+    final prepared = await _downloadAndSummarize(remote);
+    final comparison = CloudComparison(
+      local: await db.summarizeLocal(),
+      cloud: prepared,
+      cloudModified: remote.modifiedTime,
+    );
+    _comparison = comparison;
+    return comparison;
+  }
+
+  /// Compares a local backup file with the current data; [confirmRestore]
+  /// is not used for it, see [confirmLocalRestore].
+  Future<CloudComparison> prepareLocalRestore(LocalBackup backup) async {
+    _discardCloudSnapshot();
+    final path = await db.copyBackupToTemporary(backup.path);
+    final summary = await db.summarizeSnapshot(path);
+    if (summary == null) {
+      await _deleteQuietly(path);
+      throw StateError('The local backup is not a valid database.');
+    }
+    _preparedSnapshotPath = path;
+    return CloudComparison(
+      local: await db.summarizeLocal(),
+      cloud: summary,
+      cloudModified: backup.time,
+    );
+  }
+
+  /// Replaces the data with the local backup prepared by
+  /// [prepareLocalRestore]; the result is uploaded like any other change.
+  Future<bool> confirmLocalRestore() async {
+    final path = _preparedSnapshotPath;
+    if (path == null) return false;
+    try {
+      await db.replaceWithSnapshot(path);
+      await app.afterLocalRestore();
+      return true;
+    } catch (error, stackTrace) {
+      debugPrint('[CloudSync] Local restore failed: $error');
+      debugPrint('$stackTrace');
+      return false;
+    } finally {
+      _discardCloudSnapshot();
+    }
+  }
+
+  /// "Sync now" from the sync panel: uploads pending changes, or refreshes
+  /// the cloud copy when nothing is pending.
+  Future<bool> syncNow() async {
+    if (!drive.isConnected || _needsDecision) return false;
+    if (app.hasPendingSync) return app.flushPendingSync();
+    return uploadNow();
   }
 
   /// Drops the copy prepared by [prepareRestore] without using it.
@@ -197,7 +291,7 @@ class CloudSyncController extends ChangeNotifier {
     if (!_needsDecision) return false;
     try {
       if (choice == ConflictChoice.useCloud) {
-        final path = _cloudSnapshotPath;
+        final path = _preparedSnapshotPath;
         if (path == null) return false;
         await _restoreFrom(path);
       } else {
@@ -296,7 +390,7 @@ class CloudSyncController extends ChangeNotifier {
           return CloudFlowResult.uploaded;
         case BaselineAction.restoreCloud:
           if (allowRestore) {
-            await _restoreFrom(_cloudSnapshotPath!);
+            await _restoreFrom(_preparedSnapshotPath!);
             _discardCloudSnapshot();
             return CloudFlowResult.restored;
           }
@@ -349,7 +443,7 @@ class CloudSyncController extends ChangeNotifier {
       await _deleteQuietly(path);
       throw StateError('The Google Drive backup is not a valid database.');
     }
-    _cloudSnapshotPath = path;
+    _preparedSnapshotPath = path;
     return summary;
   }
 
@@ -373,8 +467,8 @@ class CloudSyncController extends ChangeNotifier {
   }
 
   void _discardCloudSnapshot() {
-    final path = _cloudSnapshotPath;
-    _cloudSnapshotPath = null;
+    final path = _preparedSnapshotPath;
+    _preparedSnapshotPath = null;
     if (path != null) unawaited(_deleteQuietly(path));
   }
 
