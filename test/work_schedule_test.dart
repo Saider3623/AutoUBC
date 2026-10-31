@@ -9,7 +9,7 @@ String _fmt(DateTime d) =>
 
 List<String> _weeks(DateTime month, WorkSchedule schedule) =>
     buildReportWeeks(month, schedule)
-        .map((w) => '${_fmt(w['start']!)}..${_fmt(w['end']!)}')
+        .map((w) => '${_fmt(w.start)}..${_fmt(w.end)}')
         .toList();
 
 FiveDayPeriod _period(int id, String start, [String? end]) => FiveDayPeriod()

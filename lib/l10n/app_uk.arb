@@ -101,7 +101,6 @@
   "invalidWholeNumber": "Введіть ціле число",
   "invalidNumber": "Введіть коректне число",
   "numberMustBeNonNegative": "Число не може бути від’ємним",
-  "reportLoadError": "Не вдалося завантажити звіт",
   "retry": "Повторити",
   "english": "Англійська",
   "russian": "Російська",
@@ -138,16 +137,6 @@
   "fuelTypesHint": "Додайте або видаліть типи пального, які використовує цей автомобіль.",
   "atLeastOneFuelType": "Залиште хоча б один тип пального.",
   "newFuelTypeHint": "Новий тип (напр., Дизель, 98, Електрика)",
-  "weeklyReportDistance": "Пробіг: {distance} км",
-  "@weeklyReportDistance": {
-    "description": "Відображення пробігу в тижневому звіті",
-    "placeholders": {
-      "distance": {
-        "type": "int",
-        "description": "Відстань у кілометрах"
-      }
-    }
-  },
   "weeklyReportNoMileage": "Без пробігу",
   "weeklyReportNoActivity": "Пробіг за цей період не зафіксований",
   "odometerSection": "ОДОМЕТР",
@@ -221,5 +210,13 @@
   "weekDetailTitle": "Деталізація: {range}",
   "reminderStartKm": "Відлік від пробігу",
   "deleteReminderConfirmation": "Видалити це нагадування?",
-  "numberMustBePositive": "Введіть число, більше за нуль"
+  "numberMustBePositive": "Введіть число, більше за нуль",
+  "weeklyReportDistanceText": "Пробіг: {distance} км",
+  "monthSummaryTitle": "ПІДСУМОК МІСЯЦЯ",
+  "monthTotalDistance": "Пробіг: {distance} км",
+  "monthDaysWithoutReading": "Робочих днів без показань: {days}",
+  "weekIncludesGap": "Пробіг включає дні без показань від {date}",
+  "editOdometerTitle": "Змінити показання",
+  "editRefuelTitle": "Змінити заправку",
+  "timeLabel": "Час"
 }

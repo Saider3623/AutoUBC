@@ -101,7 +101,6 @@
   "invalidWholeNumber": "Введите целое число",
   "invalidNumber": "Введите корректное число",
   "numberMustBeNonNegative": "Число не может быть отрицательным",
-  "reportLoadError": "Не удалось загрузить отчет",
   "retry": "Повторить",
   "english": "Английский",
   "russian": "Русский",
@@ -138,16 +137,6 @@
   "fuelTypesHint": "Добавьте или удалите типы топлива, используемые этим автомобилем.",
   "atLeastOneFuelType": "Оставьте хотя бы один вид топлива.",
   "newFuelTypeHint": "Новый тип (например, Дизель, 98, Электрика)",
-  "weeklyReportDistance": "Пробег: {distance} км",
-  "@weeklyReportDistance": {
-    "description": "Отображение пробега в еженедельном отчете",
-    "placeholders": {
-      "distance": {
-        "type": "int",
-        "description": "Расстояние в километрах"
-      }
-    }
-  },
   "weeklyReportNoMileage": "Без пробега",
   "weeklyReportNoActivity": "Пробег за этот период не зафиксирован",
   "odometerSection": "ОДОМЕТР",
@@ -221,5 +210,13 @@
   "weekDetailTitle": "Детализация: {range}",
   "reminderStartKm": "Отсчёт от пробега",
   "deleteReminderConfirmation": "Удалить это напоминание?",
-  "numberMustBePositive": "Введите число больше нуля"
+  "numberMustBePositive": "Введите число больше нуля",
+  "weeklyReportDistanceText": "Пробег: {distance} км",
+  "monthSummaryTitle": "ИТОГ МЕСЯЦА",
+  "monthTotalDistance": "Пробег: {distance} км",
+  "monthDaysWithoutReading": "Рабочих дней без показаний: {days}",
+  "weekIncludesGap": "Пробег включает дни без показаний с {date}",
+  "editOdometerTitle": "Изменить показание",
+  "editRefuelTitle": "Изменить заправку",
+  "timeLabel": "Время"
 }

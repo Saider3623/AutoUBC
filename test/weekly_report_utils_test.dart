@@ -9,12 +9,8 @@ const _sixDayOnly = WorkSchedule();
 /// Five-day weeks for the whole of 2026 and later.
 final _fiveDayOnly = WorkSchedule([FiveDayRange(DateTime(2026, 1, 1))]);
 
-Map<String, DateTime> _week(int startDay, int endDay) {
-  return {
-    'start': DateTime(2026, 9, startDay),
-    'end': DateTime(2026, 9, endDay),
-  };
-}
+ReportWeek _week(int startDay, int endDay) =>
+    ReportWeek(DateTime(2026, 9, startDay), DateTime(2026, 9, endDay));
 
 void main() {
   test('puts the current week first and preserves the other weeks order', () {
@@ -28,7 +24,7 @@ void main() {
     final ordered = prioritizeCurrentReportWeek(weeks, DateTime(2026, 9, 16));
 
     expect(
-      ordered.map((week) => week['start']!.day).toList(),
+      ordered.map((week) => week.start.day).toList(),
       [14, 1, 7, 21],
     );
   });
@@ -39,7 +35,7 @@ void main() {
     final ordered = prioritizeCurrentReportWeek(weeks, DateTime(2026, 10, 2));
 
     expect(
-      ordered.map((week) => week['start']!.day).toList(),
+      ordered.map((week) => week.start.day).toList(),
       [1, 7, 14],
     );
   });
@@ -63,7 +59,7 @@ void main() {
     final weeks = buildReportWeeks(DateTime(2026, 10, 15), _sixDayOnly);
 
     expect(
-      weeks.map((w) => '${fmt(w['start']!)}..${fmt(w['end']!)}').toList(),
+      weeks.map((w) => '${fmt(w.start)}..${fmt(w.end)}').toList(),
       [
         '10-01..10-03',
         '10-04..10-04',
@@ -82,7 +78,7 @@ void main() {
     final weeks = buildReportWeeks(DateTime(2026, 10, 1), _fiveDayOnly);
 
     expect(
-      weeks.map((w) => '${fmt(w['start']!)}..${fmt(w['end']!)}').toList(),
+      weeks.map((w) => '${fmt(w.start)}..${fmt(w.end)}').toList(),
       [
         '10-01..10-02',
         '10-03..10-04',
@@ -102,7 +98,7 @@ void main() {
     for (final month in [DateTime(2026, 3, 1), DateTime(2026, 10, 1)]) {
       for (final schedule in [_sixDayOnly, _fiveDayOnly]) {
         for (final week in buildReportWeeks(month, schedule)) {
-          for (final d in week.values) {
+          for (final d in [week.start, week.end]) {
             expect(d.hour, 0, reason: '$d');
             expect(d.minute, 0, reason: '$d');
           }

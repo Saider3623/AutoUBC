@@ -1,23 +1,43 @@
 import 'work_schedule.dart';
 
-/// Returns whether [date] falls inside the inclusive date range of [week].
-bool isDateInReportWeek(Map<String, DateTime> week, DateTime date) {
-  final day = DateTime(date.year, date.month, date.day);
-  final start = _dateOnly(week['start']!);
-  final end = _dateOnly(week['end']!);
-  return !day.isBefore(start) && !day.isAfter(end);
+/// One segment of a report month: an inclusive range of calendar days, both
+/// stored as local midnight.
+class ReportWeek {
+  final DateTime start;
+  final DateTime end;
+
+  ReportWeek(DateTime start, DateTime end)
+      : start = _dateOnly(start),
+        end = _dateOnly(end);
+
+  /// Whether [date] falls inside the inclusive range.
+  bool contains(DateTime date) {
+    final day = _dateOnly(date);
+    return !day.isBefore(start) && !day.isAfter(end);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is ReportWeek && other.start == start && other.end == end;
+
+  @override
+  int get hashCode => Object.hash(start, end);
+
+  @override
+  String toString() => 'ReportWeek($start..$end)';
 }
+
+/// Returns whether [date] falls inside the inclusive date range of [week].
+bool isDateInReportWeek(ReportWeek week, DateTime date) => week.contains(date);
 
 /// Places the current week first while preserving chronological order for the
 /// remaining weeks. Months without the current week keep their normal order.
-List<Map<String, DateTime>> prioritizeCurrentReportWeek(
-  Iterable<Map<String, DateTime>> weeks,
+List<ReportWeek> prioritizeCurrentReportWeek(
+  Iterable<ReportWeek> weeks,
   DateTime today,
 ) {
   final orderedWeeks = weeks.toList();
-  final currentIndex = orderedWeeks.indexWhere(
-    (week) => isDateInReportWeek(week, today),
-  );
+  final currentIndex = orderedWeeks.indexWhere((week) => week.contains(today));
 
   if (currentIndex <= 0) return orderedWeeks;
 
@@ -60,11 +80,11 @@ DateTime reportWeekEnd(DateTime start, WorkSchedule schedule) =>
 /// Splits [month] into consecutive working-week segments clipped to the
 /// month bounds, following the five-day periods of [schedule] (six-day weeks
 /// everywhere else). Every `start`/`end` is a local midnight.
-List<Map<String, DateTime>> buildReportWeeks(
+List<ReportWeek> buildReportWeeks(
   DateTime month,
   WorkSchedule schedule,
 ) {
-  final weeks = <Map<String, DateTime>>[];
+  final weeks = <ReportWeek>[];
   final lastDayOfMonth = DateTime(month.year, month.month + 1, 0);
 
   var currentStart = DateTime(month.year, month.month, 1);
@@ -72,7 +92,7 @@ List<Map<String, DateTime>> buildReportWeeks(
     var currentEnd = reportWeekEnd(currentStart, schedule);
     if (currentEnd.isAfter(lastDayOfMonth)) currentEnd = lastDayOfMonth;
 
-    weeks.add({'start': currentStart, 'end': currentEnd});
+    weeks.add(ReportWeek(currentStart, currentEnd));
     currentStart = addCalendarDays(currentEnd, 1);
   }
 

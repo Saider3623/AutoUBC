@@ -201,9 +201,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get numberMustBeNonNegative => 'Number cannot be negative';
 
   @override
-  String get reportLoadError => 'Could not load report';
-
-  @override
   String get retry => 'Retry';
 
   @override
@@ -288,11 +285,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newFuelTypeHint => 'New type (e.g., Diesel, 98, Electric)';
-
-  @override
-  String weeklyReportDistance(int distance) {
-    return 'Distance: $distance km';
-  }
 
   @override
   String get weeklyReportNoMileage => 'No mileage';
@@ -533,4 +525,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get numberMustBePositive => 'Enter a number greater than zero';
+
+  @override
+  String weeklyReportDistanceText(String distance) {
+    return 'Distance: $distance km';
+  }
+
+  @override
+  String get monthSummaryTitle => 'MONTH TOTAL';
+
+  @override
+  String monthTotalDistance(String distance) {
+    return 'Mileage: $distance km';
+  }
+
+  @override
+  String monthDaysWithoutReading(int days) {
+    return 'Working days without a reading: $days';
+  }
+
+  @override
+  String weekIncludesGap(String date) {
+    return 'The mileage also covers days without readings since $date';
+  }
+
+  @override
+  String get editOdometerTitle => 'Edit reading';
+
+  @override
+  String get editRefuelTitle => 'Edit refuel';
+
+  @override
+  String get timeLabel => 'Time';
 }

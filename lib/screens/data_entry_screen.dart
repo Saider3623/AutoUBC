@@ -9,6 +9,7 @@ import '../models/note.dart';
 import '../utils/error_messages.dart';
 import '../utils/form_validators.dart';
 import '../utils/weekly_report_utils.dart';
+import '../theme/fuel_colors.dart';
 import '../widgets/inline_form_error.dart';
 
 class DataEntryScreen extends StatefulWidget {
@@ -392,19 +393,8 @@ class _DataEntryScreenState extends State<DataEntryScreen>
                                   children: fuelTypes.map((type) {
                                     final isSelected =
                                         _selectedFuelType == type;
-                                    Color color = Colors.blue;
-                                    if (type.toUpperCase() == 'ГАЗ') {
-                                      color = Colors.green;
-                                    }
-                                    if (type == '95') {
-                                      color = Colors.orange;
-                                    }
-                                    if (type.toUpperCase() == 'ДИЗЕЛЬ') {
-                                      color = Colors.brown;
-                                    }
-                                    if (type.toUpperCase() == 'ЕЛЕКТРИКА') {
-                                      color = Colors.teal;
-                                    }
+                                    final color = fuelTypeColor(
+                                        type, Theme.of(context).colorScheme);
 
                                     return OutlinedButton(
                                       style: OutlinedButton.styleFrom(

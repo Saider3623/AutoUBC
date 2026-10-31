@@ -201,9 +201,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get numberMustBeNonNegative => 'Число не может быть отрицательным';
 
   @override
-  String get reportLoadError => 'Не удалось загрузить отчет';
-
-  @override
   String get retry => 'Повторить';
 
   @override
@@ -289,11 +286,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get newFuelTypeHint => 'Новый тип (например, Дизель, 98, Электрика)';
-
-  @override
-  String weeklyReportDistance(int distance) {
-    return 'Пробег: $distance км';
-  }
 
   @override
   String get weeklyReportNoMileage => 'Без пробега';
@@ -533,4 +525,36 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get numberMustBePositive => 'Введите число больше нуля';
+
+  @override
+  String weeklyReportDistanceText(String distance) {
+    return 'Пробег: $distance км';
+  }
+
+  @override
+  String get monthSummaryTitle => 'ИТОГ МЕСЯЦА';
+
+  @override
+  String monthTotalDistance(String distance) {
+    return 'Пробег: $distance км';
+  }
+
+  @override
+  String monthDaysWithoutReading(int days) {
+    return 'Рабочих дней без показаний: $days';
+  }
+
+  @override
+  String weekIncludesGap(String date) {
+    return 'Пробег включает дни без показаний с $date';
+  }
+
+  @override
+  String get editOdometerTitle => 'Изменить показание';
+
+  @override
+  String get editRefuelTitle => 'Изменить заправку';
+
+  @override
+  String get timeLabel => 'Время';
 }
