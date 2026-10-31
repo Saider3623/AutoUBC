@@ -205,8 +205,6 @@
   "appVersion": "Версія {version} ({build})",
   "navEntry": "Ввід",
   "navReport": "Звіт",
-  "todayLabel": "Сьогодні",
-  "yesterdayLabel": "Вчора",
   "previousReading": "Попереднє: {reading} км, {date}",
   "readingBelowPrevious": "Менше за попереднє показання",
   "readingAboveNext": "Більше за наступне показання: {reading} км, {date}",

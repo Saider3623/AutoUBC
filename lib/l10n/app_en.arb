@@ -277,8 +277,6 @@
   },
   "navEntry": "Entry",
   "navReport": "Report",
-  "todayLabel": "Today",
-  "yesterdayLabel": "Yesterday",
   "previousReading": "Previous: {reading} km, {date}",
   "@previousReading": {
     "placeholders": {
