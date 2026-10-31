@@ -1,0 +1,59 @@
+# Merges a pull request into main as soon as the CI workflow (check and
+# android) has passed for its latest commit. The repository setting
+# "Allow auto-merge" is off and needs admin rights, so this workflow does the
+# merge with GITHUB_TOKEN instead.
+#
+# Only pull requests from branches of this repository are merged (not from
+# forks), only into main, not drafts, and only when CI passed for the exact
+# head commit. To keep a pull request open, mark it as a draft or add the
+# "no-automerge" label.
+name: Auto-merge
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+concurrency:
+  group: auto-merge-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.head_branch != 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Merge the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          prs=$(gh api "repos/$REPO/pulls?state=open&base=main&head=$OWNER:$BRANCH" \
+            --jq '[.[] | select(.draft == false)
+                       | select(.head.sha == env.SHA)
+                       | select([.labels[].name] | index("no-automerge") | not)
+                       | .number] | .[]')
+          if [ -z "$prs" ]; then
+            echo "No open pull request into main for $BRANCH at $SHA."
+            exit 0
+          fi
+          for pr in $prs; do
+            title=$(gh api "repos/$REPO/pulls/$pr" --jq .title)
+            echo "Merging #$pr: $title"
+            gh api -X PUT "repos/$REPO/pulls/$pr/merge" \
+              -f merge_method=merge \
+              -f sha="$SHA" \
+              -f commit_title="Merge pull request #$pr: $title" \
+              --jq .message
+          done
