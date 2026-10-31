@@ -46,6 +46,26 @@ class DatabaseService {
   factory DatabaseService() => _instance;
   DatabaseService._internal();
 
+  /// Test-only replacement for the platform folders: the database, the local
+  /// backups and temporary files live under this folder. `path_provider` has
+  /// no implementation in `flutter test`.
+  @visibleForTesting
+  static Directory? debugStorageRoot;
+
+  Future<Directory> _storageFolder(
+    String name,
+    Future<Directory> Function() platformFolder,
+  ) async {
+    final root = debugStorageRoot;
+    if (root == null) return platformFolder();
+    final folder = Directory('${root.path}${Platform.pathSeparator}$name');
+    await folder.create(recursive: true);
+    return folder;
+  }
+
+  Future<Directory> _temporaryFolder() =>
+      _storageFolder('tmp', getTemporaryDirectory);
+
   Isar? _isar;
   Future<void>? _initialization;
   Future<void> _lifecycleQueue = Future<void>.value();
@@ -82,8 +102,8 @@ class DatabaseService {
     // Try multiple directories to find a writable one
     Directory? appDir;
     final dirsToTry = <Future<Directory>>[
-      getApplicationSupportDirectory(),
-      getApplicationDocumentsDirectory(),
+      _storageFolder('support', getApplicationSupportDirectory),
+      _storageFolder('documents', getApplicationDocumentsDirectory),
     ];
 
     for (final dirFuture in dirsToTry) {
@@ -268,11 +288,19 @@ class DatabaseService {
     car.fuelTypes = fuelTypes.isEmpty ? ['ГАЗ', '95'] : fuelTypes;
   }
 
+  /// Reads a legacy link inside the repair transaction. `IsarLink.value`
+  /// loads lazily with a synchronous transaction, which Isar refuses inside
+  /// `writeTxn`, so the repair failed whenever the database had records.
+  Future<int?> _linkedCarId(IsarLink<Car> link) async {
+    if (!link.isLoaded) await link.load();
+    return link.value?.id;
+  }
+
   Future<void> _repairCarIdsFromLinks(Isar db) async {
     await db.writeTxn(() async {
       final odometerLogs = await db.odometerLogs.where().findAll();
       for (final log in odometerLogs) {
-        final linkedCarId = log.car.value?.id;
+        final linkedCarId = await _linkedCarId(log.car);
         if (linkedCarId != null && log.carId != linkedCarId) {
           final duplicate = await db.odometerLogs
               .filter()
@@ -288,7 +316,7 @@ class DatabaseService {
 
       final fuelLogs = await db.fuelLogs.where().findAll();
       for (final log in fuelLogs) {
-        final linkedCarId = log.car.value?.id;
+        final linkedCarId = await _linkedCarId(log.car);
         if (linkedCarId != null && log.carId != linkedCarId) {
           log.carId = linkedCarId;
           await db.fuelLogs.put(log);
@@ -297,7 +325,7 @@ class DatabaseService {
 
       final reminders = await db.reminders.where().findAll();
       for (final reminder in reminders) {
-        final linkedCarId = reminder.car.value?.id;
+        final linkedCarId = await _linkedCarId(reminder.car);
         if (linkedCarId != null && reminder.carId != linkedCarId) {
           reminder.carId = linkedCarId;
           await db.reminders.put(reminder);
@@ -306,7 +334,7 @@ class DatabaseService {
 
       final serviceLogs = await db.serviceLogs.where().findAll();
       for (final log in serviceLogs) {
-        final linkedCarId = log.car.value?.id;
+        final linkedCarId = await _linkedCarId(log.car);
         if (linkedCarId != null && log.carId != linkedCarId) {
           log.carId = linkedCarId;
           await db.serviceLogs.put(log);
@@ -315,7 +343,7 @@ class DatabaseService {
 
       final notes = await db.notes.where().findAll();
       for (final note in notes) {
-        final linkedCarId = note.car.value?.id;
+        final linkedCarId = await _linkedCarId(note.car);
         if (linkedCarId != null && note.carId != linkedCarId) {
           note.carId = linkedCarId;
           await db.notes.put(note);
@@ -362,12 +390,24 @@ class DatabaseService {
           .dateStringEqualTo(dateString)
           .findFirst();
 
-      final previous = await db.odometerLogs
-          .filter()
-          .carIdEqualTo(carId)
-          .dateStringLessThan(dateString)
-          .sortByDateStringDesc()
-          .findFirst();
+      // Neighbours are found in Dart: Isar 3 string range filters
+      // (`lessThan`, `between`) return no records, so a reading lower than
+      // the previous one used to be accepted.
+      final carLogs =
+          await db.odometerLogs.filter().carIdEqualTo(carId).findAll();
+      OdometerLog? previous;
+      OdometerLog? next;
+      for (final log in carLogs) {
+        final order = log.dateString.compareTo(dateString);
+        if (order < 0 &&
+            (previous == null ||
+                log.dateString.compareTo(previous.dateString) > 0)) {
+          previous = log;
+        } else if (order > 0 &&
+            (next == null || log.dateString.compareTo(next.dateString) < 0)) {
+          next = log;
+        }
+      }
       if (previous != null && odometer < previous.odometer) {
         throw DataValidationException(
           ValidationCode.odometerBelowPrevious,
@@ -378,12 +418,6 @@ class DatabaseService {
         );
       }
 
-      final next = await db.odometerLogs
-          .filter()
-          .carIdEqualTo(carId)
-          .dateStringGreaterThan(dateString)
-          .sortByDateString()
-          .findFirst();
       if (next != null && odometer > next.odometer) {
         throw DataValidationException(
           ValidationCode.odometerAboveNext,
@@ -493,60 +527,6 @@ class DatabaseService {
     return car;
   }
 
-  // Report data operations.
-  Future<List<OdometerLog>> getOdometerLogsInRange(
-      int carId, String startDate, String endDate) async {
-    final db = await isar;
-    return db.odometerLogs
-        .filter()
-        .carIdEqualTo(carId)
-        .dateStringBetween(startDate, endDate)
-        .findAll();
-  }
-
-  Future<OdometerLog?> getLastOdometerLogBeforeDate(
-      int carId, String dateString) async {
-    final db = await isar;
-    final log = await db.odometerLogs
-        .filter()
-        .carIdEqualTo(carId)
-        .dateStringLessThan(dateString)
-        .sortByDateStringDesc()
-        .findFirst();
-    if (log != null) {
-      return log;
-    }
-
-    final target = DateTime.tryParse(dateString);
-    if (target == null) {
-      return null;
-    }
-
-    final all = await db.odometerLogs
-        .filter()
-        .carIdEqualTo(carId)
-        .sortByDateStringDesc()
-        .findAll();
-
-    for (final item in all) {
-      final d = DateTime.tryParse(item.dateString);
-      if (d != null && d.isBefore(target)) {
-        return item;
-      }
-    }
-    return null;
-  }
-
-  Future<List<FuelLog>> getFuelLogsInRange(
-      int carId, String startDate, String endDate) async {
-    final db = await isar;
-    return db.fuelLogs
-        .filter()
-        .carIdEqualTo(carId)
-        .dateStringBetween(startDate, endDate)
-        .findAll();
-  }
-
   // Reminder operations.
   Future<List<Reminder>> getRemindersForCar(int carId) async {
     final db = await isar;
@@ -607,8 +587,10 @@ class DatabaseService {
   }
 
   /// Marks [reminder] done. A repeating reminder gets its next occurrence;
-  /// its id is returned so the completion can be undone.
-  Future<int?> completeReminder(Reminder reminder) async {
+  /// its id is returned so the completion can be undone. [startKm] is the
+  /// mileage of the work (from a service book entry); without it a mileage
+  /// reminder restarts from the latest odometer reading.
+  Future<int?> completeReminder(Reminder reminder, {int? startKm}) async {
     final db = await isar;
     final carId = reminder.carId;
     if (carId == null) {
@@ -645,7 +627,7 @@ class DatabaseService {
           .sortByDateStringDesc()
           .findFirst();
       final currentKm = odometerLogs?.odometer ?? 0;
-      newReminder.startKm = currentKm;
+      newReminder.startKm = startKm ?? currentKm;
       newReminder.dueDate =
           DateTime.now(); // The date is less important for maintenance.
     } else {
@@ -918,7 +900,7 @@ class DatabaseService {
   /// Creates a compact snapshot for cloud upload without reading the live DB
   /// file while it may still be changing.
   Future<String> createDatabaseSnapshot() async {
-    final directory = await getTemporaryDirectory();
+    final directory = await _temporaryFolder();
     final snapshot = File(
       '${directory.path}/autoubc_sync_${DateTime.now().microsecondsSinceEpoch}.isar',
     );
@@ -955,7 +937,7 @@ class DatabaseService {
 
   /// Path for a temporary file that receives a downloaded cloud snapshot.
   Future<String> temporarySnapshotPath() async {
-    final directory = await getTemporaryDirectory();
+    final directory = await _temporaryFolder();
     return '${directory.path}/autoubc_cloud_${DateTime.now().microsecondsSinceEpoch}.isar';
   }
 
@@ -968,7 +950,9 @@ class DatabaseService {
 
   Future<Directory> _backupDirectory() async {
     Directory directory;
-    if (Platform.isAndroid) {
+    if (debugStorageRoot != null) {
+      directory = await _storageFolder('documents', getTemporaryDirectory);
+    } else if (Platform.isAndroid) {
       directory = await getExternalStorageDirectory() ??
           await getApplicationDocumentsDirectory();
     } else {
