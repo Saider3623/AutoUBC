@@ -121,8 +121,9 @@ class _DataEntryScreenState extends State<DataEntryScreen>
       !provider.workSchedule.isNonWorkingSaturday(day);
 
   /// Finds the previous working day without a reading. It is offered only
-  /// when the car already had readings before that day and either a refuel
-  /// was recorded on it or nothing was entered after it.
+  /// when the car already had readings before that day and a refuel was
+  /// recorded on it: a working day spent at home has no reading, and its
+  /// mileage simply carries over from the previous reading.
   void _updateMissingDay(AppProvider provider, {bool rebuild = true}) {
     DateTime? missing;
     if (provider.selectedCar != null) {
@@ -134,10 +135,9 @@ class _DataEntryScreenState extends State<DataEntryScreen>
       final logs = provider.odometerLogs;
       final hasReading = logs.any((log) => log.dateString == dayKey);
       final hasEarlier = logs.any((log) => log.dateString.compareTo(dayKey) < 0);
-      final hasLater = logs.any((log) => log.dateString.compareTo(dayKey) > 0);
       final hasRefuel =
           provider.fuelLogs.any((log) => log.dateString == dayKey);
-      if (!hasReading && hasEarlier && (hasRefuel || !hasLater)) {
+      if (!hasReading && hasEarlier && hasRefuel) {
         missing = day;
       }
     }
