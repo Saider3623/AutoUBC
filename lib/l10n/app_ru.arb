@@ -218,5 +218,6 @@
   "weekIncludesGap": "Пробег включает дни без показаний с {date}",
   "editOdometerTitle": "Изменить показание",
   "editRefuelTitle": "Изменить заправку",
-  "timeLabel": "Время"
+  "timeLabel": "Время",
+  "appVersion": "Версия {version} ({build})"
 }

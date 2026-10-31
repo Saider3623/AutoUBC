@@ -23,6 +23,20 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+// Release signing. android/key.properties (never committed, see
+// key.properties.example) points at the release keystore. Without it the
+// release build type falls back to the debug key so `flutter run --release`
+// keeps working on a developer machine, but build.ps1 refuses to produce a
+// distributable APK in that case.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+def hasReleaseKey = keystorePropertiesFile.exists()
+if (hasReleaseKey) {
+    keystorePropertiesFile.withReader('UTF-8') { reader ->
+        keystoreProperties.load(reader)
+    }
+}
+
 android {
     namespace "com.driver.autoubc"
     compileSdk 35
@@ -41,6 +55,17 @@ android {
         main.java.srcDirs += 'src/main/kotlin'
     }
 
+    signingConfigs {
+        release {
+            if (hasReleaseKey) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile rootProject.file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.driver.autoubc"
@@ -54,9 +79,13 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig signingConfigs.debug
+            if (hasReleaseKey) {
+                signingConfig signingConfigs.release
+            } else {
+                logger.warn('AutoUBC: android/key.properties not found, ' +
+                        'the release build is signed with the DEBUG key.')
+                signingConfig signingConfigs.debug
+            }
             shrinkResources true
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

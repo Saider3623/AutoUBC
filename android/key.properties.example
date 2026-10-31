@@ -1,0 +1,13 @@
+# Copy to android/key.properties (git-ignored) and fill in the real values.
+# Keep the keystore and this file in a password manager or another safe
+# place: without them no update can be installed over a released APK.
+#
+# Create the keystore once (from the android/ folder):
+#   keytool -genkeypair -v -keystore app/autoubc-release.jks -alias autoubc ^
+#     -keyalg RSA -keysize 2048 -validity 10000
+# Print its SHA-1 for the Android OAuth client in Google Cloud Console:
+#   keytool -list -v -keystore app/autoubc-release.jks -alias autoubc
+storeFile=app/autoubc-release.jks
+storePassword=CHANGE_ME
+keyAlias=autoubc
+keyPassword=CHANGE_ME

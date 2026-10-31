@@ -1119,6 +1119,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Time'**
   String get timeLabel;
+
+  /// No description provided for @appVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} ({build})'**
+  String appVersion(String version, String build);
 }
 
 class _AppLocalizationsDelegate

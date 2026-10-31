@@ -280,5 +280,16 @@
   },
   "editOdometerTitle": "Edit reading",
   "editRefuelTitle": "Edit refuel",
-  "timeLabel": "Time"
+  "timeLabel": "Time",
+  "appVersion": "Version {version} ({build})",
+  "@appVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  }
 }
