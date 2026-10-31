@@ -81,26 +81,6 @@ class _PdfTranslations {
 
   factory _PdfTranslations.of(String languageCode) {
     switch (languageCode) {
-      case 'ru':
-        return const _PdfTranslations(
-          reportTitle: 'Отчет по автомобилю {carName}',
-          weekLabel: 'Неделя:  {dateRange}',
-          odometerStart: 'Начало недели',
-          odometerEnd: 'Конец недели',
-          mileage: 'Пробег за неделю',
-          noMileage: 'Без пробега',
-          monthTotal: 'Итог месяца',
-          monthMileage: 'Пробег за месяц',
-          daysWithoutReading: 'Рабочих дней без показаний',
-          gapNote: 'Пробег включает дни без показаний с {date}',
-          generated: 'Сформирован {date}',
-          page: 'Страница {page} из {pages}',
-          plate: 'Госномер',
-          driver: 'Водитель',
-          km: 'км',
-          l: 'л',
-          shareText: 'Отчет AutoUBC',
-        );
       case 'en':
         return const _PdfTranslations(
           reportTitle: 'Report for car {carName}',

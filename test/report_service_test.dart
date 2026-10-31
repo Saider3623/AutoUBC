@@ -8,17 +8,6 @@ void main() {
   setUpAll(initializeDateFormatting);
 
   group('buildReportFileName', () {
-    test('uses the Russian localized month name', () {
-      expect(
-        buildReportFileName(
-          'АХ9323',
-          DateTime(2026, 6),
-          'ru',
-        ),
-        'АХ9323_Июнь.pdf',
-      );
-    });
-
     test('uses the Ukrainian localized month name', () {
       expect(
         buildReportFileName(
