@@ -291,5 +291,69 @@
         "type": "String"
       }
     }
-  }
+  },
+  "navEntry": "Entry",
+  "navReport": "Report",
+  "todayLabel": "Today",
+  "yesterdayLabel": "Yesterday",
+  "previousReading": "Previous: {reading} km, {date}",
+  "@previousReading": {
+    "placeholders": {
+      "reading": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "readingBelowPrevious": "Lower than the previous reading",
+  "readingAboveNext": "Higher than the next reading: {reading} km, {date}",
+  "@readingAboveNext": {
+    "placeholders": {
+      "reading": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "largeJumpConfirm": "+{distance} km in {days} day(s). Save anyway?",
+  "@largeJumpConfirm": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "goToDate": "Go to {date}",
+  "@goToDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "missingReadingBanner": "No odometer reading for {date}",
+  "@missingReadingBanner": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "showAllNotes": "All notes ({count})",
+  "@showAllNotes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "showFewerNotes": "Show less",
+  "storageExplanation": "Your data is stored on this phone; Google Drive keeps a backup copy."
 }

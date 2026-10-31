@@ -84,12 +84,10 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
-  late PageController _pageController;
+  final PageController _pageController = PageController();
   AppProvider? _appProvider;
   CloudSyncController? _cloud;
-  final int _totalPages = 2;
-  static const int _initialPage = 1000; // A large index for circular paging.
-  int _currentDisplayPage = 0;
+  int _currentPage = 0;
   bool _isInteractiveSignIn = false;
   bool _isLifecycleSyncInProgress = false;
   bool _isDecisionDialogOpen = false;
@@ -98,8 +96,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _pageController =
-        PageController(initialPage: _initialPage + _currentDisplayPage);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final cloud = context.read<CloudSyncController>();
@@ -200,11 +196,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  /// Maps the endless page index to one of the real pages.
-  int _getRealIndex(int index) {
-    return (index - _initialPage) % _totalPages;
-  }
-
   /// Whether any active reminder of the selected car is overdue or soon due.
   (bool, bool) _checkReminders(AppProvider provider) {
     if (provider.selectedCar == null) return (false, false);
@@ -225,9 +216,38 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      bottomNavigationBar: Consumer<AppProvider>(
+        builder: (context, provider, child) {
+          if (provider.cars.isEmpty) return const SizedBox.shrink();
+          return NavigationBar(
+            selectedIndex: _currentPage,
+            height: 64,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            onDestinationSelected: (index) {
+              setState(() => _currentPage = index);
+              _pageController.animateToPage(
+                index,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+              );
+            },
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.edit_outlined),
+                selectedIcon: const Icon(Icons.edit),
+                label: loc.navEntry,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.bar_chart_outlined),
+                selectedIcon: const Icon(Icons.bar_chart),
+                label: loc.navReport,
+              ),
+            ],
+          );
+        },
+      ),
       appBar: AppBar(
         title: Consumer2<AppProvider, CloudSyncController>(
           builder: (context, provider, cloud, child) {
@@ -409,51 +429,13 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           if (provider.cars.isEmpty) {
             return _buildEmptyState(loc);
           }
-          return Column(
-            children: [
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentDisplayPage = _getRealIndex(index);
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final realIndex = _getRealIndex(index);
-                    switch (realIndex) {
-                      case 0:
-                        return const DataEntryScreen();
-                      case 1:
-                        return const WeeklyReportScreen();
-                      default:
-                        return const DataEntryScreen();
-                    }
-                  },
-                ),
-              ),
-              // Індикатори
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(_totalPages, (index) {
-                    final isSelected = _currentDisplayPage == index;
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                      width: isSelected ? 24.0 : 8.0,
-                      height: 8.0,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? colorScheme.primary
-                            : colorScheme.primary.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                    );
-                  }),
-                ),
-              ),
+          // Swiping still switches pages; the bottom bar names them.
+          return PageView(
+            controller: _pageController,
+            onPageChanged: (index) => setState(() => _currentPage = index),
+            children: const [
+              DataEntryScreen(),
+              WeeklyReportScreen(),
             ],
           );
         },
@@ -506,6 +488,14 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                           : loc.firstLaunchDescription,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      loc.storageExplanation,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     if (sync.isConnected)

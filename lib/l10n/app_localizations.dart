@@ -1125,6 +1125,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Version {version} ({build})'**
   String appVersion(String version, String build);
+
+  /// No description provided for @navEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry'**
+  String get navEntry;
+
+  /// No description provided for @navReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get navReport;
+
+  /// No description provided for @todayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get todayLabel;
+
+  /// No description provided for @yesterdayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get yesterdayLabel;
+
+  /// No description provided for @previousReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous: {reading} km, {date}'**
+  String previousReading(String reading, String date);
+
+  /// No description provided for @readingBelowPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower than the previous reading'**
+  String get readingBelowPrevious;
+
+  /// No description provided for @readingAboveNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Higher than the next reading: {reading} km, {date}'**
+  String readingAboveNext(String reading, String date);
+
+  /// No description provided for @largeJumpConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'+{distance} km in {days} day(s). Save anyway?'**
+  String largeJumpConfirm(String distance, int days);
+
+  /// No description provided for @goToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to {date}'**
+  String goToDate(String date);
+
+  /// No description provided for @missingReadingBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'No odometer reading for {date}'**
+  String missingReadingBanner(String date);
+
+  /// No description provided for @showAllNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'All notes ({count})'**
+  String showAllNotes(int count);
+
+  /// No description provided for @showFewerNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get showFewerNotes;
+
+  /// No description provided for @storageExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your data is stored on this phone; Google Drive keeps a backup copy.'**
+  String get storageExplanation;
 }
 
 class _AppLocalizationsDelegate
