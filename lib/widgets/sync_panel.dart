@@ -7,6 +7,7 @@ import '../providers/app_provider.dart';
 import '../screens/backups_screen.dart';
 import '../services/cloud_sync_controller.dart';
 import '../services/google_drive_sync_service.dart';
+import '../theme/app_theme.dart';
 
 /// Bottom sheet with the Google Drive state and every sync action in one
 /// place: account, last successful sync, last problem, sync now, restore,
@@ -102,13 +103,20 @@ class _SyncPanelState extends State<_SyncPanel> {
 
     final status = cloud.status;
     final lastSynced = cloud.lastSyncedAt;
+    final problem = status == SyncStatus.error ? cloud.lastProblem : null;
+    final problemText = switch (problem) {
+      SyncProblem.offline => loc.syncProblemOffline,
+      SyncProblem.accessDenied => loc.syncProblemAccessDenied,
+      SyncProblem.storageFull => loc.syncProblemStorageFull,
+      _ => null,
+    };
     final (IconData icon, Color color, String text) = switch (status) {
       SyncStatus.syncing => (Icons.sync, theme.colorScheme.primary, loc.syncInProgress),
       SyncStatus.error => (Icons.error_outline, theme.colorScheme.error, loc.syncPanelError),
-      SyncStatus.attention => (Icons.warning_amber, Colors.orange.shade800, loc.syncNeedsDecision),
+      SyncStatus.attention => (Icons.warning_amber, AppColors.warning, loc.syncNeedsDecision),
       _ => app.hasPendingSync
           ? (Icons.cloud_upload_outlined, theme.colorScheme.primary, loc.syncPendingChanges)
-          : (Icons.cloud_done_outlined, Colors.green.shade700, loc.syncIdle),
+          : (Icons.cloud_done_outlined, AppColors.success, loc.syncIdle),
     };
 
     return Padding(
@@ -130,6 +138,27 @@ class _SyncPanelState extends State<_SyncPanel> {
                 : Text(loc.syncLastSuccess(
                     DateFormat.yMMMd(languageCode).add_Hm().format(lastSynced))),
           ),
+          if (problemText != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                problemText,
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: theme.colorScheme.error),
+              ),
+            ),
+          if (problem == SyncProblem.accessDenied)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: FilledButton.icon(
+                icon: const Icon(Icons.login),
+                label: Text(loc.syncSignInAgain),
+                onPressed: () => _closeThen(() async {
+                  await cloud.signOut();
+                  await widget.onSignIn();
+                }),
+              ),
+            ),
           if (status == SyncStatus.attention)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -600,7 +600,15 @@ class DatabaseService {
     await db.writeTxn(() => db.reminders.delete(reminder.id));
   }
 
-  Future<void> completeReminder(Reminder reminder) async {
+  /// Active and completed reminders of every car (for notifications).
+  Future<List<Reminder>> getAllReminders() async {
+    final db = await isar;
+    return db.reminders.where().findAll();
+  }
+
+  /// Marks [reminder] done. A repeating reminder gets its next occurrence;
+  /// its id is returned so the completion can be undone.
+  Future<int?> completeReminder(Reminder reminder) async {
     final db = await isar;
     final carId = reminder.carId;
     if (carId == null) {
@@ -618,7 +626,7 @@ class DatabaseService {
         reminder.isCompleted = true;
         await db.reminders.put(reminder);
       });
-      return;
+      return null;
     }
 
     final newReminder = Reminder()
@@ -653,6 +661,18 @@ class DatabaseService {
       reminder.isCompleted = true;
       await db.reminders.put(reminder);
       await db.reminders.put(newReminder);
+    });
+    return newReminder.id;
+  }
+
+  /// Reverts [completeReminder]: removes the next occurrence it created and
+  /// makes [reminder] active again.
+  Future<void> undoCompleteReminder(Reminder reminder, int? nextId) async {
+    final db = await isar;
+    await db.writeTxn(() async {
+      if (nextId != null) await db.reminders.delete(nextId);
+      reminder.isCompleted = false;
+      await db.reminders.put(reminder);
     });
   }
 

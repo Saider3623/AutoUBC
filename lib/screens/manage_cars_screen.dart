@@ -8,6 +8,7 @@ import '../utils/error_messages.dart';
 import '../widgets/app_version_text.dart';
 import '../widgets/work_schedule_card.dart';
 import 'backups_screen.dart';
+import '../theme/app_theme.dart';
 
 /// Settings: the selected car (name, plate, driver, fuel types, deletion) and
 /// app-wide options (working week, backups, version).
@@ -212,7 +213,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () => _showAddCarDialog(appProvider, loc),
-                    icon: const Icon(Icons.add_circle, color: Colors.green),
+                    icon: const Icon(Icons.add_circle, color: AppColors.success),
                     iconSize: 36,
                     tooltip: loc.addCar,
                   ),
@@ -259,7 +260,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(loc.fuelTypesHint,
-                    style: const TextStyle(color: Colors.grey)),
+                    style: const TextStyle(color: AppColors.muted)),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -275,7 +276,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.add_circle, color: Colors.blue),
+                      icon: const Icon(Icons.add_circle, color: AppColors.primary),
                       iconSize: 36,
                       onPressed: _addFuelType,
                     ),
@@ -297,7 +298,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                           ),
                           IconButton(
                             tooltip: loc.delete,
-                            icon: const Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(Icons.delete, color: AppColors.error),
                             onPressed: () {
                               setState(() => _localFuelTypes.remove(fuelType));
                             },
@@ -496,7 +497,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                 onPressed: matches ? () => Navigator.pop(context, true) : null,
                 child: Text(
                   loc.delete,
-                  style: TextStyle(color: matches ? Colors.red : null),
+                  style: TextStyle(color: matches ? AppColors.error : null),
                 ),
               ),
             ],

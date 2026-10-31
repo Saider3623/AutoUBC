@@ -10,14 +10,16 @@ subprojects {
         if (project.hasProperty("android")) {
             def androidExt = project.extensions.findByName("android")
             if (androidExt != null) {
+                // Old plugins (isar_flutter_libs 3) target an SDK too old for
+                // current AndroidX; build every module against the app's SDK.
                 try {
-                    androidExt.compileSdk = 35
+                    androidExt.compileSdk = 36
                 } catch (Exception ignored) {}
                 try {
                     if (androidExt.hasProperty("defaultConfig")) {
                         def defaultConfig = androidExt.defaultConfig
                         try {
-                            defaultConfig.minSdk = 21
+                            defaultConfig.minSdk = 24
                         } catch (Exception ignored) {}
                     }
                 } catch (Exception ignored) {}

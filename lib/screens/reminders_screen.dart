@@ -7,13 +7,69 @@ import '../l10n/app_localizations.dart';
 import '../models/reminder.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
+import '../services/reminder_notifications.dart';
 import '../utils/error_messages.dart';
 import '../utils/form_validators.dart';
+import '../utils/reminder_texts.dart';
 import '../widgets/app_empty_state.dart';
 import '../widgets/inline_form_error.dart';
+import 'service_book_screen.dart';
+import '../theme/app_theme.dart';
 
-class RemindersScreen extends StatelessWidget {
+class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
+
+  @override
+  State<RemindersScreen> createState() => _RemindersScreenState();
+}
+
+class _RemindersScreenState extends State<RemindersScreen>
+    with WidgetsBindingObserver {
+  late Future<bool> _notificationsEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _notificationsEnabled = ReminderNotifications.instance.areEnabled();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // The user may come back from the system notification settings.
+    if (state == AppLifecycleState.resumed) _refreshNotificationState();
+  }
+
+  void _refreshNotificationState() {
+    if (!mounted) return;
+    setState(() {
+      _notificationsEnabled = ReminderNotifications.instance.areEnabled();
+    });
+  }
+
+  Future<void> _enableNotifications() async {
+    final notifications = ReminderNotifications.instance;
+    // Android shows the prompt only until the user declines it twice; after
+    // that the app settings are the only way.
+    if (!await notifications.requestPermission()) {
+      await notifications.openSettings();
+    }
+    _refreshNotificationState();
+  }
+
+  /// Asks for the notification permission when a date reminder is saved:
+  /// that is the moment the user expects to be notified.
+  Future<void> _afterSave(Reminder reminder) async {
+    if (isMileageReminder(reminder) || reminder.isCompleted) return;
+    await ReminderNotifications.instance.requestPermission();
+    _refreshNotificationState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +81,7 @@ class RemindersScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.add),
             tooltip: loc.addReminder,
-            onPressed: () => _showAddReminderDialog(context),
+            onPressed: _showAddReminderDialog,
           ),
         ],
       ),
@@ -39,10 +95,11 @@ class RemindersScreen extends StatelessWidget {
           }
 
           final currentKm = currentMileage(provider.odometerLogs);
+          final today = DateTime.now();
           final sorted = sortRemindersByUrgency(
             provider.reminders,
             currentKm: currentKm,
-            today: DateTime.now(),
+            today: today,
           );
           final activeReminders = sorted.where((r) => !r.isCompleted).toList();
           final completedReminders =
@@ -55,9 +112,21 @@ class RemindersScreen extends StatelessWidget {
             );
           }
 
+          final hasDateReminders =
+              activeReminders.any((r) => !isMileageReminder(r));
           return ListView(
             padding: const EdgeInsets.all(12),
             children: [
+              if (hasDateReminders)
+                FutureBuilder<bool>(
+                  future: _notificationsEnabled,
+                  builder: (context, snapshot) {
+                    if (snapshot.data != false) return const SizedBox.shrink();
+                    return _NotificationsOffCard(
+                      onEnable: _enableNotifications,
+                    );
+                  },
+                ),
               if (activeReminders.isNotEmpty) ...[
                 Text(
                   loc.active,
@@ -67,10 +136,19 @@ class RemindersScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...activeReminders.map((reminder) => _ReminderCard(
-                      reminder: reminder,
+                for (final reminder in activeReminders)
+                  _ReminderCard(
+                    key: ValueKey(reminder.id),
+                    reminder: reminder,
+                    status: reminderStatus(
+                      reminder,
                       currentKm: currentKm,
-                    )),
+                      today: today,
+                    ),
+                    currentKm: currentKm,
+                    onComplete: () => _complete(reminder),
+                    onEdit: () => _showEditReminderDialog(reminder),
+                  ),
                 const SizedBox(height: 16),
               ],
               if (completedReminders.isNotEmpty) ...[
@@ -82,10 +160,18 @@ class RemindersScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...completedReminders.map((reminder) => _ReminderCard(
-                      reminder: reminder,
+                for (final reminder in completedReminders)
+                  _ReminderCard(
+                    key: ValueKey(reminder.id),
+                    reminder: reminder,
+                    status: reminderStatus(
+                      reminder,
                       currentKm: currentKm,
-                    )),
+                      today: today,
+                    ),
+                    currentKm: currentKm,
+                    onEdit: () => _showEditReminderDialog(reminder),
+                  ),
               ],
             ],
           );
@@ -94,17 +180,146 @@ class RemindersScreen extends StatelessWidget {
     );
   }
 
-  void _showAddReminderDialog(BuildContext context) {
-    final provider = Provider.of<AppProvider>(context, listen: false);
-    if (provider.selectedCar == null) return;
+  void _showAddReminderDialog() {
+    final provider = context.read<AppProvider>();
+    final car = provider.selectedCar;
+    if (car == null) return;
 
     showDialog(
       context: context,
       builder: (context) => _ReminderDialog(
-        carId: provider.selectedCar!.id,
+        carId: car.id,
         onSave: (reminder) async {
           await provider.addReminder(reminder);
+          await _afterSave(reminder);
         },
+      ),
+    );
+  }
+
+  void _showEditReminderDialog(Reminder reminder) {
+    final provider = context.read<AppProvider>();
+    showDialog(
+      context: context,
+      builder: (context) => _ReminderDialog(
+        carId: reminder.carId!,
+        reminder: reminder,
+        onSave: (updatedReminder) async {
+          await provider.updateReminder(updatedReminder);
+          await _afterSave(updatedReminder);
+        },
+        onDelete: () async {
+          await provider.deleteReminder(reminder);
+        },
+      ),
+    );
+  }
+
+  /// Marks [reminder] done. A finished maintenance is offered for the service
+  /// book; then a snackbar lets the user undo the completion.
+  Future<void> _complete(Reminder reminder) async {
+    final provider = context.read<AppProvider>();
+    final loc = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final title = reminderTitle(reminder, loc);
+
+    int? nextId;
+    try {
+      nextId = await provider.completeReminder(reminder);
+    } catch (error) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(describeError(error, loc))),
+      );
+      return;
+    }
+
+    if (reminder.type == ReminderType.maintenance && mounted) {
+      await _offerServiceBookEntry(reminder, title);
+    }
+
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(
+      content: Text(loc.reminderCompletedMessage(title)),
+      duration: const Duration(seconds: 6),
+      // A snackbar with an action would otherwise stay until dismissed.
+      persist: false,
+      action: SnackBarAction(
+        label: loc.undo,
+        onPressed: () async {
+          try {
+            await provider.undoCompleteReminder(reminder, nextId);
+          } catch (error) {
+            messenger.showSnackBar(
+              SnackBar(content: Text(describeError(error, loc))),
+            );
+          }
+        },
+      ),
+    ));
+  }
+
+  Future<void> _offerServiceBookEntry(Reminder reminder, String title) async {
+    final loc = AppLocalizations.of(context)!;
+    final add = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.menu_book_outlined),
+        title: Text(loc.serviceBookOfferTitle),
+        content: Text(loc.serviceBookOfferBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(loc.notNow),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(loc.addRecord),
+          ),
+        ],
+      ),
+    );
+    if (add != true || !mounted) return;
+    final provider = context.read<AppProvider>();
+    final carId = reminder.carId ?? provider.selectedCar?.id;
+    if (carId == null) return;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => ServiceLogDialog(
+        carId: carId,
+        initialDescription: title,
+        onSave: provider.addServiceLog,
+      ),
+    );
+  }
+}
+
+class _NotificationsOffCard extends StatelessWidget {
+  final VoidCallback onEnable;
+
+  const _NotificationsOffCard({required this.onEnable});
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 0,
+      color: colorScheme.secondaryContainer,
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+        child: Row(
+          children: [
+            Icon(Icons.notifications_off_outlined,
+                color: colorScheme.onSecondaryContainer),
+            const SizedBox(width: 10),
+            Expanded(child: Text(loc.notificationsDisabledHint)),
+            TextButton(
+              onPressed: onEnable,
+              child: Text(loc.enableNotifications),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -112,22 +327,19 @@ class RemindersScreen extends StatelessWidget {
 
 class _ReminderCard extends StatelessWidget {
   final Reminder reminder;
+  final ReminderStatus status;
   final int currentKm;
+  final VoidCallback? onComplete;
+  final VoidCallback onEdit;
 
-  const _ReminderCard({required this.reminder, required this.currentKm});
-
-  String _getReminderTypeName(ReminderType type, AppLocalizations loc) {
-    switch (type) {
-      case ReminderType.insurance:
-        return loc.insuranceReminder;
-      case ReminderType.maintenance:
-        return loc.maintenanceReminder;
-      case ReminderType.inspection:
-        return loc.inspectionReminder;
-      case ReminderType.custom:
-        return reminder.title ?? loc.customReminder;
-    }
-  }
+  const _ReminderCard({
+    super.key,
+    required this.reminder,
+    required this.status,
+    required this.currentKm,
+    required this.onEdit,
+    this.onComplete,
+  });
 
   Color _getReminderTypeColor(ReminderType type) {
     switch (type) {
@@ -155,37 +367,22 @@ class _ReminderCard extends StatelessWidget {
     }
   }
 
-  Future<void> _complete(BuildContext context) async {
-    final provider = Provider.of<AppProvider>(context, listen: false);
-    final loc = AppLocalizations.of(context)!;
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await provider.completeReminder(reminder);
-    } catch (error) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(describeError(error, loc))),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<AppProvider>(context, listen: false);
     final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
     final languageCode = localeProvider.locale?.languageCode ?? 'uk';
-    final status = reminderStatus(
-      reminder,
-      currentKm: currentKm,
-      today: DateTime.now(),
-    );
     final isOverdue = status.isOverdue;
     final isUpcoming = status.isUpcoming;
     final usesKm = isMileageReminder(reminder);
+    final timeLeft = reminderTimeLeft(status, loc);
 
     final subtitleText = usesKm
         ? loc.mileage(currentKm, status.dueKm ?? 0)
         : DateFormat.yMMMd(languageCode).format(reminder.dueDate);
+    final repeats =
+        usesKm ? (reminder.repeatKm ?? 0) > 0 : reminder.repeatMonths > 0;
+    final decoration = reminder.isCompleted ? TextDecoration.lineThrough : null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -200,11 +397,10 @@ class _ReminderCard extends StatelessWidget {
           ),
         ),
         title: Text(
-          _getReminderTypeName(reminder.type, loc),
+          reminderTitle(reminder, loc),
           style: TextStyle(
-            decoration:
-                reminder.isCompleted ? TextDecoration.lineThrough : null,
-            color: isOverdue ? Colors.red : null,
+            decoration: decoration,
+            color: isOverdue ? AppColors.error : null,
           ),
         ),
         subtitle: Column(
@@ -213,45 +409,45 @@ class _ReminderCard extends StatelessWidget {
             Text(
               subtitleText,
               style: TextStyle(
-                decoration:
-                    reminder.isCompleted ? TextDecoration.lineThrough : null,
-                color: isOverdue ? Colors.red : null,
+                decoration: decoration,
+                color: isOverdue ? AppColors.error : null,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              usesKm
-                  ? '${loc.repeatEvery} ${reminder.repeatKm} ${loc.km}'
-                  : '${loc.repeatEvery} ${reminder.repeatMonths} ${loc.months}',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
+            if (timeLeft != null)
+              Text(
+                timeLeft,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: isOverdue
+                      ? AppColors.error
+                      : isUpcoming
+                          ? AppColors.warning
+                          : null,
+                ),
+              ),
+            if (repeats) ...[
+              const SizedBox(height: 4),
+              Text(
+                usesKm
+                    ? '${loc.repeatEvery} ${reminder.repeatKm} ${loc.km}'
+                    : '${loc.repeatEvery} ${reminder.repeatMonths} ${loc.months}',
+                style: const TextStyle(fontSize: 12, color: AppColors.muted),
+              ),
+            ],
           ],
         ),
         trailing: reminder.isCompleted
-            ? const Icon(Icons.check_circle, color: Colors.green)
+            ? const Icon(Icons.check_circle, color: AppColors.success)
             : IconButton(
                 icon: const Icon(Icons.check_circle_outline),
-                onPressed: () => _complete(context),
+                tooltip: loc.completed,
+                onPressed: onComplete,
               ),
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (context) => _ReminderDialog(
-              carId: reminder.carId!,
-              reminder: reminder,
-              onSave: (updatedReminder) async {
-                await provider.updateReminder(updatedReminder);
-              },
-              onDelete: () async {
-                await provider.deleteReminder(reminder);
-              },
-            ),
-          );
-        },
+        onTap: onEdit,
         tileColor: isOverdue
-            ? Colors.red.withValues(alpha: 0.1)
+            ? AppColors.error.withValues(alpha: 0.1)
             : isUpcoming
-                ? Colors.yellow.withValues(alpha: 0.1)
+                ? AppColors.warning.withValues(alpha: 0.1)
                 : null,
       ),
     );
@@ -354,7 +550,7 @@ class _ReminderDialogState extends State<_ReminderDialog> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(loc.delete, style: const TextStyle(color: Colors.red)),
+            child: Text(loc.delete, style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -519,12 +715,12 @@ class _ReminderDialogState extends State<_ReminderDialog> {
                 if (!usesKm) ...[
                   Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                      border: Border.all(color: AppColors.line, width: 1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: ListTile(
                       leading:
-                          const Icon(Icons.calendar_today, color: Colors.grey),
+                          const Icon(Icons.calendar_today, color: AppColors.muted),
                       title: Text(
                         DateFormat.yMMMd(languageCode).format(_dueDate),
                         style: const TextStyle(fontSize: 16),
@@ -602,7 +798,7 @@ class _ReminderDialogState extends State<_ReminderDialog> {
         if (widget.onDelete != null)
           TextButton(
             onPressed: _isSaving ? null : _delete,
-            child: Text(loc.delete, style: const TextStyle(color: Colors.red)),
+            child: Text(loc.delete, style: const TextStyle(color: AppColors.error)),
           ),
         TextButton(
           onPressed: () => Navigator.pop(context),

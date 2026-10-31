@@ -701,4 +701,94 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncNow => 'Синхронизировать сейчас';
+
+  @override
+  String get notificationChannelDescription =>
+      'Сроки страховки, техосмотра и других напоминаний';
+
+  @override
+  String notificationDueToday(String date) {
+    return 'Срок сегодня, $date';
+  }
+
+  @override
+  String notificationDueTomorrow(String date) {
+    return 'Срок завтра, $date';
+  }
+
+  @override
+  String notificationDueInWeek(String date) {
+    return 'Срок через неделю, $date';
+  }
+
+  @override
+  String get reminderDueToday => 'Срок сегодня';
+
+  @override
+  String reminderDaysLeft(int days) {
+    return 'Осталось дней: $days';
+  }
+
+  @override
+  String reminderDaysOverdue(int days) {
+    return 'Просрочено дней: $days';
+  }
+
+  @override
+  String reminderKmLeft(int km) {
+    return 'Осталось $km км';
+  }
+
+  @override
+  String reminderKmOverdue(int km) {
+    return 'Просрочено на $km км';
+  }
+
+  @override
+  String reminderCompletedMessage(String title) {
+    return 'Выполнено: $title';
+  }
+
+  @override
+  String get undo => 'Отменить';
+
+  @override
+  String get serviceBookOfferTitle => 'Записать в сервисную книжку?';
+
+  @override
+  String get serviceBookOfferBody =>
+      'Добавьте пробег и что было сделано — история обслуживания останется полной.';
+
+  @override
+  String get addRecord => 'Добавить запись';
+
+  @override
+  String get notNow => 'Не сейчас';
+
+  @override
+  String remindersDueMore(int count) {
+    return 'ещё $count';
+  }
+
+  @override
+  String get notificationsDisabledHint =>
+      'Уведомления выключены — напоминания по дате не придут.';
+
+  @override
+  String get enableNotifications => 'Включить';
+
+  @override
+  String get syncProblemOffline =>
+      'Нет связи с Google Drive. Копия выгрузится, когда связь появится.';
+
+  @override
+  String get syncProblemAccessDenied =>
+      'Google не даёт доступа к Drive. Войдите снова и разрешите доступ к Google Drive.';
+
+  @override
+  String get syncProblemStorageFull =>
+      'В хранилище Google закончилось место, копия не выгружается.';
+
+  @override
+  String get syncSignInAgain => 'Войти снова';
 }

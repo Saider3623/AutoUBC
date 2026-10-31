@@ -90,6 +90,8 @@ class CloudSyncController extends ChangeNotifier {
   /// Technical description of the last failed Drive operation.
   String? get lastError => drive.lastError;
 
+  SyncProblem? get lastProblem => drive.lastProblem;
+
   Future<void> _loadLastSynced() async {
     final prefs = await SharedPreferences.getInstance();
     final stored = prefs.getString(_lastSyncedKey);
