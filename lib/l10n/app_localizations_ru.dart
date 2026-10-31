@@ -544,12 +544,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navReport => 'Отчёт';
 
   @override
-  String get todayLabel => 'Сегодня';
-
-  @override
-  String get yesterdayLabel => 'Вчера';
-
-  @override
   String previousReading(String reading, String date) {
     return 'Предыдущее: $reading км, $date';
   }

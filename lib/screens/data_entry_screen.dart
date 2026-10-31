@@ -361,7 +361,7 @@ class _DataEntryScreenState extends State<DataEntryScreen>
                   if (missingDay != null && missingDay != _dismissedMissingDay)
                     _buildMissingBanner(missingDay, loc, languageCode),
                   _buildReminderBanner(provider, loc),
-                  _buildDateCard(loc, languageCode, localeProvider),
+                  _buildDateCard(languageCode, localeProvider),
                   const SizedBox(height: 12),
                   _buildOdometerCard(provider, loc, languageCode),
                   const SizedBox(height: 12),
@@ -490,12 +490,9 @@ class _DataEntryScreenState extends State<DataEntryScreen>
   }
 
   Widget _buildDateCard(
-    AppLocalizations loc,
     String languageCode,
     LocaleProvider localeProvider,
   ) {
-    final today = _dateOnly(DateTime.now());
-    final yesterday = addCalendarDays(today, -1);
     final selected = _dateOnly(_selectedDate);
     final label = DateFormat('EEE, d MMMM', languageCode).format(selected);
 
@@ -504,18 +501,6 @@ class _DataEntryScreenState extends State<DataEntryScreen>
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         child: Row(
           children: [
-            ChoiceChip(
-              label: Text(loc.todayLabel),
-              selected: selected == today,
-              onSelected: (_) => _selectDate(DateTime.now()),
-            ),
-            const SizedBox(width: 6),
-            ChoiceChip(
-              label: Text(loc.yesterdayLabel),
-              selected: selected == yesterday,
-              onSelected: (_) => _selectDate(yesterday),
-            ),
-            const SizedBox(width: 6),
             Expanded(
               child: InkWell(
                 borderRadius: BorderRadius.circular(8),
@@ -535,12 +520,12 @@ class _DataEntryScreenState extends State<DataEntryScreen>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Flexible(
                         child: Text(
                           label,
-                          textAlign: TextAlign.end,
+                          textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,

@@ -1090,18 +1090,6 @@ abstract class AppLocalizations {
   /// **'Report'**
   String get navReport;
 
-  /// No description provided for @todayLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Today'**
-  String get todayLabel;
-
-  /// No description provided for @yesterdayLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Yesterday'**
-  String get yesterdayLabel;
-
   /// No description provided for @previousReading.
   ///
   /// In en, this message translates to:
