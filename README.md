@@ -75,7 +75,8 @@ Release APKs must be signed with the project's own key, not the debug key:
 2. Add the SHA-1 of the release certificate to the Android OAuth client of
    `com.driver.autoubc` in Google Cloud Console, otherwise Google sign-in fails
    in release builds.
-3. Increase `version` in `pubspec.yaml` (for example `1.1.0+2` → `1.1.1+3`)
+3. Increase `version` in `pubspec.yaml` (for example `1.5.1+2026` → `1.5.2+2027`;
+   the build number must always grow, it is the Android versionCode)
    for every APK that is handed out.
 
 `build.ps1` refuses to build without `android/key.properties`;

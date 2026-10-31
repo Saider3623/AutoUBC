@@ -4,7 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
-/// "Version 1.1.0 (2)" — tells which build is installed when a problem is
+/// "Version 1.5.1 (2026)" — tells which build is installed when a problem is
 /// reported.
 class AppVersionText extends StatelessWidget {
   const AppVersionText({super.key});
