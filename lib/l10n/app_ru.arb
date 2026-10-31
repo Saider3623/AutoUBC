@@ -193,7 +193,6 @@
   "errorUnexpected": "Что-то пошло не так. Попробуйте ещё раз.",
   "weekDetailTitle": "Детализация: {range}",
   "reminderStartKm": "Отсчёт от пробега",
-  "deleteReminderConfirmation": "Удалить это напоминание?",
   "numberMustBePositive": "Введите число больше нуля",
   "weeklyReportDistanceText": "Пробег: {distance} км",
   "monthSummaryTitle": "ИТОГ МЕСЯЦА",
@@ -270,5 +269,12 @@
   "syncProblemOffline": "Нет связи с Google Drive. Копия выгрузится, когда связь появится.",
   "syncProblemAccessDenied": "Google не даёт доступа к Drive. Войдите снова и разрешите доступ к Google Drive.",
   "syncProblemStorageFull": "В хранилище Google закончилось место, копия не выгружается.",
-  "syncSignInAgain": "Войти снова"
+  "syncSignInAgain": "Войти снова",
+  "previewReport": "Просмотреть отчёт",
+  "shareReport": "Поделиться",
+  "reminderDeletedMessage": "Удалено: {title}",
+  "maintenanceResetTitle": "Отметить ТО выполненным?",
+  "maintenanceResetBody": "Напоминание о ТО будет отмечено выполненным, следующее — на {km} км.",
+  "maintenanceResetBodyOnce": "Напоминание о ТО будет отмечено выполненным.",
+  "maintenanceResetAction": "Отметить"
 }

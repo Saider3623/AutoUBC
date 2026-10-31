@@ -227,7 +227,6 @@
     }
   },
   "reminderStartKm": "Count from mileage",
-  "deleteReminderConfirmation": "Delete this reminder?",
   "numberMustBePositive": "Enter a number greater than zero",
   "weeklyReportDistanceText": "Distance: {distance} km",
   "@weeklyReportDistanceText": {
@@ -484,5 +483,26 @@
   "syncProblemOffline": "No connection to Google Drive. The copy is uploaded when the connection is back.",
   "syncProblemAccessDenied": "Google does not allow access to Drive. Sign in again and allow access to Google Drive.",
   "syncProblemStorageFull": "Your Google storage is full, so the copy cannot be uploaded.",
-  "syncSignInAgain": "Sign in again"
+  "syncSignInAgain": "Sign in again",
+  "previewReport": "Preview report",
+  "shareReport": "Share",
+  "reminderDeletedMessage": "Deleted: {title}",
+  "@reminderDeletedMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "maintenanceResetTitle": "Mark the maintenance done?",
+  "maintenanceResetBody": "The maintenance reminder is marked done; the next one is due at {km} km.",
+  "@maintenanceResetBody": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "maintenanceResetBodyOnce": "The maintenance reminder is marked done.",
+  "maintenanceResetAction": "Mark done"
 }

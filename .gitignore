@@ -48,3 +48,8 @@ AutoUBC.apk
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Isar core downloaded by `flutter test`
+libisar.so
+libisar.dylib
+isar.dll

@@ -10,9 +10,13 @@ import 'package:autoubc/models/odometer_log.dart';
 import 'package:autoubc/models/reminder.dart';
 import 'package:autoubc/models/service_log.dart';
 
+import 'support/test_database.dart';
+
 void main() {
   late Directory directory;
   Isar? db;
+
+  setUpAll(ensureIsarCore);
 
   setUp(() async {
     directory = await Directory.systemTemp.createTemp('autoubc_isar_test_');
@@ -30,8 +34,7 @@ void main() {
         name: 'contract',
       );
     } on ArgumentError {
-      // `flutter test` on Windows does not load the plugin DLL. This test is
-      // still executed in Flutter integration/device test environments.
+      // Without network the Isar core cannot be downloaded for the host.
       db = null;
     }
   });

@@ -498,9 +498,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderStartKm => 'Count from mileage';
 
   @override
-  String get deleteReminderConfirmation => 'Delete this reminder?';
-
-  @override
   String get numberMustBePositive => 'Enter a number greater than zero';
 
   @override
@@ -790,4 +787,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncSignInAgain => 'Sign in again';
+
+  @override
+  String get previewReport => 'Preview report';
+
+  @override
+  String get shareReport => 'Share';
+
+  @override
+  String reminderDeletedMessage(String title) {
+    return 'Deleted: $title';
+  }
+
+  @override
+  String get maintenanceResetTitle => 'Mark the maintenance done?';
+
+  @override
+  String maintenanceResetBody(int km) {
+    return 'The maintenance reminder is marked done; the next one is due at $km km.';
+  }
+
+  @override
+  String get maintenanceResetBodyOnce =>
+      'The maintenance reminder is marked done.';
+
+  @override
+  String get maintenanceResetAction => 'Mark done';
 }

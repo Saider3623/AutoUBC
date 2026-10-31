@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../domain/reminder_status.dart';
+import '../models/reminder.dart';
 import '../models/service_log.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/error_messages.dart';
 import '../utils/form_validators.dart';
+import '../utils/reminder_texts.dart';
 import '../utils/validation.dart';
 import '../widgets/app_empty_state.dart';
 import '../widgets/inline_form_error.dart';
@@ -191,11 +194,13 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
     );
   }
 
-  void _showAddServiceDialog(BuildContext context, [ServiceLog? logToEdit]) {
+  Future<void> _showAddServiceDialog(BuildContext context,
+      [ServiceLog? logToEdit]) async {
     final provider = Provider.of<AppProvider>(context, listen: false);
     if (provider.selectedCar == null) return;
 
-    showDialog(
+    ServiceLog? added;
+    await showDialog<void>(
       context: context,
       builder: (context) => ServiceLogDialog(
         carId: provider.selectedCar!.id,
@@ -205,10 +210,68 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
             await provider.updateServiceLog(log);
           } else {
             await provider.addServiceLog(log);
+            added = log;
           }
         },
       ),
     );
+    final log = added;
+    if (log != null && context.mounted) {
+      await _offerMaintenanceReset(context, log);
+    }
+  }
+
+  /// A new service entry usually is the maintenance a mileage reminder waits
+  /// for: offer to mark it done, counting the next one from the entry's
+  /// mileage.
+  Future<void> _offerMaintenanceReset(
+      BuildContext context, ServiceLog log) async {
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    final loc = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final candidates = sortRemindersByUrgency(
+      provider.reminders.where((reminder) =>
+          !reminder.isCompleted &&
+          reminder.type == ReminderType.maintenance),
+      currentKm: currentMileage(provider.odometerLogs),
+      today: DateTime.now(),
+    );
+    if (candidates.isEmpty) return;
+    final reminder = candidates.first;
+    final repeatKm = reminder.repeatKm ?? 0;
+
+    final reset = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.build_outlined),
+        title: Text(loc.maintenanceResetTitle),
+        content: Text(repeatKm > 0
+            ? loc.maintenanceResetBody(log.odometer + repeatKm)
+            : loc.maintenanceResetBodyOnce),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(loc.notNow),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(loc.maintenanceResetAction),
+          ),
+        ],
+      ),
+    );
+    if (reset != true) return;
+    try {
+      await provider.completeReminder(reminder, startKm: log.odometer);
+      messenger.showSnackBar(SnackBar(
+        content: Text(
+            loc.reminderCompletedMessage(reminderTitle(reminder, loc))),
+      ));
+    } catch (error) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(describeError(error, loc))),
+      );
+    }
   }
 
   Future<void> _confirmDelete(BuildContext context, ServiceLog log) async {

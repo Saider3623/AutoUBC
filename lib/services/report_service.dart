@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -158,6 +160,28 @@ class ReportService {
     String languageCode, {
     WorkSchedule schedule = const WorkSchedule(),
   }) async {
+    final bytes = await buildPdfReport(
+      car,
+      startDate,
+      endDate,
+      languageCode,
+      schedule: schedule,
+    );
+    final tempDir = await getTemporaryDirectory();
+    final fileName = buildReportFileName(car.name, startDate, languageCode);
+    final file = File('${tempDir.path}/$fileName');
+    await file.writeAsBytes(bytes);
+    return file;
+  }
+
+  /// The PDF of [generatePdfReport] in memory, for the preview screen.
+  Future<Uint8List> buildPdfReport(
+    Car car,
+    DateTime startDate,
+    DateTime endDate,
+    String languageCode, {
+    WorkSchedule schedule = const WorkSchedule(),
+  }) async {
     final t = _PdfTranslations.of(languageCode);
     final pdf = pw.Document();
 
@@ -248,11 +272,7 @@ class ReportService {
       ),
     );
 
-    final tempDir = await getTemporaryDirectory();
-    final fileName = buildReportFileName(car.name, startDate, languageCode);
-    final file = File('${tempDir.path}/$fileName');
-    await file.writeAsBytes(await pdf.save());
-    return file;
+    return pdf.save();
   }
 
   pw.Widget _buildMonthSection(

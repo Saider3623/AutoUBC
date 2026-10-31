@@ -1018,12 +1018,6 @@ abstract class AppLocalizations {
   /// **'Count from mileage'**
   String get reminderStartKm;
 
-  /// No description provided for @deleteReminderConfirmation.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete this reminder?'**
-  String get deleteReminderConfirmation;
-
   /// No description provided for @numberMustBePositive.
   ///
   /// In en, this message translates to:
@@ -1485,6 +1479,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in again'**
   String get syncSignInAgain;
+
+  /// No description provided for @previewReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview report'**
+  String get previewReport;
+
+  /// No description provided for @shareReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get shareReport;
+
+  /// No description provided for @reminderDeletedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted: {title}'**
+  String reminderDeletedMessage(String title);
+
+  /// No description provided for @maintenanceResetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark the maintenance done?'**
+  String get maintenanceResetTitle;
+
+  /// No description provided for @maintenanceResetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The maintenance reminder is marked done; the next one is due at {km} km.'**
+  String maintenanceResetBody(int km);
+
+  /// No description provided for @maintenanceResetBodyOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'The maintenance reminder is marked done.'**
+  String get maintenanceResetBodyOnce;
+
+  /// No description provided for @maintenanceResetAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark done'**
+  String get maintenanceResetAction;
 }
 
 class _AppLocalizationsDelegate

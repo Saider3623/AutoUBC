@@ -6,6 +6,7 @@ import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/report_service.dart';
 import '../utils/error_messages.dart';
+import 'report_preview_screen.dart';
 
 class ExportReportScreen extends StatefulWidget {
   const ExportReportScreen({super.key});
@@ -18,6 +19,36 @@ class _ExportReportScreenState extends State<ExportReportScreen> {
   DateTime _selectedMonth = DateTime.now();
   final ReportService _reportService = ReportService();
   bool _isLoading = false;
+
+  /// Opens the PDF preview; sharing from there makes the same file as the
+  /// export button.
+  void _preview() {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final car = appProvider.selectedCar;
+    if (car == null) return;
+    final languageCode = localeProvider.locale?.languageCode ?? 'uk';
+    final startDate = DateTime(_selectedMonth.year, _selectedMonth.month, 1);
+    final endDate = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0);
+    final document = _reportService.buildPdfReport(
+      car,
+      startDate,
+      endDate,
+      languageCode,
+      schedule: appProvider.workSchedule,
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReportPreviewScreen(
+          title: DateFormat.yMMMM(languageCode).format(startDate),
+          fileName: buildReportFileName(car.name, startDate, languageCode),
+          document: document,
+          onShare: _exportToPdf,
+        ),
+      ),
+    );
+  }
 
   Future<void> _exportToPdf() async {
     final appProvider = Provider.of<AppProvider>(context, listen: false);
@@ -113,7 +144,7 @@ class _ExportReportScreenState extends State<ExportReportScreen> {
               Center(
                   child:
                       Text(loc.loading, style: const TextStyle(fontSize: 16)))
-            else
+            else ...[
               ElevatedButton.icon(
                 onPressed: _exportToPdf,
                 icon: const Icon(Icons.picture_as_pdf),
@@ -123,6 +154,17 @@ class _ExportReportScreenState extends State<ExportReportScreen> {
                   textStyle: const TextStyle(fontSize: 16),
                 ),
               ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _preview,
+                icon: const Icon(Icons.visibility_outlined),
+                label: Text(loc.previewReport),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(fontSize: 16),
+                ),
+              ),
+            ],
           ],
         ),
       ),
