@@ -457,10 +457,10 @@ class AppProvider extends ChangeNotifier {
 
   /// Marks [reminder] done and returns the id of its next occurrence, for
   /// [undoCompleteReminder].
-  Future<int?> completeReminder(Reminder reminder) async {
+  Future<int?> completeReminder(Reminder reminder, {int? startKm}) async {
     try {
       await _markLocalMutationPending();
-      final nextId = await _db.completeReminder(reminder);
+      final nextId = await _db.completeReminder(reminder, startKm: startKm);
       await _afterReminderChange();
       return nextId;
     } catch (e) {
@@ -476,6 +476,18 @@ class AppProvider extends ChangeNotifier {
       await _afterReminderChange();
     } catch (e) {
       debugPrint('[Data] Undoing a reminder completion failed: $e');
+      rethrow;
+    }
+  }
+
+  /// Puts a deleted [reminder] back with its old id (undo of a deletion).
+  Future<void> restoreReminder(Reminder reminder) async {
+    try {
+      await _markLocalMutationPending();
+      await _db.updateReminder(reminder);
+      await _afterReminderChange();
+    } catch (e) {
+      debugPrint('[Data] Restoring a reminder failed: $e');
       rethrow;
     }
   }

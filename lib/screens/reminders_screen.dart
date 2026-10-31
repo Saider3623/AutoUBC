@@ -210,9 +210,35 @@ class _RemindersScreenState extends State<RemindersScreen>
         },
         onDelete: () async {
           await provider.deleteReminder(reminder);
+          _offerUndoDelete(reminder);
         },
       ),
     );
+  }
+
+  void _offerUndoDelete(Reminder reminder) {
+    if (!mounted) return;
+    final provider = context.read<AppProvider>();
+    final loc = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(
+      content: Text(loc.reminderDeletedMessage(reminderTitle(reminder, loc))),
+      duration: const Duration(seconds: 6),
+      persist: false,
+      action: SnackBarAction(
+        label: loc.undo,
+        onPressed: () async {
+          try {
+            await provider.restoreReminder(reminder);
+          } catch (error) {
+            messenger.showSnackBar(
+              SnackBar(content: Text(describeError(error, loc))),
+            );
+          }
+        },
+      ),
+    ));
   }
 
   /// Marks [reminder] done. A finished maintenance is offered for the service
@@ -535,27 +561,10 @@ class _ReminderDialogState extends State<_ReminderDialog> {
     );
   }
 
+  /// Deletes without a confirmation: the reminders screen offers "Undo".
   Future<void> _delete() async {
     final loc = AppLocalizations.of(context)!;
     final navigator = Navigator.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(loc.confirmDelete),
-        content: Text(loc.deleteReminderConfirmation),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(loc.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(loc.delete, style: const TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
     try {
       await widget.onDelete!();
       if (mounted) navigator.pop();

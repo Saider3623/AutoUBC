@@ -38,10 +38,7 @@ dependencies:
   intl: ^0.20.3
   provider: ^6.1.2
   pdf: ^3.10.8
-  # `printing` is NOT used by the app code (grep over lib/ found zero calls),
-  # but it stays here to avoid breaking transitive Android/iOS registrations
-  # before a clean `flutter pub get` / `flutter clean` run is done manually.
-  # It can be safely removed AFTER the next successful build + APK install.
+  # PDF preview before sharing (ReportPreviewScreen).
   printing: ^5.11.1
   google_sign_in: ^6.3.0
   # `share_plus` 13.0.0 is the first release whose Windows implementation

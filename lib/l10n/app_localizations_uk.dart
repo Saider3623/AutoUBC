@@ -499,9 +499,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get reminderStartKm => 'Відлік від пробігу';
 
   @override
-  String get deleteReminderConfirmation => 'Видалити це нагадування?';
-
-  @override
   String get numberMustBePositive => 'Введіть число, більше за нуль';
 
   @override
@@ -791,4 +788,30 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get syncSignInAgain => 'Увійти знову';
+
+  @override
+  String get previewReport => 'Переглянути звіт';
+
+  @override
+  String get shareReport => 'Поділитися';
+
+  @override
+  String reminderDeletedMessage(String title) {
+    return 'Видалено: $title';
+  }
+
+  @override
+  String get maintenanceResetTitle => 'Відмітити ТО виконаним?';
+
+  @override
+  String maintenanceResetBody(int km) {
+    return 'Нагадування про ТО буде відмічено виконаним, наступне — на $km км.';
+  }
+
+  @override
+  String get maintenanceResetBodyOnce =>
+      'Нагадування про ТО буде відмічено виконаним.';
+
+  @override
+  String get maintenanceResetAction => 'Відмітити';
 }
