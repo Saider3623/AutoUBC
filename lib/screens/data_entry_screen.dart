@@ -6,6 +6,7 @@ import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../db/database_service.dart';
 import '../models/note.dart';
+import '../utils/error_messages.dart';
 import '../utils/form_validators.dart';
 import '../utils/weekly_report_utils.dart';
 import '../widgets/inline_form_error.dart';
@@ -17,8 +18,12 @@ class DataEntryScreen extends StatefulWidget {
   State<DataEntryScreen> createState() => _DataEntryScreenState();
 }
 
-class _DataEntryScreenState extends State<DataEntryScreen> {
+class _DataEntryScreenState extends State<DataEntryScreen>
+    with WidgetsBindingObserver {
   DateTime _selectedDate = DateTime.now();
+  // Calendar day seen when the screen was last active; used to move the
+  // selected date forward when the app is reopened on a later day.
+  DateTime _today = _dateOnly(DateTime.now());
   final _odometerController = TextEditingController();
   final _litersController = TextEditingController();
   String _selectedFuelType = 'ГАЗ';
@@ -34,9 +39,31 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
   // odometer field until the missing past reading is saved.
   bool _odometerMissingForPast = false;
 
+  static DateTime _dateOnly(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkMissedOdometerForYesterday();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    final today = _dateOnly(DateTime.now());
+    if (today == _today) return;
+    final wasToday = _dateOnly(_selectedDate) == _today;
+    _today = today;
+    // The app stayed open overnight: a morning reading must not be saved on
+    // yesterday's date, so "today" moves along unless the user picked a date.
+    if (wasToday) {
+      setState(() {
+        _selectedDate = DateTime.now();
+        _odometerMissingForPast = false;
+      });
+    }
     _checkMissedOdometerForYesterday();
   }
 
@@ -106,9 +133,12 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
     }
     final dateString = DateFormat('yyyy-MM-dd').format(_selectedDate);
     final log = await _db.getOdometerLog(carId, dateString);
+    // Drop a late answer: the user may have switched the car or the date
+    // while the reading was loading, and it must not land under another date.
     if (!mounted ||
         Provider.of<AppProvider>(context, listen: false).selectedCar?.id !=
-            carId) {
+            carId ||
+        DateFormat('yyyy-MM-dd').format(_selectedDate) != dateString) {
       return;
     }
     _loadedCarId = carId;
@@ -304,7 +334,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                             setState(() {
                                               _isSavingOdometer = false;
                                               _odometerSaveError =
-                                                  loc.saveError(e.toString());
+                                                  describeError(e, loc);
                                             });
                                           }
                                         },
@@ -423,6 +453,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                       invalidMessage: loc.invalidNumber,
                                       nonNegativeMessage:
                                           loc.numberMustBeNonNegative,
+                                      positiveMessage: loc.numberMustBePositive,
                                     ),
                                     onChanged: (value) {
                                       if (value.contains(',')) {
@@ -502,7 +533,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                                             setState(() {
                                               _isSavingFuel = false;
                                               _fuelSaveError =
-                                                  loc.saveError(e.toString());
+                                                  describeError(e, loc);
                                             });
                                           }
                                         },
@@ -631,6 +662,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _odometerController.dispose();
     _litersController.dispose();
     super.dispose();
@@ -782,9 +814,14 @@ class _NoteDialogState extends State<_NoteDialog> {
 
               if (!mounted) return;
               if (confirmed == true) {
-                await provider.deleteNote(widget.noteToEdit!);
-                if (!mounted) return;
-                navigator.pop();
+                try {
+                  await provider.deleteNote(widget.noteToEdit!);
+                  if (!mounted) return;
+                  navigator.pop();
+                } catch (error) {
+                  if (!mounted) return;
+                  setState(() => _saveError = describeError(error, loc));
+                }
               }
             },
             child:
@@ -819,7 +856,7 @@ class _NoteDialogState extends State<_NoteDialog> {
                     if (!mounted) return;
                     setState(() {
                       _isSaving = false;
-                      _saveError = loc.saveError(error.toString());
+                      _saveError = describeError(error, loc);
                     });
                   }
                 },

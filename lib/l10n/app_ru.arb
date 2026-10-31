@@ -1,6 +1,5 @@
 {
   "@@locale": "ru",
-  "appTitle": "AutoUBC",
   "addCar": "Добавить автомобиль",
   "selectCar": "Выбрать автомобиль",
   "deleteCar": "Удалить текущий автомобиль",
@@ -24,23 +23,12 @@
   "delete": "Удалить",
   "confirm": "Подтвердить",
   "enterData": "Ввод данных",
-  "historyAndReports": "История и отчеты",
   "date": "Дата",
   "odometer": "Одометр",
   "km": "км",
   "fuel": "Топливо",
   "save": "Сохранить",
   "saveOdometerSuccess": "Показания одометра сохранены",
-  "saveError": "Ошибка сохранения: {error}",
-  "@saveError": {
-    "description": "Сообщение об ошибке при сохранении",
-    "placeholders": {
-      "error": {
-        "type": "String",
-        "description": "Текст ошибки"
-      }
-    }
-  },
   "refuelingAdded": "Заправка добавлена",
   "addRefueling": "Добавить заправку",
   "customReminder": "Другое",
@@ -167,23 +155,6 @@
   "endLabel": "Конец",
   "fuelSection": "ТОПЛИВО",
   "noRefuels": "Нет заправок",
-  "averageFuelConsumption": "Средний расход топлива (последние 30 дней)",
-  "averageFuelConsumptionFor": "{fuelType}: {consumption} л/100км",
-  "@averageFuelConsumptionFor": {
-    "description": "Отображение среднего расхода топлива",
-    "placeholders": {
-      "fuelType": {
-        "type": "String",
-        "description": "Тип топлива"
-      },
-      "consumption": {
-        "type": "String",
-        "description": "Значение расхода топлива"
-      }
-    }
-  },
-  "primaryFuelType": "Основной вид топлива",
-  "selectPrimaryFuelType": "Выберите основной вид топлива",
   "carName": "Название автомобиля",
   "editCar": "Изменить автомобиль",
   "carAdded": "Автомобиль успешно добавлен!",
@@ -193,17 +164,14 @@
   "addNote": "Добавить заметку",
   "editNote": "Редактировать заметку",
   "noteDescription": "Описание",
-  "noteDateTime": "Дата и время",
   "deleteNote": "Удалить заметку",
   "deleteNoteConfirmation": "Вы уверены, что хотите удалить эту заметку?",
   "noNotes": "Заметок пока нет",
   "chooseDate": "Выбрать дату",
   "noteDateSelected": "Дата установлена",
   "syncInProgress": "Синхронизация…",
-  "syncUnknown": "Синхронизация еще не выполнена",
   "syncIdle": "Синхронизировано",
   "syncError": "Ошибка синхронизации",
-  "syncOk": "Синхронизировано",
   "workWeekSection": "Режим рабочей недели",
   "saturdayNotWorkingConfirm": "По графику на эту дату действует 5-дневная неделя, суббота нерабочая. Добавить данные?",
   "workWeekScheduleHint": "По умолчанию неделя 6-дневная (Пн–Сб). С даты начала до даты конца действует 5-дневная (Пн–Пт). Воскресенье всегда нерабочее.",
@@ -239,5 +207,19 @@
   "cloudRestoring": "Восстанавливаем данные…",
   "syncNeedsDecision": "Выберите, какие данные оставить",
   "dataLoadErrorTitle": "Не удалось открыть данные",
-  "dataLoadErrorBody": "Ваши записи не удалены. Попробуйте ещё раз; если повторится — перезапустите приложение."
+  "dataLoadErrorBody": "Ваши записи не удалены. Попробуйте ещё раз; если повторится — перезапустите приложение.",
+  "errorCarNameEmpty": "Введите название автомобиля.",
+  "errorCarMissing": "Этого автомобиля больше нет. Откройте экран заново и попробуйте ещё раз.",
+  "errorRecordMissing": "Этой записи больше нет.",
+  "errorFuelTypeEmpty": "Выберите вид топлива.",
+  "errorOdometerBelowPrevious": "Показание меньше предыдущего: {reading} км от {date}.",
+  "errorOdometerAboveNext": "Показание больше следующего: {reading} км от {date}.",
+  "errorInvalidDate": "Неверная дата.",
+  "errorInvalidTime": "Неверное время.",
+  "errorPeriodEndsBeforeStart": "Дата окончания раньше даты начала.",
+  "errorUnexpected": "Что-то пошло не так. Попробуйте ещё раз.",
+  "weekDetailTitle": "Детализация: {range}",
+  "reminderStartKm": "Отсчёт от пробега",
+  "deleteReminderConfirmation": "Удалить это напоминание?",
+  "numberMustBePositive": "Введите число больше нуля"
 }

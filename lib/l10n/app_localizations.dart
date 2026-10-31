@@ -100,12 +100,6 @@ abstract class AppLocalizations {
     Locale('uk')
   ];
 
-  /// No description provided for @appTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'AutoUBC'**
-  String get appTitle;
-
   /// No description provided for @addCar.
   ///
   /// In en, this message translates to:
@@ -190,12 +184,6 @@ abstract class AppLocalizations {
   /// **'Enter Data'**
   String get enterData;
 
-  /// No description provided for @historyAndReports.
-  ///
-  /// In en, this message translates to:
-  /// **'History and Reports'**
-  String get historyAndReports;
-
   /// No description provided for @date.
   ///
   /// In en, this message translates to:
@@ -231,12 +219,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Odometer reading saved'**
   String get saveOdometerSuccess;
-
-  /// Error message when saving fails
-  ///
-  /// In en, this message translates to:
-  /// **'Save error: {error}'**
-  String saveError(String error);
 
   /// No description provided for @refuelingAdded.
   ///
@@ -700,30 +682,6 @@ abstract class AppLocalizations {
   /// **'No refuels'**
   String get noRefuels;
 
-  /// No description provided for @averageFuelConsumption.
-  ///
-  /// In en, this message translates to:
-  /// **'Average Fuel Consumption (last 30 days)'**
-  String get averageFuelConsumption;
-
-  /// Average fuel consumption display
-  ///
-  /// In en, this message translates to:
-  /// **'{fuelType}: {consumption} L/100km'**
-  String averageFuelConsumptionFor(String fuelType, String consumption);
-
-  /// No description provided for @primaryFuelType.
-  ///
-  /// In en, this message translates to:
-  /// **'Primary Fuel Type'**
-  String get primaryFuelType;
-
-  /// No description provided for @selectPrimaryFuelType.
-  ///
-  /// In en, this message translates to:
-  /// **'Select primary fuel type'**
-  String get selectPrimaryFuelType;
-
   /// No description provided for @carName.
   ///
   /// In en, this message translates to:
@@ -778,12 +736,6 @@ abstract class AppLocalizations {
   /// **'Description'**
   String get noteDescription;
 
-  /// No description provided for @noteDateTime.
-  ///
-  /// In en, this message translates to:
-  /// **'Date and Time'**
-  String get noteDateTime;
-
   /// No description provided for @deleteNote.
   ///
   /// In en, this message translates to:
@@ -820,12 +772,6 @@ abstract class AppLocalizations {
   /// **'Synchronizing…'**
   String get syncInProgress;
 
-  /// No description provided for @syncUnknown.
-  ///
-  /// In en, this message translates to:
-  /// **'Not synchronized yet'**
-  String get syncUnknown;
-
   /// No description provided for @syncIdle.
   ///
   /// In en, this message translates to:
@@ -837,12 +783,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Synchronization error'**
   String get syncError;
-
-  /// No description provided for @syncOk.
-  ///
-  /// In en, this message translates to:
-  /// **'Synchronized'**
-  String get syncOk;
 
   /// No description provided for @workWeekSection.
   ///
@@ -1059,6 +999,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your records are not deleted. Try again; if it repeats, restart the app.'**
   String get dataLoadErrorBody;
+
+  /// No description provided for @errorCarNameEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the car name.'**
+  String get errorCarNameEmpty;
+
+  /// No description provided for @errorCarMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'This car no longer exists. Reopen the screen and try again.'**
+  String get errorCarMissing;
+
+  /// No description provided for @errorRecordMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'This record no longer exists.'**
+  String get errorRecordMissing;
+
+  /// No description provided for @errorFuelTypeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a fuel type.'**
+  String get errorFuelTypeEmpty;
+
+  /// No description provided for @errorOdometerBelowPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'The reading is lower than the previous one: {reading} km on {date}.'**
+  String errorOdometerBelowPrevious(int reading, String date);
+
+  /// No description provided for @errorOdometerAboveNext.
+  ///
+  /// In en, this message translates to:
+  /// **'The reading is higher than the next one: {reading} km on {date}.'**
+  String errorOdometerAboveNext(int reading, String date);
+
+  /// No description provided for @errorInvalidDate.
+  ///
+  /// In en, this message translates to:
+  /// **'The date is not valid.'**
+  String get errorInvalidDate;
+
+  /// No description provided for @errorInvalidTime.
+  ///
+  /// In en, this message translates to:
+  /// **'The time is not valid.'**
+  String get errorInvalidTime;
+
+  /// No description provided for @errorPeriodEndsBeforeStart.
+  ///
+  /// In en, this message translates to:
+  /// **'The end date is earlier than the start date.'**
+  String get errorPeriodEndsBeforeStart;
+
+  /// No description provided for @errorUnexpected.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Try again.'**
+  String get errorUnexpected;
+
+  /// No description provided for @weekDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Details: {range}'**
+  String weekDetailTitle(String range);
+
+  /// No description provided for @reminderStartKm.
+  ///
+  /// In en, this message translates to:
+  /// **'Count from mileage'**
+  String get reminderStartKm;
+
+  /// No description provided for @deleteReminderConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this reminder?'**
+  String get deleteReminderConfirmation;
+
+  /// No description provided for @numberMustBePositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number greater than zero'**
+  String get numberMustBePositive;
 }
 
 class _AppLocalizationsDelegate

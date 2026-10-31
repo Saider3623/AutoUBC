@@ -24,11 +24,14 @@ String normalizeDecimalInput(String value) {
   return value.replaceAll(',', '.');
 }
 
+/// Validates a decimal number. With [positiveMessage], zero is rejected too
+/// (a refuel of 0 litres is always a typo).
 String? validateNonNegativeDecimal(
   String? value, {
   required String requiredMessage,
   required String invalidMessage,
   required String nonNegativeMessage,
+  String? positiveMessage,
 }) {
   final trimmed = value?.trim() ?? '';
   if (trimmed.isEmpty) return requiredMessage;
@@ -36,5 +39,6 @@ String? validateNonNegativeDecimal(
   final parsed = double.tryParse(normalizeDecimalInput(trimmed));
   if (parsed == null || !parsed.isFinite) return invalidMessage;
   if (parsed < 0) return nonNegativeMessage;
+  if (parsed == 0 && positiveMessage != null) return positiveMessage;
   return null;
 }

@@ -269,20 +269,33 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  int _logsRequest = 0;
+
   Future<void> loadLogsForCar(int carId) async {
+    // Only the newest request may publish its lists: switching cars quickly
+    // must never show the readings of one car next to the notes of another.
+    final request = ++_logsRequest;
     try {
       _isLoading = true;
       notifyListeners();
-      _odometerLogs = await _db.getOdometerLogsForCar(carId);
-      _fuelLogs = await _db.getFuelLogsForCar(carId);
-      _reminders = await _db.getRemindersForCar(carId);
-      _serviceLogs = await _db.getServiceLogsForCar(carId);
-      _notes = await _db.getNotesForCar(carId);
+      final odometerLogs = await _db.getOdometerLogsForCar(carId);
+      final fuelLogs = await _db.getFuelLogsForCar(carId);
+      final reminders = await _db.getRemindersForCar(carId);
+      final serviceLogs = await _db.getServiceLogsForCar(carId);
+      final notes = await _db.getNotesForCar(carId);
+      if (request != _logsRequest) return;
+      _odometerLogs = odometerLogs;
+      _fuelLogs = fuelLogs;
+      _reminders = reminders;
+      _serviceLogs = serviceLogs;
+      _notes = notes;
     } catch (e) {
-      debugPrint('Помилка завантаження логів: $e');
+      debugPrint('[Data] Loading records failed: $e');
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (request == _logsRequest) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 

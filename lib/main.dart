@@ -12,7 +12,7 @@ import 'screens/export_report_screen.dart';
 import 'screens/reminders_screen.dart';
 import 'screens/service_book_screen.dart';
 import 'screens/manage_cars_screen.dart';
-import 'models/reminder.dart';
+import 'domain/reminder_status.dart';
 import 'services/cloud_sync_controller.dart';
 import 'services/google_drive_sync_service.dart';
 import 'theme/app_theme.dart';
@@ -200,39 +200,24 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  // Отримати реальний індекс сторінки для відображення
+  /// Maps the endless page index to one of the real pages.
   int _getRealIndex(int index) {
     return (index - _initialPage) % _totalPages;
   }
 
-  // Перевірка статусу нагадувань
+  /// Whether any active reminder of the selected car is overdue or soon due.
   (bool, bool) _checkReminders(AppProvider provider) {
     if (provider.selectedCar == null) return (false, false);
 
-    bool hasUpcoming = false;
-    bool hasOverdue = false;
-    final now = DateTime.now();
-
+    final currentKm = currentMileage(provider.odometerLogs);
+    final today = DateTime.now();
+    var hasUpcoming = false;
+    var hasOverdue = false;
     for (final reminder in provider.reminders) {
-      if (reminder.isCompleted) continue;
-
-      if (reminder.type == ReminderType.maintenance ||
-          (reminder.type == ReminderType.custom && reminder.repeatKm != null)) {
-        final odometerLogs = provider.odometerLogs;
-        final currentKm =
-            odometerLogs.isNotEmpty ? odometerLogs.first.odometer : 0;
-        final dueKm = (reminder.startKm ?? 0) + (reminder.repeatKm ?? 0);
-        if (currentKm >= dueKm - 1000 && currentKm < dueKm) hasUpcoming = true;
-        if (currentKm >= dueKm) hasOverdue = true;
-      } else {
-        if (reminder.dueDate.isBefore(now.add(const Duration(days: 7))) &&
-            !reminder.dueDate.isBefore(now)) {
-          hasUpcoming = true;
-        }
-        if (reminder.dueDate.isBefore(now)) {
-          hasOverdue = true;
-        }
-      }
+      final status =
+          reminderStatus(reminder, currentKm: currentKm, today: today);
+      if (status.isOverdue) hasOverdue = true;
+      if (status.isUpcoming) hasUpcoming = true;
     }
     return (hasOverdue, hasUpcoming);
   }

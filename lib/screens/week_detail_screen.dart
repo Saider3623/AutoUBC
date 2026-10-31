@@ -6,6 +6,7 @@ import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/odometer_log.dart';
 import '../models/fuel_log.dart';
+import '../utils/error_messages.dart';
 import '../widgets/app_empty_state.dart';
 
 class WeekDetailScreen extends StatefulWidget {
@@ -34,7 +35,7 @@ class _WeekDetailScreenState extends State<WeekDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Деталізація: $titleRange'),
+        title: Text(loc.weekDetailTitle(titleRange)),
       ),
       body: Consumer<AppProvider>(
         builder: (context, provider, child) {
@@ -204,8 +205,10 @@ class _WeekDetailScreenState extends State<WeekDetailScreen> {
     );
 
     if (confirmed == true && mounted) {
-      await Provider.of<AppProvider>(context, listen: false)
-          .deleteOdometerLog(log);
+      await _runDelete(
+        () => Provider.of<AppProvider>(context, listen: false)
+            .deleteOdometerLog(log),
+      );
     }
   }
 
@@ -230,7 +233,22 @@ class _WeekDetailScreenState extends State<WeekDetailScreen> {
     );
 
     if (confirmed == true && mounted) {
-      await Provider.of<AppProvider>(context, listen: false).deleteFuelLog(log);
+      await _runDelete(
+        () => Provider.of<AppProvider>(context, listen: false)
+            .deleteFuelLog(log),
+      );
+    }
+  }
+
+  Future<void> _runDelete(Future<void> Function() delete) async {
+    final loc = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await delete();
+    } catch (error) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(describeError(error, loc))),
+      );
     }
   }
 }

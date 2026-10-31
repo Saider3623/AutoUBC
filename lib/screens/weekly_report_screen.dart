@@ -18,7 +18,8 @@ class WeeklyReportScreen extends StatefulWidget {
   State<WeeklyReportScreen> createState() => _WeeklyReportScreenState();
 }
 
-class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
+class _WeeklyReportScreenState extends State<WeeklyReportScreen>
+    with WidgetsBindingObserver {
   static const _noMileageBackground = Color(0xFFFFFBF2);
   static const _noMileageForeground = Color(0xFF8D6E63);
   static const _secondaryTextColor = Color(0xFF607D8B);
@@ -26,6 +27,34 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
 
   DateTime _selectedMonth = DateTime.now();
   final DatabaseService _db = DatabaseService();
+  DateTime _lastSeen = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    final now = DateTime.now();
+    bool sameMonth(DateTime a, DateTime b) =>
+        a.year == b.year && a.month == b.month;
+    // Follow the calendar when the app was left open on the current month.
+    if (sameMonth(_selectedMonth, _lastSeen) && !sameMonth(now, _lastSeen)) {
+      _selectedMonth = now;
+    }
+    _lastSeen = now;
+    // Rebuild anyway: the current week and future-week cards depend on today.
+    setState(() {});
+  }
 
   Future<void> _onWeekTap(Map<String, DateTime> week) async {
     await Navigator.push(

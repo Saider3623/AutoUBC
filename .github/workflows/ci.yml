@@ -88,13 +88,20 @@ jobs:
             echo "::warning title=format::$(wc -l < "$RUNNER_TEMP/ci-out/format-changed.txt") files are not formatted with dart format"
           fi
 
-      - name: No debug network hooks
+      - name: No debug network hooks or 24-hour day steps
         if: ${{ !cancelled() }}
         run: |
+          status=0
           if grep -rnE "192\.168\.|_dbg[A-Z]|RemoteLog|#region debug-point" lib/; then
             echo "::error title=debug hooks::Debug network hooks must not be committed"
-            exit 1
+            status=1
           fi
+          # A local day is not always 24 hours long (DST); see addCalendarDays.
+          if grep -rnE "Duration\(days:" lib/ --include=*.dart | grep -vE ":[0-9]+:[[:space:]]*//"; then
+            echo "::error title=calendar math::Use addCalendarDays or calendarDaysBetween instead of Duration(days:)"
+            status=1
+          fi
+          exit $status
 
       - name: Publish raw results to ci-output branch
         if: ${{ !cancelled() && github.event_name == 'push' && github.ref_name != 'main' }}

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
+import '../models/car.dart';
 import '../providers/app_provider.dart';
+import '../utils/error_messages.dart';
 import '../widgets/work_schedule_card.dart';
 
 class ManageCarsScreen extends StatefulWidget {
@@ -85,11 +87,23 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                   return;
                 }
                 final navigator = Navigator.of(context);
-                final car = appProvider.selectedCar!;
-                car.fuelTypes = _localFuelTypes;
-                await appProvider.updateCar(car);
-                if (mounted) {
-                  navigator.pop();
+                final messenger = ScaffoldMessenger.of(context);
+                final selected = appProvider.selectedCar!;
+                // Save a copy: the car held by the provider changes only when
+                // the database write succeeds.
+                final car = Car()
+                  ..id = selected.id
+                  ..name = selected.name
+                  ..fuelTypes = List.of(_localFuelTypes)
+                  ..selectedFuelTypesForConsumption =
+                      selected.selectedFuelTypesForConsumption;
+                try {
+                  await appProvider.updateCar(car);
+                  if (mounted) navigator.pop();
+                } catch (error) {
+                  messenger.showSnackBar(
+                    SnackBar(content: Text(describeError(error, loc))),
+                  );
                 }
               }
             },
@@ -268,7 +282,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
       } catch (e) {
         if (mounted) {
           scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text(loc.saveError(e.toString()))),
+            SnackBar(content: Text(describeError(e, loc))),
           );
         }
       }
@@ -305,7 +319,7 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
       } catch (e) {
         if (mounted) {
           scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text(loc.saveError(e.toString()))),
+            SnackBar(content: Text(describeError(e, loc))),
           );
         }
       }

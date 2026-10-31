@@ -1,6 +1,5 @@
 {
   "@@locale": "uk",
-  "appTitle": "AutoUBC",
   "addCar": "Додати автомобіль",
   "selectCar": "Вибрати автомобіль",
   "deleteCar": "Видалити поточний автомобіль",
@@ -24,23 +23,12 @@
   "delete": "Видалити",
   "confirm": "Підтвердити",
   "enterData": "Введення даних",
-  "historyAndReports": "Історія та звіти",
   "date": "Дата",
   "odometer": "Одометр",
   "km": "км",
   "fuel": "Паливо",
   "save": "Зберегти",
   "saveOdometerSuccess": "Показання одометра збережено",
-  "saveError": "Помилка збереження: {error}",
-  "@saveError": {
-    "description": "Повідомлення про помилку при збереженні",
-    "placeholders": {
-      "error": {
-        "type": "String",
-        "description": "Текст помилки"
-      }
-    }
-  },
   "refuelingAdded": "Заправку додано",
   "addRefueling": "Додати заправку",
   "customReminder": "Інше",
@@ -167,23 +155,6 @@
   "endLabel": "Кінець",
   "fuelSection": "ПАЛИВО",
   "noRefuels": "Немає заправок",
-  "averageFuelConsumption": "Середня витрата пального (останні 30 днів)",
-  "averageFuelConsumptionFor": "{fuelType}: {consumption} л/100км",
-  "@averageFuelConsumptionFor": {
-    "description": "Відображення середньої витрати пального",
-    "placeholders": {
-      "fuelType": {
-        "type": "String",
-        "description": "Тип пального"
-      },
-      "consumption": {
-        "type": "String",
-        "description": "Значення витрати пального"
-      }
-    }
-  },
-  "primaryFuelType": "Основной вид пального",
-  "selectPrimaryFuelType": "Виберіть основний вид пального",
   "carName": "Назва автомобіля",
   "editCar": "Редагувати автомобіль",
   "carAdded": "Автомобіль успішно додано!",
@@ -193,17 +164,14 @@
   "addNote": "Додати нотатку",
   "editNote": "Редагувати нотатку",
   "noteDescription": "Опис",
-  "noteDateTime": "Дата та час",
   "deleteNote": "Видалити нотатку",
   "deleteNoteConfirmation": "Ви впевнені, що хочете видалити цю нотатку?",
   "noNotes": "Нотаток ще немає",
   "chooseDate": "Вибрати дату",
   "noteDateSelected": "Дату встановлено",
   "syncInProgress": "Синхронізація…",
-  "syncUnknown": "Синхронізацію ще не виконано",
   "syncIdle": "Синхронізовано",
   "syncError": "Помилка синхронізації",
-  "syncOk": "Синхронізовано",
   "workWeekSection": "Режим робочого тижня",
   "saturdayNotWorkingConfirm": "За графіком на цю дату діє 5-денний тиждень, субота неробоча. Додати дані?",
   "workWeekScheduleHint": "За замовчуванням тиждень 6-денний (Пн–Сб). Від дати початку до дати кінця діє 5-денний (Пн–Пт). Неділя завжди неробоча.",
@@ -239,5 +207,19 @@
   "cloudRestoring": "Відновлюємо дані…",
   "syncNeedsDecision": "Оберіть, які дані залишити",
   "dataLoadErrorTitle": "Не вдалося відкрити дані",
-  "dataLoadErrorBody": "Ваші записи не видалено. Спробуйте ще раз; якщо повториться — перезапустіть застосунок."
+  "dataLoadErrorBody": "Ваші записи не видалено. Спробуйте ще раз; якщо повториться — перезапустіть застосунок.",
+  "errorCarNameEmpty": "Введіть назву автомобіля.",
+  "errorCarMissing": "Цього автомобіля вже немає. Відкрийте екран заново й спробуйте ще раз.",
+  "errorRecordMissing": "Цього запису вже немає.",
+  "errorFuelTypeEmpty": "Оберіть вид пального.",
+  "errorOdometerBelowPrevious": "Показання менше за попереднє: {reading} км від {date}.",
+  "errorOdometerAboveNext": "Показання більше за наступне: {reading} км від {date}.",
+  "errorInvalidDate": "Неправильна дата.",
+  "errorInvalidTime": "Неправильний час.",
+  "errorPeriodEndsBeforeStart": "Дата завершення раніша за дату початку.",
+  "errorUnexpected": "Щось пішло не так. Спробуйте ще раз.",
+  "weekDetailTitle": "Деталізація: {range}",
+  "reminderStartKm": "Відлік від пробігу",
+  "deleteReminderConfirmation": "Видалити це нагадування?",
+  "numberMustBePositive": "Введіть число, більше за нуль"
 }
