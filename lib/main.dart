@@ -65,7 +65,6 @@ class MyApp extends StatelessWidget {
             ],
             supportedLocales: const [
               Locale('en'),
-              Locale('ru'),
               Locale('uk'),
             ],
             locale: localeProvider.locale,
@@ -700,16 +699,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     : null,
                 onTap: () {
                   lp.setLocale(const Locale('en'));
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: Text(loc.russian),
-                trailing: lp.locale?.languageCode == 'ru'
-                    ? const Icon(Icons.check)
-                    : null,
-                onTap: () {
-                  lp.setLocale(const Locale('ru'));
                   Navigator.pop(context);
                 },
               ),

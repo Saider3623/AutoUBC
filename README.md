@@ -113,7 +113,7 @@ adb shell getprop ro.product.cpu.abilist
 ## Code conventions
 
 - Write code comments and documentation comments in Ukrainian or English only.
-- Do not add comments in Russian. This applies to inline comments, `///` docs,
-  TODO/FIXME notes, and block comments; localized product text and domain data
-  are not comments and should remain in their intended language.
+  This applies to inline comments, `///` docs, TODO/FIXME notes, and block
+  comments.
+- The app is localized into Ukrainian (default) and English only.
 - See [AGENTS.md](AGENTS.md) for instructions intended for AI coding agents.

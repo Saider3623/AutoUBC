@@ -196,9 +196,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get english => 'Англійська';
 
   @override
-  String get russian => 'Російська';
-
-  @override
   String get ukrainian => 'Українська';
 
   @override

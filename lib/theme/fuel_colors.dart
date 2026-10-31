@@ -13,7 +13,7 @@ Color fuelTypeColor(String fuelType, ColorScheme colorScheme) {
 
   if (hasAny(const ['ГАЗ', 'LPG', 'CNG', 'ПРОПАН', 'МЕТАН'])) return _gas;
   if (hasAny(const ['ДИЗЕЛЬ', 'DIESEL', 'ДП', 'ДТ'])) return _diesel;
-  if (hasAny(const ['ЕЛЕКТРИ', 'ЭЛЕКТРИ', 'ELECTRIC'])) return _electric;
+  if (hasAny(const ['ЕЛЕКТРИ', 'ELECTRIC'])) return _electric;
   if (hasAny(const ['92', '95', '98', '100', 'БЕНЗИН', 'PETROL'])) {
     return _petrol;
   }

@@ -3,9 +3,8 @@
 ## Comment language
 
 - Write all code comments and documentation comments in Ukrainian or English only.
-- Do not add comments in Russian.
 - This rule applies to `//`, `///`, block comments, TODO/FIXME notes, and inline comments in Dart source.
-- Preserve Russian, Ukrainian, and English user-facing strings when they are intentional localization or domain data; this rule concerns comments, not product copy.
+- The app is localized into Ukrainian (default) and English only; add every new user-facing string to both ARB files.
 
 ## Scope discipline
 
