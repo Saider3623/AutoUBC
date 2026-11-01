@@ -1,0 +1,182 @@
+Resolving dependencies...
+Downloading packages...
+  _fe_analyzer_shared 61.0.0 (111.0.0 available)
+  analyzer 5.13.0 (14.7.0 available)
+  archive 4.0.9 (4.6.0 available)
+  build 2.4.1 (5.0.0 available)
+  build_config 1.1.2 (1.4.0 available)
+  build_daemon 4.1.6 (4.1.7 available)
+  build_resolvers 2.4.2 (3.0.4 available)
+  build_runner 2.4.13 (2.17.1 available)
+  build_runner_core 7.3.2 (9.3.2 available)
+  built_collection 5.1.1 (6.0.0 available)
+  cli_util 0.4.2 (0.6.0 available)
+  code_assets 2.0.0 (2.1.0 available)
+  code_builder 4.12.0 (4.13.0 available)
+  cross_file 0.3.5+5 (0.4.0 available)
+  crypto 3.0.7 (3.0.8 available)
+  dart_style 2.3.2 (3.1.14 available)
+  flutter_launcher_icons 0.13.1 (0.14.4 available)
+  flutter_lints 3.0.2 (6.0.0 available)
+  frontend_server_client 4.0.0 (4.2.0 available)
+  google_sign_in 6.3.0 (7.2.0 available)
+! google_sign_in_android 6.2.1 (overridden) (7.2.18 available)
+  google_sign_in_ios 5.9.0 (6.3.8 available)
+  google_sign_in_platform_interface 2.5.0 (3.1.0 available)
+  google_sign_in_web 0.12.4+4 (1.1.3 available)
+  googleapis 12.0.0 (17.0.0 available)
+  http_multi_server 3.2.2 (3.2.3 available)
+  image 4.9.2 (4.12.0 available)
+  jni 1.0.3 (1.1.1 available)
+  jni_flutter 1.0.3 (1.0.4+1 available)
+  js 0.6.7 (0.7.2 available)
+  lints 3.0.0 (6.1.0 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  objective_c 9.6.0 (9.6.2 available)
+  package_config 2.2.0 (3.0.0 available)
+! path_provider_android 2.3.1 (overridden)
+  pdf 3.13.0 (3.13.1 available)
+  petitparser 7.0.2 (7.1.0 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.5.2 (6.5.4 available)
+  printing 5.15.0 (5.15.1 available)
+  pubspec_parse 1.6.0 (1.7.0 available)
+  qr 3.0.2 (4.0.1 available)
+  share_plus 13.3.0 (13.3.1 available)
+  shared_preferences 2.5.5 (2.5.6 available)
+! shared_preferences_android 2.4.28 (overridden) (2.5.4 available)
+  shared_preferences_foundation 2.5.7 (2.6.1 available)
+  shelf 1.4.2 (1.4.3 available)
+  shelf_web_socket 2.0.1 (3.0.0 available)
+  source_gen 1.5.0 (4.3.1 available)
+  test_api 0.7.12 (0.7.15 available)
+  vector_math 2.4.2 (2.4.4 available)
+  vm_service 15.3.0 (15.4.0 available)
+  web 1.1.1 (1.1.2 available)
+! win32 6.4.0 (overridden)
+  xml 7.0.1 (7.1.0 available)
+Got dependencies!
+53 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /home/runner/work/AutoUBC/AutoUBC/test/widget_test.dart
+00:00 +0: /home/runner/work/AutoUBC/AutoUBC/test/widget_test.dart: renders the first-run AutoUBC setup actions
+00:00 +1: /home/runner/work/AutoUBC/AutoUBC/test/widget_test.dart: renders the first-run AutoUBC setup actions
+00:00 +2: /home/runner/work/AutoUBC/AutoUBC/test/widget_test.dart: renders the first-run AutoUBC setup actions
+00:00 +3: /home/runner/work/AutoUBC/AutoUBC/test/widget_test.dart: renders the first-run AutoUBC setup actions
+00:00 +4: /home/runner/work/AutoUBC/AutoUBC/test/widget_test.dart: renders the first-run AutoUBC setup actions
+00:00 +5: /home/runner/work/AutoUBC/AutoUBC/test/widget_test.dart: renders the first-run AutoUBC setup actions
+[GoogleDrive] Silent sign-in failed: TimeoutException after 0:00:15.000000: Future not completed
+#0      Future.timeout.<anonymous closure> (dart:async/future_impl.dart:1042:24)
+<asynchronous suspension>
+#1      GoogleDriveSyncService.signInSilently (package:autoubc/services/google_drive_sync_service.dart:272:11)
+<asynchronous suspension>
+#2      CloudSyncController.start (package:autoubc/services/cloud_sync_controller.dart:149:5)
+<asynchronous suspension>
+#3      _MainScreenState.initState.<anonymous closure> (package:autoubc/main.dart:110:22)
+<asynchronous suspension>
+
+00:01 +6: /home/runner/work/AutoUBC/AutoUBC/test/database_service_lifecycle_test.dart: (setUpAll)
+00:02 +7: /home/runner/work/AutoUBC/AutoUBC/test/database_service_lifecycle_test.dart: (setUpAll)
+00:02 +8: /home/runner/work/AutoUBC/AutoUBC/test/database_service_lifecycle_test.dart: (setUpAll)
+00:02 +8: /home/runner/work/AutoUBC/AutoUBC/test/database_service_lifecycle_test.dart: database service reopens cleanly after close
+00:02 +9: /home/runner/work/AutoUBC/AutoUBC/test/database_service_lifecycle_test.dart: (tearDownAll)
+00:03 +9: /home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart: date reminders a reminder due today is upcoming, not overdue
+00:03 +10: /home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart: date reminders becomes overdue the day after the due date
+00:03 +11: /home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart: date reminders counts calendar days across the DST change
+00:03 +12: /home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart: date reminders is scheduled more than seven days ahead
+00:03 +13: /home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart: mileage reminders turns upcoming 1000 km before the target and overdue at it
+00:03 +14: /home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart: current mileage is the highest reading, 0 without readings
+00:03 +15: /home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart: sorts the most urgent active reminders first
+00:03 +16: /home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart: resolveBaseline first sign-in on a new phone restores the cloud history
+00:03 +17: /home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart: resolveBaseline a car created before sign-in never overwrites the cloud history
+00:03 +18: /home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart: resolveBaseline a newer local copy of the same history is uploaded after an update
+00:03 +19: /home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart: resolveBaseline a local copy with fewer records is never treated as newer
+00:03 +20: /home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart: resolveBaseline identical copies need no transfer
+00:03 +21: /home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart: resolveBaseline without a cloud backup local data becomes the first copy
+00:03 +22: /home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart: resolveBaseline an empty cloud backup can be replaced
+00:03 +23: /home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart: dated cloud copies names carry the date and, for explicit replacements, the time
+00:03 +24: /home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart: dated cloud copies keeps the 14 newest copies and one copy per month for 6 months
+00:03 +25: /home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart: local backup rotation keeps recent, daily, weekly and tagged copies
+00:04 +26: /home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart: WorkSchedule defaults to six-day weeks everywhere
+00:04 +27: /home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart: WorkSchedule open-ended period lasts indefinitely
+00:04 +28: /home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart: WorkSchedule closed period includes both boundary dates
+00:04 +29: /home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart: WorkSchedule a week takes its mode from its Saturday
+00:04 +30: /home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart: WorkSchedule marks only Saturdays inside a period as days off
+00:04 +31: /home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart: WorkSchedule skips malformed stored periods
+00:04 +32: /home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart: buildReportWeeks with a schedule September before the period uses six-day weeks
+00:04 +33: /home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart: buildReportWeeks with a schedule October inside the period uses five-day weeks
+00:04 +34: /home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart: buildReportWeeks with a schedule a period ending mid-week returns to six days that week
+00:04 +35: /home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart: buildReportWeeks with a schedule a period ending on Saturday keeps that Saturday off
+00:04 +36: /home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart: formats and parses schedule dates
+00:04 +37: /home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart: planReminderNotifications plans a week before, the day before and the due day at 09:00
+00:04 +38: /home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart: planReminderNotifications skips moments that have already passed
+00:04 +39: /home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart: planReminderNotifications a week before crosses month boundaries and the DST change
+00:04 +40: /home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart: planReminderNotifications ignores completed and mileage reminders
+00:04 +41: /home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart: planReminderNotifications ids are stable per reminder and never collide
+00:04 +42: /home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart: reminderTimeLeft describes days left, today and overdue days
+00:04 +43: /home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart: reminderTimeLeft describes kilometres left and overdue kilometres
+00:04 +44: /home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart: reminderTimeLeft says nothing for a completed reminder
+00:04 +45: /home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart: reminderTimeLeft a custom reminder without a title uses the type name
+00:05 +46: /home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart: starts from the last reading before the week
+00:05 +47: /home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart: uses the first reading of the week when there is none before
+00:05 +48: /home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart: flags mileage that also covers days without readings
+00:05 +49: /home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart: a weekend between readings is not a gap
+00:05 +50: /home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart: a week with refuels but without readings keeps its fuel
+00:05 +51: /home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart: never reports negative mileage
+00:05 +52: /home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart: month totals add up the weeks and count missing working days
+00:05 +53: /home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart: validateRequiredText rejects blank text after trimming
+00:05 +54: /home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart: validateRequiredText accepts non-empty text
+00:05 +55: /home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart: validateWholeNumber accepts zero and positive values
+00:05 +56: /home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart: validateWholeNumber rejects malformed and negative values
+00:05 +57: /home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart: validateNonNegativeDecimal normalizes comma decimals and accepts zero
+00:05 +58: /home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart: validateNonNegativeDecimal rejects malformed and negative values
+00:05 +59: /home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart: rejects zero litres when a positive value is required
+00:06 +60: /home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart: sync status presentation keeps a connected session neutral before the first success
+00:06 +61: /home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart: sync status presentation active operations always present as syncing
+00:06 +62: /home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart: sync status presentation preserves idle and error after operations finish
+00:06 +63: /home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart: selects the newest valid backup when Drive returns duplicates
+00:06 +64: /home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart: classifySyncError connection problems are offline
+00:06 +65: /home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart: classifySyncError a refused Drive request asks to sign in again
+00:06 +66: /home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart: classifySyncError a full Google storage is reported as such
+00:06 +67: /home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart: classifySyncError server errors and anything unknown stay generic
+00:07 +68: /home/runner/work/AutoUBC/AutoUBC/test/isar_relationship_test.dart: (setUpAll)
+00:07 +68: /home/runner/work/AutoUBC/AutoUBC/test/isar_relationship_test.dart: child records are queryable by canonical carId
+00:07 +69: /home/runner/work/AutoUBC/AutoUBC/test/isar_relationship_test.dart: (tearDownAll)
+00:07 +69: /home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart: puts the current week first and preserves the other weeks order
+00:07 +70: /home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart: keeps the normal order when the selected month is not current
+00:07 +71: /home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart: treats both week boundaries as part of the current week
+00:07 +72: /home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart: builds October 2026 weeks across the DST change (6-day week)
+00:07 +73: /home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart: builds October 2026 weeks across the DST change (5-day week)
+00:07 +74: /home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart: every report week starts and ends at local midnight
+00:07 +75: /home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart: addCalendarDays steps whole calendar days over DST changes
+00:08 +76: /home/runner/work/AutoUBC/AutoUBC/test/app_provider_sync_test.dart: sync completion does not notify the widget tree
+00:08 +77: /home/runner/work/AutoUBC/AutoUBC/test/app_provider_sync_test.dart: lifecycle flush skips uploads when there are no pending changes
+00:08 +78: /home/runner/work/AutoUBC/AutoUBC/test/service_log_update_test.dart: (setUpAll)
+00:08 +78: /home/runner/work/AutoUBC/AutoUBC/test/service_log_update_test.dart: updates an existing service log without creating a duplicate
+00:08 +79: /home/runner/work/AutoUBC/AutoUBC/test/service_log_update_test.dart: (tearDownAll)
+00:09 +79: /home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart: (setUpAll)
+00:09 +79: /home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart: buildReportFileName uses the Ukrainian localized month name
+00:09 +80: /home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart: buildReportFileName uses the English localized month name
+00:09 +81: /home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart: buildReportFileName preserves a Cyrillic car name when the app language is English
+00:09 +82: /home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart: buildReportFileName sanitizes invalid filename characters in the car name
+00:09 +83: /home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart: buildReportFileName groups weekly refuels by exact fuel type
+00:09 +84: /home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart: buildReportFileName keeps arbitrary fuel types separate
+00:09 +85: /home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart: buildReportFileName ignores blank fuel types while grouping refuels
+00:09 +86: /home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart: (tearDownAll)
+00:10 +86: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: (setUpAll)
+00:10 +86: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: saveOdometerLog keeps readings monotonic around the neighbouring dates
+00:10 +87: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: saveOdometerLog a second reading for the same date replaces the first
+00:10 +88: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: saveOdometerLog readings of another car do not count as neighbours
+00:10 +89: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: saveOdometerLog rejects a malformed date and an unknown car
+00:10 +90: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: updateCarWithFuelRenames moves the refuels of this car to the new fuel name
+00:10 +91: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: updateCarWithFuelRenames trims the registration plate and the driver
+00:10 +92: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: completeReminder a monthly reminder moves to the clamped next month
+00:10 +93: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: completeReminder a mileage reminder restarts from the latest reading
+00:10 +94: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: completeReminder a one-off reminder is only marked done
+00:10 +95: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: completeReminder undo removes the next occurrence and reactivates
+00:10 +96: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: snapshots and restore a snapshot summarizes like the live database
+[Database] Snapshot verified: DatabaseSummary(cars: 1, odometer: 1, fuel: 1, reminders: 0, service: 0, notes: 0, last: 2026-10-06)
+00:10 +97: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: snapshots and restore restoring a snapshot keeps the replaced data as a backup
+00:10 +98: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: compatibility repair reopening moves a legacy car link into carId
+00:10 +99: /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart: (tearDownAll)
+00:10 +99: All tests passed!

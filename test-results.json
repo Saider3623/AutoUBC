@@ -1,0 +1,314 @@
+{"protocolVersion":"0.1.1","runnerVersion":null,"pid":2577,"type":"start","time":0}
+{"suite":{"id":0,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/widget_test.dart"},"type":"suite","time":0}
+{"test":{"id":1,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/widget_test.dart","suiteID":0,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":0}
+{"suite":{"id":2,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/validation_test.dart"},"type":"suite","time":2}
+{"test":{"id":3,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/validation_test.dart","suiteID":2,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":2}
+{"count":17,"time":3,"type":"allSuites"}
+{"testID":1,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":11309}
+{"group":{"id":4,"suiteID":0,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":11311}
+{"test":{"id":5,"name":"renders the first-run AutoUBC setup actions","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":27,"root_column":3,"root_url":"file:///home/runner/work/AutoUBC/AutoUBC/test/widget_test.dart"},"type":"testStart","time":11311}
+{"testID":3,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":11836}
+{"group":{"id":6,"suiteID":2,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":5,"line":null,"column":null,"url":null},"type":"group","time":11837}
+{"group":{"id":7,"suiteID":2,"parentID":6,"name":"date validation","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":7,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/validation_test.dart"},"type":"group","time":11837}
+{"test":{"id":8,"name":"date validation accepts an ISO calendar date","suiteID":2,"groupIDs":[6,7],"metadata":{"skip":false,"skipReason":null},"line":8,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/validation_test.dart"},"type":"testStart","time":11837}
+{"testID":8,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":11850}
+{"test":{"id":9,"name":"date validation rejects invalid calendar dates","suiteID":2,"groupIDs":[6,7],"metadata":{"skip":false,"skipReason":null},"line":12,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/validation_test.dart"},"type":"testStart","time":11851}
+{"testID":9,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":11854}
+{"test":{"id":10,"name":"date validation rejects malformed times and values","suiteID":2,"groupIDs":[6,7],"metadata":{"skip":false,"skipReason":null},"line":19,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/validation_test.dart"},"type":"testStart","time":11854}
+{"testID":10,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":11856}
+{"group":{"id":11,"suiteID":2,"parentID":6,"name":"month arithmetic","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":31,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/validation_test.dart"},"type":"group","time":11856}
+{"test":{"id":12,"name":"month arithmetic clamps January 31 to February 28","suiteID":2,"groupIDs":[6,11],"metadata":{"skip":false,"skipReason":null},"line":32,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/validation_test.dart"},"type":"testStart","time":11856}
+{"testID":12,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":11858}
+{"test":{"id":13,"name":"month arithmetic preserves leap day when target month supports it","suiteID":2,"groupIDs":[6,11],"metadata":{"skip":false,"skipReason":null},"line":36,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/validation_test.dart"},"type":"testStart","time":11858}
+{"testID":13,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":11860}
+{"suite":{"id":14,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/database_service_lifecycle_test.dart"},"type":"suite","time":11882}
+{"test":{"id":15,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/database_service_lifecycle_test.dart","suiteID":14,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":11882}
+{"testID":5,"messageType":"print","message":"[GoogleDrive] Silent sign-in failed: TimeoutException after 0:00:15.000000: Future not completed","type":"print","time":11904}
+{"testID":5,"messageType":"print","message":"#0      Future.timeout.<anonymous closure> (dart:async/future_impl.dart:1042:24)\n<asynchronous suspension>\n#1      GoogleDriveSyncService.signInSilently (package:autoubc/services/google_drive_sync_service.dart:272:11)\n<asynchronous suspension>\n#2      CloudSyncController.start (package:autoubc/services/cloud_sync_controller.dart:149:5)\n<asynchronous suspension>\n#3      _MainScreenState.initState.<anonymous closure> (package:autoubc/main.dart:110:22)\n<asynchronous suspension>\n","type":"print","time":11905}
+{"testID":5,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":11931}
+{"suite":{"id":16,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/model_contract_test.dart"},"type":"suite","time":11953}
+{"test":{"id":17,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/model_contract_test.dart","suiteID":16,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":11953}
+{"testID":15,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":13059}
+{"group":{"id":18,"suiteID":14,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":13059}
+{"test":{"id":19,"name":"(setUpAll)","suiteID":14,"groupIDs":[18],"metadata":{"skip":false,"skipReason":null},"line":12,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_lifecycle_test.dart"},"type":"testStart","time":13059}
+{"testID":17,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":13452}
+{"group":{"id":20,"suiteID":16,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":null,"column":null,"url":null},"type":"group","time":13453}
+{"test":{"id":21,"name":"all child collections retain indexed carId compatibility","suiteID":16,"groupIDs":[20],"metadata":{"skip":false,"skipReason":null},"line":12,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/model_contract_test.dart"},"type":"testStart","time":13453}
+{"testID":21,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":13471}
+{"test":{"id":22,"name":"working-week schedule stores plain YYYY-MM-DD boundaries","suiteID":16,"groupIDs":[20],"metadata":{"skip":false,"skipReason":null},"line":21,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/model_contract_test.dart"},"type":"testStart","time":13472}
+{"testID":22,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":13474}
+{"suite":{"id":23,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart"},"type":"suite","time":13495}
+{"test":{"id":24,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart","suiteID":23,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":13495}
+{"testID":19,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":13537}
+{"test":{"id":25,"name":"database service reopens cleanly after close","suiteID":14,"groupIDs":[18],"metadata":{"skip":false,"skipReason":null},"line":15,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_lifecycle_test.dart"},"type":"testStart","time":13537}
+{"testID":25,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":13604}
+{"test":{"id":26,"name":"(tearDownAll)","suiteID":14,"groupIDs":[18],"metadata":{"skip":false,"skipReason":null},"line":13,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_lifecycle_test.dart"},"type":"testStart","time":13604}
+{"testID":26,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":13608}
+{"suite":{"id":27,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"suite","time":13629}
+{"test":{"id":28,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart","suiteID":27,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":13629}
+{"testID":24,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":14353}
+{"group":{"id":29,"suiteID":23,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":7,"line":null,"column":null,"url":null},"type":"group","time":14354}
+{"group":{"id":30,"suiteID":23,"parentID":29,"name":"date reminders","metadata":{"skip":false,"skipReason":null},"testCount":4,"line":30,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart"},"type":"group","time":14354}
+{"test":{"id":31,"name":"date reminders a reminder due today is upcoming, not overdue","suiteID":23,"groupIDs":[29,30],"metadata":{"skip":false,"skipReason":null},"line":31,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart"},"type":"testStart","time":14354}
+{"testID":31,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14365}
+{"test":{"id":32,"name":"date reminders becomes overdue the day after the due date","suiteID":23,"groupIDs":[29,30],"metadata":{"skip":false,"skipReason":null},"line":41,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart"},"type":"testStart","time":14365}
+{"testID":32,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14366}
+{"test":{"id":33,"name":"date reminders counts calendar days across the DST change","suiteID":23,"groupIDs":[29,30],"metadata":{"skip":false,"skipReason":null},"line":51,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart"},"type":"testStart","time":14366}
+{"testID":33,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14367}
+{"test":{"id":34,"name":"date reminders is scheduled more than seven days ahead","suiteID":23,"groupIDs":[29,30],"metadata":{"skip":false,"skipReason":null},"line":60,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart"},"type":"testStart","time":14368}
+{"testID":34,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14369}
+{"group":{"id":35,"suiteID":23,"parentID":29,"name":"mileage reminders","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":70,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart"},"type":"group","time":14369}
+{"test":{"id":36,"name":"mileage reminders turns upcoming 1000 km before the target and overdue at it","suiteID":23,"groupIDs":[29,35],"metadata":{"skip":false,"skipReason":null},"line":71,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart"},"type":"testStart","time":14369}
+{"testID":36,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14370}
+{"test":{"id":37,"name":"current mileage is the highest reading, 0 without readings","suiteID":23,"groupIDs":[29],"metadata":{"skip":false,"skipReason":null},"line":81,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart"},"type":"testStart","time":14370}
+{"testID":37,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14371}
+{"test":{"id":38,"name":"sorts the most urgent active reminders first","suiteID":23,"groupIDs":[29],"metadata":{"skip":false,"skipReason":null},"line":89,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_status_test.dart"},"type":"testStart","time":14371}
+{"testID":38,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14373}
+{"suite":{"id":39,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"suite","time":14389}
+{"test":{"id":40,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart","suiteID":39,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":14389}
+{"testID":28,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":15274}
+{"group":{"id":41,"suiteID":27,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":10,"line":null,"column":null,"url":null},"type":"group","time":15274}
+{"group":{"id":42,"suiteID":27,"parentID":41,"name":"resolveBaseline","metadata":{"skip":false,"skipReason":null},"testCount":7,"line":26,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"group","time":15274}
+{"test":{"id":43,"name":"resolveBaseline first sign-in on a new phone restores the cloud history","suiteID":27,"groupIDs":[41,42],"metadata":{"skip":false,"skipReason":null},"line":29,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"testStart","time":15274}
+{"testID":43,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15285}
+{"test":{"id":44,"name":"resolveBaseline a car created before sign-in never overwrites the cloud history","suiteID":27,"groupIDs":[41,42],"metadata":{"skip":false,"skipReason":null},"line":40,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"testStart","time":15285}
+{"testID":44,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15287}
+{"test":{"id":45,"name":"resolveBaseline a newer local copy of the same history is uploaded after an update","suiteID":27,"groupIDs":[41,42],"metadata":{"skip":false,"skipReason":null},"line":53,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"testStart","time":15287}
+{"testID":45,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15289}
+{"test":{"id":46,"name":"resolveBaseline a local copy with fewer records is never treated as newer","suiteID":27,"groupIDs":[41,42],"metadata":{"skip":false,"skipReason":null},"line":66,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"testStart","time":15289}
+{"testID":46,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15290}
+{"test":{"id":47,"name":"resolveBaseline identical copies need no transfer","suiteID":27,"groupIDs":[41,42],"metadata":{"skip":false,"skipReason":null},"line":74,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"testStart","time":15290}
+{"testID":47,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15292}
+{"test":{"id":48,"name":"resolveBaseline without a cloud backup local data becomes the first copy","suiteID":27,"groupIDs":[41,42],"metadata":{"skip":false,"skipReason":null},"line":81,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"testStart","time":15292}
+{"testID":48,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15293}
+{"test":{"id":49,"name":"resolveBaseline an empty cloud backup can be replaced","suiteID":27,"groupIDs":[41,42],"metadata":{"skip":false,"skipReason":null},"line":96,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"testStart","time":15293}
+{"testID":49,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15294}
+{"group":{"id":50,"suiteID":27,"parentID":41,"name":"dated cloud copies","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":108,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"group","time":15294}
+{"test":{"id":51,"name":"dated cloud copies names carry the date and, for explicit replacements, the time","suiteID":27,"groupIDs":[41,50],"metadata":{"skip":false,"skipReason":null},"line":109,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"testStart","time":15294}
+{"testID":51,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15297}
+{"test":{"id":52,"name":"dated cloud copies keeps the 14 newest copies and one copy per month for 6 months","suiteID":27,"groupIDs":[41,50],"metadata":{"skip":false,"skipReason":null},"line":118,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"testStart","time":15297}
+{"testID":52,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15301}
+{"group":{"id":53,"suiteID":27,"parentID":41,"name":"local backup rotation","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":145,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"group","time":15301}
+{"test":{"id":54,"name":"local backup rotation keeps recent, daily, weekly and tagged copies","suiteID":27,"groupIDs":[41,53],"metadata":{"skip":false,"skipReason":null},"line":146,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/cloud_sync_policy_test.dart"},"type":"testStart","time":15301}
+{"testID":54,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15304}
+{"suite":{"id":55,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart"},"type":"suite","time":15319}
+{"test":{"id":56,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart","suiteID":55,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":15319}
+{"testID":40,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":15766}
+{"group":{"id":57,"suiteID":39,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":11,"line":null,"column":null,"url":null},"type":"group","time":15767}
+{"group":{"id":58,"suiteID":39,"parentID":57,"name":"WorkSchedule","metadata":{"skip":false,"skipReason":null},"testCount":6,"line":21,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"group","time":15767}
+{"test":{"id":59,"name":"WorkSchedule defaults to six-day weeks everywhere","suiteID":39,"groupIDs":[57,58],"metadata":{"skip":false,"skipReason":null},"line":22,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"testStart","time":15767}
+{"testID":59,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15780}
+{"test":{"id":60,"name":"WorkSchedule open-ended period lasts indefinitely","suiteID":39,"groupIDs":[57,58],"metadata":{"skip":false,"skipReason":null},"line":29,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"testStart","time":15781}
+{"testID":60,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15783}
+{"test":{"id":61,"name":"WorkSchedule closed period includes both boundary dates","suiteID":39,"groupIDs":[57,58],"metadata":{"skip":false,"skipReason":null},"line":36,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"testStart","time":15783}
+{"testID":61,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15785}
+{"test":{"id":62,"name":"WorkSchedule a week takes its mode from its Saturday","suiteID":39,"groupIDs":[57,58],"metadata":{"skip":false,"skipReason":null},"line":44,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"testStart","time":15785}
+{"testID":62,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15786}
+{"test":{"id":63,"name":"WorkSchedule marks only Saturdays inside a period as days off","suiteID":39,"groupIDs":[57,58],"metadata":{"skip":false,"skipReason":null},"line":53,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"testStart","time":15786}
+{"testID":63,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15788}
+{"test":{"id":64,"name":"WorkSchedule skips malformed stored periods","suiteID":39,"groupIDs":[57,58],"metadata":{"skip":false,"skipReason":null},"line":60,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"testStart","time":15788}
+{"testID":64,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15789}
+{"group":{"id":65,"suiteID":39,"parentID":57,"name":"buildReportWeeks with a schedule","metadata":{"skip":false,"skipReason":null},"testCount":4,"line":70,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"group","time":15789}
+{"test":{"id":66,"name":"buildReportWeeks with a schedule September before the period uses six-day weeks","suiteID":39,"groupIDs":[57,65],"metadata":{"skip":false,"skipReason":null},"line":73,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"testStart","time":15790}
+{"testID":66,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15792}
+{"test":{"id":67,"name":"buildReportWeeks with a schedule October inside the period uses five-day weeks","suiteID":39,"groupIDs":[57,65],"metadata":{"skip":false,"skipReason":null},"line":87,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"testStart","time":15792}
+{"testID":67,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15794}
+{"test":{"id":68,"name":"buildReportWeeks with a schedule a period ending mid-week returns to six days that week","suiteID":39,"groupIDs":[57,65],"metadata":{"skip":false,"skipReason":null},"line":102,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"testStart","time":15794}
+{"testID":68,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15795}
+{"test":{"id":69,"name":"buildReportWeeks with a schedule a period ending on Saturday keeps that Saturday off","suiteID":39,"groupIDs":[57,65],"metadata":{"skip":false,"skipReason":null},"line":118,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"testStart","time":15795}
+{"testID":69,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15797}
+{"test":{"id":70,"name":"formats and parses schedule dates","suiteID":39,"groupIDs":[57],"metadata":{"skip":false,"skipReason":null},"line":130,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/work_schedule_test.dart"},"type":"testStart","time":15797}
+{"testID":70,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15799}
+{"suite":{"id":71,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart"},"type":"suite","time":15815}
+{"test":{"id":72,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart","suiteID":71,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":15815}
+{"testID":56,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":16245}
+{"group":{"id":73,"suiteID":55,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":9,"line":null,"column":null,"url":null},"type":"group","time":16246}
+{"group":{"id":74,"suiteID":55,"parentID":73,"name":"planReminderNotifications","metadata":{"skip":false,"skipReason":null},"testCount":5,"line":25,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart"},"type":"group","time":16246}
+{"test":{"id":75,"name":"planReminderNotifications plans a week before, the day before and the due day at 09:00","suiteID":55,"groupIDs":[73,74],"metadata":{"skip":false,"skipReason":null},"line":26,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart"},"type":"testStart","time":16246}
+{"testID":75,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16259}
+{"test":{"id":76,"name":"planReminderNotifications skips moments that have already passed","suiteID":55,"groupIDs":[73,74],"metadata":{"skip":false,"skipReason":null},"line":39,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart"},"type":"testStart","time":16259}
+{"testID":76,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16261}
+{"test":{"id":77,"name":"planReminderNotifications a week before crosses month boundaries and the DST change","suiteID":55,"groupIDs":[73,74],"metadata":{"skip":false,"skipReason":null},"line":48,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart"},"type":"testStart","time":16261}
+{"testID":77,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16262}
+{"test":{"id":78,"name":"planReminderNotifications ignores completed and mileage reminders","suiteID":55,"groupIDs":[73,74],"metadata":{"skip":false,"skipReason":null},"line":58,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart"},"type":"testStart","time":16262}
+{"testID":78,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16264}
+{"test":{"id":79,"name":"planReminderNotifications ids are stable per reminder and never collide","suiteID":55,"groupIDs":[73,74],"metadata":{"skip":false,"skipReason":null},"line":76,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart"},"type":"testStart","time":16264}
+{"testID":79,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16266}
+{"group":{"id":80,"suiteID":55,"parentID":73,"name":"reminderTimeLeft","metadata":{"skip":false,"skipReason":null},"testCount":4,"line":94,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart"},"type":"group","time":16266}
+{"test":{"id":81,"name":"reminderTimeLeft describes days left, today and overdue days","suiteID":55,"groupIDs":[73,80],"metadata":{"skip":false,"skipReason":null},"line":97,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart"},"type":"testStart","time":16266}
+{"testID":81,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16268}
+{"test":{"id":82,"name":"reminderTimeLeft describes kilometres left and overdue kilometres","suiteID":55,"groupIDs":[73,80],"metadata":{"skip":false,"skipReason":null},"line":122,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart"},"type":"testStart","time":16268}
+{"testID":82,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16269}
+{"test":{"id":83,"name":"reminderTimeLeft says nothing for a completed reminder","suiteID":55,"groupIDs":[73,80],"metadata":{"skip":false,"skipReason":null},"line":141,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart"},"type":"testStart","time":16270}
+{"testID":83,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16271}
+{"test":{"id":84,"name":"reminderTimeLeft a custom reminder without a title uses the type name","suiteID":55,"groupIDs":[73,80],"metadata":{"skip":false,"skipReason":null},"line":151,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/reminder_notifications_test.dart"},"type":"testStart","time":16271}
+{"testID":84,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16272}
+{"suite":{"id":85,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart"},"type":"suite","time":16287}
+{"test":{"id":86,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart","suiteID":85,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":16287}
+{"testID":72,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":16697}
+{"group":{"id":87,"suiteID":71,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":7,"line":null,"column":null,"url":null},"type":"group","time":16698}
+{"test":{"id":88,"name":"starts from the last reading before the week","suiteID":71,"groupIDs":[87],"metadata":{"skip":false,"skipReason":null},"line":22,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart"},"type":"testStart","time":16698}
+{"testID":88,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16711}
+{"test":{"id":89,"name":"uses the first reading of the week when there is none before","suiteID":71,"groupIDs":[87],"metadata":{"skip":false,"skipReason":null},"line":39,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart"},"type":"testStart","time":16711}
+{"testID":89,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16713}
+{"test":{"id":90,"name":"flags mileage that also covers days without readings","suiteID":71,"groupIDs":[87],"metadata":{"skip":false,"skipReason":null},"line":49,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart"},"type":"testStart","time":16714}
+{"testID":90,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16715}
+{"test":{"id":91,"name":"a weekend between readings is not a gap","suiteID":71,"groupIDs":[87],"metadata":{"skip":false,"skipReason":null},"line":60,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart"},"type":"testStart","time":16716}
+{"testID":91,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16717}
+{"test":{"id":92,"name":"a week with refuels but without readings keeps its fuel","suiteID":71,"groupIDs":[87],"metadata":{"skip":false,"skipReason":null},"line":69,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart"},"type":"testStart","time":16717}
+{"testID":92,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16720}
+{"test":{"id":93,"name":"never reports negative mileage","suiteID":71,"groupIDs":[87],"metadata":{"skip":false,"skipReason":null},"line":86,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart"},"type":"testStart","time":16720}
+{"testID":93,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16722}
+{"test":{"id":94,"name":"month totals add up the weeks and count missing working days","suiteID":71,"groupIDs":[87],"metadata":{"skip":false,"skipReason":null},"line":95,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/week_summary_test.dart"},"type":"testStart","time":16722}
+{"testID":94,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":16725}
+{"suite":{"id":95,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart"},"type":"suite","time":16741}
+{"test":{"id":96,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart","suiteID":95,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":16741}
+{"testID":86,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":17129}
+{"group":{"id":97,"suiteID":85,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":7,"line":null,"column":null,"url":null},"type":"group","time":17130}
+{"group":{"id":98,"suiteID":85,"parentID":97,"name":"validateRequiredText","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":6,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart"},"type":"group","time":17130}
+{"test":{"id":99,"name":"validateRequiredText rejects blank text after trimming","suiteID":85,"groupIDs":[97,98],"metadata":{"skip":false,"skipReason":null},"line":7,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart"},"type":"testStart","time":17130}
+{"testID":99,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17140}
+{"test":{"id":100,"name":"validateRequiredText accepts non-empty text","suiteID":85,"groupIDs":[97,98],"metadata":{"skip":false,"skipReason":null},"line":14,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart"},"type":"testStart","time":17141}
+{"testID":100,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17142}
+{"group":{"id":101,"suiteID":85,"parentID":97,"name":"validateWholeNumber","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":19,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart"},"type":"group","time":17142}
+{"test":{"id":102,"name":"validateWholeNumber accepts zero and positive values","suiteID":85,"groupIDs":[97,101],"metadata":{"skip":false,"skipReason":null},"line":26,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart"},"type":"testStart","time":17142}
+{"testID":102,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17144}
+{"test":{"id":103,"name":"validateWholeNumber rejects malformed and negative values","suiteID":85,"groupIDs":[97,101],"metadata":{"skip":false,"skipReason":null},"line":43,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart"},"type":"testStart","time":17144}
+{"testID":103,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17146}
+{"group":{"id":104,"suiteID":85,"parentID":97,"name":"validateNonNegativeDecimal","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":61,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart"},"type":"group","time":17146}
+{"test":{"id":105,"name":"validateNonNegativeDecimal normalizes comma decimals and accepts zero","suiteID":85,"groupIDs":[97,104],"metadata":{"skip":false,"skipReason":null},"line":68,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart"},"type":"testStart","time":17146}
+{"testID":105,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17148}
+{"test":{"id":106,"name":"validateNonNegativeDecimal rejects malformed and negative values","suiteID":85,"groupIDs":[97,104],"metadata":{"skip":false,"skipReason":null},"line":86,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart"},"type":"testStart","time":17148}
+{"testID":106,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17150}
+{"test":{"id":107,"name":"rejects zero litres when a positive value is required","suiteID":85,"groupIDs":[97],"metadata":{"skip":false,"skipReason":null},"line":104,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/form_validators_test.dart"},"type":"testStart","time":17150}
+{"testID":107,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17151}
+{"suite":{"id":108,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/isar_relationship_test.dart"},"type":"suite","time":17170}
+{"test":{"id":109,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/isar_relationship_test.dart","suiteID":108,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":17170}
+{"testID":96,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":17717}
+{"group":{"id":110,"suiteID":95,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":8,"line":null,"column":null,"url":null},"type":"group","time":17717}
+{"group":{"id":111,"suiteID":95,"parentID":110,"name":"sync status presentation","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":11,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart"},"type":"group","time":17717}
+{"test":{"id":112,"name":"sync status presentation keeps a connected session neutral before the first success","suiteID":95,"groupIDs":[110,111],"metadata":{"skip":false,"skipReason":null},"line":12,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart"},"type":"testStart","time":17717}
+{"testID":112,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17728}
+{"test":{"id":113,"name":"sync status presentation active operations always present as syncing","suiteID":95,"groupIDs":[110,111],"metadata":{"skip":false,"skipReason":null},"line":22,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart"},"type":"testStart","time":17728}
+{"testID":113,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17729}
+{"test":{"id":114,"name":"sync status presentation preserves idle and error after operations finish","suiteID":95,"groupIDs":[110,111],"metadata":{"skip":false,"skipReason":null},"line":32,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart"},"type":"testStart","time":17730}
+{"testID":114,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17731}
+{"test":{"id":115,"name":"selects the newest valid backup when Drive returns duplicates","suiteID":95,"groupIDs":[110],"metadata":{"skip":false,"skipReason":null},"line":50,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart"},"type":"testStart","time":17731}
+{"testID":115,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17735}
+{"group":{"id":116,"suiteID":95,"parentID":110,"name":"classifySyncError","metadata":{"skip":false,"skipReason":null},"testCount":4,"line":63,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart"},"type":"group","time":17735}
+{"test":{"id":117,"name":"classifySyncError connection problems are offline","suiteID":95,"groupIDs":[110,116],"metadata":{"skip":false,"skipReason":null},"line":64,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart"},"type":"testStart","time":17735}
+{"testID":117,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17737}
+{"test":{"id":118,"name":"classifySyncError a refused Drive request asks to sign in again","suiteID":95,"groupIDs":[110,116],"metadata":{"skip":false,"skipReason":null},"line":73,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart"},"type":"testStart","time":17737}
+{"testID":118,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17738}
+{"test":{"id":119,"name":"classifySyncError a full Google storage is reported as such","suiteID":95,"groupIDs":[110,116],"metadata":{"skip":false,"skipReason":null},"line":87,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart"},"type":"testStart","time":17738}
+{"testID":119,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17739}
+{"test":{"id":120,"name":"classifySyncError server errors and anything unknown stay generic","suiteID":95,"groupIDs":[110,116],"metadata":{"skip":false,"skipReason":null},"line":94,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/google_drive_sync_logic_test.dart"},"type":"testStart","time":17740}
+{"testID":120,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17741}
+{"suite":{"id":121,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart"},"type":"suite","time":17756}
+{"test":{"id":122,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart","suiteID":121,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":17756}
+{"testID":109,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":18486}
+{"group":{"id":123,"suiteID":108,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":18486}
+{"test":{"id":124,"name":"(setUpAll)","suiteID":108,"groupIDs":[123],"metadata":{"skip":false,"skipReason":null},"line":19,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/isar_relationship_test.dart"},"type":"testStart","time":18486}
+{"testID":124,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":18502}
+{"test":{"id":125,"name":"child records are queryable by canonical carId","suiteID":108,"groupIDs":[123],"metadata":{"skip":false,"skipReason":null},"line":47,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/isar_relationship_test.dart"},"type":"testStart","time":18503}
+{"testID":125,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":18678}
+{"test":{"id":126,"name":"(tearDownAll)","suiteID":108,"groupIDs":[123],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":18679}
+{"testID":126,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":18681}
+{"suite":{"id":127,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/app_provider_sync_test.dart"},"type":"suite","time":18700}
+{"test":{"id":128,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/app_provider_sync_test.dart","suiteID":127,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":18700}
+{"testID":122,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":18968}
+{"group":{"id":129,"suiteID":121,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":7,"line":null,"column":null,"url":null},"type":"group","time":18968}
+{"test":{"id":130,"name":"puts the current week first and preserves the other weeks order","suiteID":121,"groupIDs":[129],"metadata":{"skip":false,"skipReason":null},"line":16,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart"},"type":"testStart","time":18969}
+{"testID":130,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":18983}
+{"test":{"id":131,"name":"keeps the normal order when the selected month is not current","suiteID":121,"groupIDs":[129],"metadata":{"skip":false,"skipReason":null},"line":32,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart"},"type":"testStart","time":18983}
+{"testID":131,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":18985}
+{"test":{"id":132,"name":"treats both week boundaries as part of the current week","suiteID":121,"groupIDs":[129],"metadata":{"skip":false,"skipReason":null},"line":43,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart"},"type":"testStart","time":18985}
+{"testID":132,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":18987}
+{"test":{"id":133,"name":"builds October 2026 weeks across the DST change (6-day week)","suiteID":121,"groupIDs":[129],"metadata":{"skip":false,"skipReason":null},"line":58,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart"},"type":"testStart","time":18987}
+{"testID":133,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":18990}
+{"test":{"id":134,"name":"builds October 2026 weeks across the DST change (5-day week)","suiteID":121,"groupIDs":[129],"metadata":{"skip":false,"skipReason":null},"line":77,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart"},"type":"testStart","time":18991}
+{"testID":134,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":18993}
+{"test":{"id":135,"name":"every report week starts and ends at local midnight","suiteID":121,"groupIDs":[129],"metadata":{"skip":false,"skipReason":null},"line":97,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart"},"type":"testStart","time":18993}
+{"testID":135,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":18997}
+{"test":{"id":136,"name":"addCalendarDays steps whole calendar days over DST changes","suiteID":121,"groupIDs":[129],"metadata":{"skip":false,"skipReason":null},"line":110,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/weekly_report_utils_test.dart"},"type":"testStart","time":18997}
+{"testID":136,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":18999}
+{"suite":{"id":137,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/service_log_update_test.dart"},"type":"suite","time":19020}
+{"test":{"id":138,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/service_log_update_test.dart","suiteID":137,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":19021}
+{"testID":128,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":19552}
+{"group":{"id":139,"suiteID":127,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":null,"column":null,"url":null},"type":"group","time":19552}
+{"test":{"id":140,"name":"sync completion does not notify the widget tree","suiteID":127,"groupIDs":[139],"metadata":{"skip":false,"skipReason":null},"line":12,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/app_provider_sync_test.dart"},"type":"testStart","time":19552}
+{"testID":140,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":19567}
+{"test":{"id":141,"name":"lifecycle flush skips uploads when there are no pending changes","suiteID":127,"groupIDs":[139],"metadata":{"skip":false,"skipReason":null},"line":28,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/app_provider_sync_test.dart"},"type":"testStart","time":19568}
+{"testID":141,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":19569}
+{"suite":{"id":142,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart"},"type":"suite","time":19585}
+{"test":{"id":143,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart","suiteID":142,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":19585}
+{"testID":138,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":19987}
+{"group":{"id":144,"suiteID":137,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":19987}
+{"test":{"id":145,"name":"(setUpAll)","suiteID":137,"groupIDs":[144],"metadata":{"skip":false,"skipReason":null},"line":14,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/service_log_update_test.dart"},"type":"testStart","time":19987}
+{"testID":145,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":20003}
+{"test":{"id":146,"name":"updates an existing service log without creating a duplicate","suiteID":137,"groupIDs":[144],"metadata":{"skip":false,"skipReason":null},"line":17,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/service_log_update_test.dart"},"type":"testStart","time":20004}
+{"testID":146,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":20271}
+{"test":{"id":147,"name":"(tearDownAll)","suiteID":137,"groupIDs":[144],"metadata":{"skip":false,"skipReason":null},"line":15,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/service_log_update_test.dart"},"type":"testStart","time":20272}
+{"testID":147,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":20277}
+{"suite":{"id":148,"platform":"vm","path":"/home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"suite","time":20294}
+{"test":{"id":149,"name":"loading /home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart","suiteID":148,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":20294}
+{"testID":143,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":20962}
+{"group":{"id":150,"suiteID":142,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":7,"line":null,"column":null,"url":null},"type":"group","time":20963}
+{"test":{"id":151,"name":"(setUpAll)","suiteID":142,"groupIDs":[150],"metadata":{"skip":false,"skipReason":null},"line":8,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart"},"type":"testStart","time":20963}
+{"testID":151,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":20984}
+{"group":{"id":152,"suiteID":142,"parentID":150,"name":"buildReportFileName","metadata":{"skip":false,"skipReason":null},"testCount":7,"line":10,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart"},"type":"group","time":20985}
+{"test":{"id":153,"name":"buildReportFileName uses the Ukrainian localized month name","suiteID":142,"groupIDs":[150,152],"metadata":{"skip":false,"skipReason":null},"line":11,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart"},"type":"testStart","time":20985}
+{"testID":153,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":20993}
+{"test":{"id":154,"name":"buildReportFileName uses the English localized month name","suiteID":142,"groupIDs":[150,152],"metadata":{"skip":false,"skipReason":null},"line":22,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart"},"type":"testStart","time":20994}
+{"testID":154,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":20995}
+{"test":{"id":155,"name":"buildReportFileName preserves a Cyrillic car name when the app language is English","suiteID":142,"groupIDs":[150,152],"metadata":{"skip":false,"skipReason":null},"line":33,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart"},"type":"testStart","time":20996}
+{"testID":155,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":20997}
+{"test":{"id":156,"name":"buildReportFileName sanitizes invalid filename characters in the car name","suiteID":142,"groupIDs":[150,152],"metadata":{"skip":false,"skipReason":null},"line":44,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart"},"type":"testStart","time":20997}
+{"testID":156,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":20999}
+{"test":{"id":157,"name":"buildReportFileName groups weekly refuels by exact fuel type","suiteID":142,"groupIDs":[150,152],"metadata":{"skip":false,"skipReason":null},"line":54,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart"},"type":"testStart","time":20999}
+{"testID":157,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21004}
+{"test":{"id":158,"name":"buildReportFileName keeps arbitrary fuel types separate","suiteID":142,"groupIDs":[150,152],"metadata":{"skip":false,"skipReason":null},"line":89,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart"},"type":"testStart","time":21004}
+{"testID":158,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21006}
+{"test":{"id":159,"name":"buildReportFileName ignores blank fuel types while grouping refuels","suiteID":142,"groupIDs":[150,152],"metadata":{"skip":false,"skipReason":null},"line":118,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/report_service_test.dart"},"type":"testStart","time":21006}
+{"testID":159,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21008}
+{"test":{"id":160,"name":"(tearDownAll)","suiteID":142,"groupIDs":[150],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":21008}
+{"testID":160,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":21009}
+{"testID":149,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":21400}
+{"group":{"id":161,"suiteID":148,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":13,"line":null,"column":null,"url":null},"type":"group","time":21401}
+{"test":{"id":162,"name":"(setUpAll)","suiteID":148,"groupIDs":[161],"metadata":{"skip":false,"skipReason":null},"line":18,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21401}
+{"testID":162,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":21416}
+{"group":{"id":163,"suiteID":148,"parentID":161,"name":"saveOdometerLog","metadata":{"skip":false,"skipReason":null},"testCount":4,"line":48,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"group","time":21416}
+{"test":{"id":164,"name":"saveOdometerLog keeps readings monotonic around the neighbouring dates","suiteID":148,"groupIDs":[161,163],"metadata":{"skip":false,"skipReason":null},"line":49,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21416}
+{"testID":164,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21493}
+{"test":{"id":165,"name":"saveOdometerLog a second reading for the same date replaces the first","suiteID":148,"groupIDs":[161,163],"metadata":{"skip":false,"skipReason":null},"line":71,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21493}
+{"testID":165,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21499}
+{"test":{"id":166,"name":"saveOdometerLog readings of another car do not count as neighbours","suiteID":148,"groupIDs":[161,163],"metadata":{"skip":false,"skipReason":null},"line":82,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21500}
+{"testID":166,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21504}
+{"test":{"id":167,"name":"saveOdometerLog rejects a malformed date and an unknown car","suiteID":148,"groupIDs":[161,163],"metadata":{"skip":false,"skipReason":null},"line":92,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21504}
+{"testID":167,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21508}
+{"group":{"id":168,"suiteID":148,"parentID":161,"name":"updateCarWithFuelRenames","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":106,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"group","time":21508}
+{"test":{"id":169,"name":"updateCarWithFuelRenames moves the refuels of this car to the new fuel name","suiteID":148,"groupIDs":[161,168],"metadata":{"skip":false,"skipReason":null},"line":107,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21509}
+{"testID":169,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21521}
+{"test":{"id":170,"name":"updateCarWithFuelRenames trims the registration plate and the driver","suiteID":148,"groupIDs":[161,168],"metadata":{"skip":false,"skipReason":null},"line":127,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21521}
+{"testID":170,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21524}
+{"group":{"id":171,"suiteID":148,"parentID":161,"name":"completeReminder","metadata":{"skip":false,"skipReason":null},"testCount":4,"line":141,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"group","time":21524}
+{"test":{"id":172,"name":"completeReminder a monthly reminder moves to the clamped next month","suiteID":148,"groupIDs":[161,171],"metadata":{"skip":false,"skipReason":null},"line":153,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21524}
+{"testID":172,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21531}
+{"test":{"id":173,"name":"completeReminder a mileage reminder restarts from the latest reading","suiteID":148,"groupIDs":[161,171],"metadata":{"skip":false,"skipReason":null},"line":168,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21531}
+{"testID":173,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21538}
+{"test":{"id":174,"name":"completeReminder a one-off reminder is only marked done","suiteID":148,"groupIDs":[161,171],"metadata":{"skip":false,"skipReason":null},"line":188,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21538}
+{"testID":174,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21542}
+{"test":{"id":175,"name":"completeReminder undo removes the next occurrence and reactivates","suiteID":148,"groupIDs":[161,171],"metadata":{"skip":false,"skipReason":null},"line":199,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21543}
+{"testID":175,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21550}
+{"group":{"id":176,"suiteID":148,"parentID":161,"name":"snapshots and restore","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":214,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"group","time":21550}
+{"test":{"id":177,"name":"snapshots and restore a snapshot summarizes like the live database","suiteID":148,"groupIDs":[161,176],"metadata":{"skip":false,"skipReason":null},"line":215,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21550}
+{"testID":177,"messageType":"print","message":"[Database] Snapshot verified: DatabaseSummary(cars: 1, odometer: 1, fuel: 1, reminders: 0, service: 0, notes: 0, last: 2026-10-06)","type":"print","time":21566}
+{"testID":177,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21569}
+{"test":{"id":178,"name":"snapshots and restore restoring a snapshot keeps the replaced data as a backup","suiteID":148,"groupIDs":[161,176],"metadata":{"skip":false,"skipReason":null},"line":230,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21569}
+{"testID":178,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21596}
+{"group":{"id":179,"suiteID":148,"parentID":161,"name":"compatibility repair","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":259,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"group","time":21597}
+{"test":{"id":180,"name":"compatibility repair reopening moves a legacy car link into carId","suiteID":148,"groupIDs":[161,179],"metadata":{"skip":false,"skipReason":null},"line":260,"column":5,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21597}
+{"testID":180,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":21620}
+{"test":{"id":181,"name":"(tearDownAll)","suiteID":148,"groupIDs":[161],"metadata":{"skip":false,"skipReason":null},"line":19,"column":3,"url":"file:///home/runner/work/AutoUBC/AutoUBC/test/database_service_test.dart"},"type":"testStart","time":21620}
+{"testID":181,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":21624}
+{"success":true,"type":"done","time":21644}
