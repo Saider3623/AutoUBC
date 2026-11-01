@@ -12,7 +12,6 @@ import 'screens/export_report_screen.dart';
 import 'screens/reminders_screen.dart';
 import 'screens/service_book_screen.dart';
 import 'screens/manage_cars_screen.dart';
-import 'domain/reminder_status.dart';
 import 'services/cloud_sync_controller.dart';
 import 'services/google_drive_sync_service.dart';
 import 'services/reminder_notifications.dart';
@@ -241,23 +240,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  /// Whether any active reminder of the selected car is overdue or soon due.
-  (bool, bool) _checkReminders(AppProvider provider) {
-    if (provider.selectedCar == null) return (false, false);
-
-    final currentKm = currentMileage(provider.odometerLogs);
-    final today = DateTime.now();
-    var hasUpcoming = false;
-    var hasOverdue = false;
-    for (final reminder in provider.reminders) {
-      final status =
-          reminderStatus(reminder, currentKm: currentKm, today: today);
-      if (status.isOverdue) hasOverdue = true;
-      if (status.isUpcoming) hasUpcoming = true;
-    }
-    return (hasOverdue, hasUpcoming);
-  }
-
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -330,102 +312,73 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           ),
           Consumer2<AppProvider, LocaleProvider>(
             builder: (context, provider, localeProvider, child) {
-              final (hasOverdue, hasUpcoming) = _checkReminders(provider);
-              return Stack(
-                children: [
-                  PopupMenuButton<String>(
-                    onSelected: _handleMenuAction,
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'manage_cars',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.directions_car,
-                                size: 20, color: AppColors.primary),
-                            const SizedBox(width: 12),
-                            Text(loc.carSettings),
-                          ],
-                        ),
-                      ),
-                      if (provider.cars.isNotEmpty) ...[
-                        const PopupMenuDivider(),
-                        PopupMenuItem(
-                          value: 'reminders',
-                          child: Row(
-                            children: [
-                              Icon(
-                                hasOverdue
-                                    ? Icons.warning
-                                    : (hasUpcoming
-                                        ? Icons.warning_amber
-                                        : Icons.notifications_none),
-                                size: 20,
-                                color: hasOverdue
-                                    ? AppColors.error
-                                    : (hasUpcoming
-                                        ? AppColors.warning
-                                        : AppColors.primary),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(loc.reminders),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'service_book',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.book,
-                                  size: 20, color: AppColors.primary),
-                              const SizedBox(width: 12),
-                              Text(loc.serviceBook),
-                            ],
-                          ),
-                        ),
+              return PopupMenuButton<String>(
+                onSelected: _handleMenuAction,
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'manage_cars',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.directions_car,
+                            size: 20, color: AppColors.primary),
+                        const SizedBox(width: 12),
+                        Text(loc.carSettings),
                       ],
-                      const PopupMenuDivider(),
-                      // Секція мови
-                      PopupMenuItem(
-                        value: 'language',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.language,
-                                size: 20, color: AppColors.primary),
-                            const SizedBox(width: 12),
-                            Text(loc.language),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuDivider(),
-                      // Google Drive: account, sync state and all actions.
-                      PopupMenuItem(
-                        value: 'google_drive',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.cloud_outlined,
-                                size: 20, color: AppColors.primary),
-                            const SizedBox(width: 12),
-                            Text(context.read<CloudSyncController>().isConnected
-                                ? 'Google Drive'
-                                : loc.signInToGoogleDrive),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                  if (hasOverdue || hasUpcoming)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: hasOverdue ? AppColors.error : AppColors.warning,
-                          shape: BoxShape.circle,
-                        ),
+                  if (provider.cars.isNotEmpty) ...[
+                    const PopupMenuDivider(),
+                    PopupMenuItem(
+                      value: 'reminders',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.notifications_none,
+                              size: 20, color: AppColors.primary),
+                          const SizedBox(width: 12),
+                          Text(loc.reminders),
+                        ],
                       ),
                     ),
+                    PopupMenuItem(
+                      value: 'service_book',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.book,
+                              size: 20, color: AppColors.primary),
+                          const SizedBox(width: 12),
+                          Text(loc.serviceBook),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const PopupMenuDivider(),
+                  // Секція мови
+                  PopupMenuItem(
+                    value: 'language',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.language,
+                            size: 20, color: AppColors.primary),
+                        const SizedBox(width: 12),
+                        Text(loc.language),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  // Google Drive: account, sync state and all actions.
+                  PopupMenuItem(
+                    value: 'google_drive',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.cloud_outlined,
+                            size: 20, color: AppColors.primary),
+                        const SizedBox(width: 12),
+                        Text(context.read<CloudSyncController>().isConnected
+                            ? 'Google Drive'
+                            : loc.signInToGoogleDrive),
+                      ],
+                    ),
+                  ),
                 ],
               );
             },
