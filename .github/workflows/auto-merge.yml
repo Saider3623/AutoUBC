@@ -7,6 +7,10 @@
 # forks), only into main, not drafts, and only when CI passed for the exact
 # head commit. To keep a pull request open, mark it as a draft or add the
 # "no-automerge" label.
+#
+# After a merge the head branch and its ci-output branches are deleted. A
+# deletion made with GITHUB_TOKEN does not start other workflows, so
+# cleanup-ci-output.yml would not run for it and the cleanup is done here.
 name: Auto-merge
 
 on:
@@ -56,4 +60,12 @@ jobs:
               -f sha="$SHA" \
               -f commit_title="Merge pull request #$pr: $title" \
               --jq .message
+            merged=yes
           done
+          if [ "${merged:-}" = yes ]; then
+            for ref in "$BRANCH" "ci-output/$BRANCH" "ci-output/$BRANCH-android"; do
+              if gh api -X DELETE "repos/$REPO/git/refs/heads/$ref" >/dev/null 2>&1; then
+                echo "Deleted branch $ref"
+              fi
+            done
+          fi
