@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="AutoUBC.png" alt="AutoUBC" width="96">
-</p>
-
 <h1 align="center">AutoUBC</h1>
 
 <p align="center">
