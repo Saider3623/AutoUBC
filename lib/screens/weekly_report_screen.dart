@@ -6,18 +6,11 @@ import '../domain/week_summary.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
+import '../theme/app_theme.dart';
 import '../theme/fuel_colors.dart';
 import '../utils/weekly_report_utils.dart';
 import '../widgets/app_empty_state.dart';
 import 'week_detail_screen.dart';
-
-/// Formats a report segment as "пн 5 – сб 10 жовт." or "нд 11 жовт.".
-String formatReportWeekTitle(ReportWeek week, String languageCode) {
-  final withMonth = DateFormat('EEE d MMM', languageCode);
-  if (week.start == week.end) return withMonth.format(week.start);
-  final dayOnly = DateFormat('EEE d', languageCode);
-  return '${dayOnly.format(week.start)} – ${withMonth.format(week.end)}';
-}
 
 /// "40", "40.5" or "40.25": no trailing zeros.
 String formatLiters(double liters) {
@@ -134,7 +127,11 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
               day.weekday != DateTime.sunday &&
               !schedule.isNonWorkingSaturday(day),
         );
-        final weeks = prioritizeCurrentReportWeek(monthWeeks, today);
+        final weeks = prioritizeCurrentReportWeek(
+          monthWeeks
+              .where((week) => summaries[week]!.shouldShowInReport(schedule)),
+          today,
+        );
         final monthStarted = !monthWeeks.first.start.isAfter(today);
 
         return Column(
@@ -153,10 +150,13 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
                       });
                     },
                   ),
-                  Text(
-                    DateFormat.yMMMM(languageCode).format(_selectedMonth),
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: Text(
+                      DateFormat.yMMMM(languageCode).format(_selectedMonth),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.chevron_right),
@@ -307,10 +307,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
         borderRadius: BorderRadius.circular(20),
         side: isCurrentWeek
             ? BorderSide(color: colorScheme.primary, width: 2)
-            : isEmptyWeek
-                ? BorderSide(
-                    color: _noMileageForeground.withValues(alpha: 0.08))
-                : BorderSide.none,
+            : const BorderSide(color: AppColors.line, width: 1.2),
       ),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Padding(
@@ -332,7 +329,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
             if (isEmptyWeek)
               _buildNoMileagePanel(loc)
             else
-              _buildReportGrid(summary, loc, colorScheme, languageCode),
+              _buildReportSections(summary, loc, colorScheme, languageCode),
             if (summary.includesGap && summary.odometerStartDate != null) ...[
               const SizedBox(height: 12),
               _buildGapNote(summary.odometerStartDate!, loc, languageCode),
@@ -377,14 +374,13 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
   }) {
     final weekTitle = formatReportWeekTitle(week, languageCode);
     const futureTextColor = Color(0xFF5B6874);
-    const futureBorderColor = Color(0xFFDCE3EA);
 
     return Card(
       elevation: 0,
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: futureBorderColor),
+        side: const BorderSide(color: AppColors.line, width: 1.2),
       ),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Padding(
@@ -430,20 +426,20 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
     final badgeForeground =
         isNoMileage ? _noMileageForeground : colorScheme.primary;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 12,
+      runSpacing: 10,
       children: [
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              height: 1.2,
-              fontWeight: FontWeight.w700,
-            ),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            height: 1.2,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(width: 12),
         Semantics(
           label: statusLabel,
           child: Container(
@@ -503,18 +499,20 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
     );
   }
 
-  Widget _buildReportGrid(
+  Widget _buildReportSections(
     WeekSummary summary,
     AppLocalizations loc,
     ColorScheme colorScheme,
     String languageCode,
   ) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: _buildOdometerColumn(summary, loc, languageCode)),
-        const SizedBox(width: 18),
-        Expanded(child: _buildFuelColumn(summary, loc, colorScheme)),
+        _buildOdometerColumn(summary, loc, languageCode),
+        const SizedBox(height: 14),
+        const Divider(height: 1, thickness: 1, color: _dividerColor),
+        const SizedBox(height: 14),
+        _buildFuelColumn(summary, loc, colorScheme),
       ],
     );
   }
@@ -587,12 +585,11 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
   }
 
   Widget _buildMetricRow(String label, String value) {
-    // The label shrinks and wraps with a large system font instead of being
-    // cut at a fixed width.
+    // Each metric uses the full card width and can wrap at large font sizes.
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Flexible(
+        Expanded(
           child: Text(
             '$label:',
             style: const TextStyle(
@@ -602,9 +599,8 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
             ),
           ),
         ),
-        const SizedBox(width: 5),
+        const SizedBox(width: 12),
         Expanded(
-          flex: 2,
           child: Text(
             value,
             textAlign: TextAlign.end,

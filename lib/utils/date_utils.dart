@@ -1,3 +1,13 @@
+import 'package:intl/intl.dart';
+
+/// Full month name, with the day first in both supported interface languages.
+String formatFullDate(DateTime date, String languageCode) {
+  final format = languageCode == 'en'
+      ? DateFormat('d MMMM y', 'en')
+      : DateFormat.yMMMMd('uk');
+  return format.format(date);
+}
+
 DateTime addMonthsClamped(DateTime date, int months) {
   final targetMonth = date.month - 1 + months;
   final targetYear = date.year + targetMonth ~/ 12;

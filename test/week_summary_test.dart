@@ -4,6 +4,7 @@ import 'package:autoubc/domain/week_summary.dart';
 import 'package:autoubc/models/fuel_log.dart';
 import 'package:autoubc/models/odometer_log.dart';
 import 'package:autoubc/utils/weekly_report_utils.dart';
+import 'package:autoubc/utils/work_schedule.dart';
 
 OdometerLog _odo(String date, int km) => OdometerLog()
   ..dateString = date
@@ -16,6 +17,96 @@ FuelLog _fuel(String date, String type, double liters) => FuelLog()
   ..liters = liters;
 
 void main() {
+  group('report visibility', () {
+    final fiveDay = WorkSchedule([FiveDayRange(DateTime(2026, 1, 1))]);
+
+    List<WeekSummary> november(WorkSchedule schedule) => [
+          for (final week in buildReportWeeks(DateTime(2026, 11), schedule))
+            summarizeWeek(week, odometerLogs: const [], fuelLogs: const []),
+        ];
+
+    test('keeps empty working weeks, including a one-day month boundary', () {
+      final visible = november(fiveDay)
+          .where((summary) => summary.shouldShowInReport(fiveDay));
+      expect(
+          visible.map((summary) => summary.week.start.day), [2, 9, 16, 23, 30]);
+      expect(visible.every((summary) => !summary.hasEntries), isTrue);
+    });
+
+    test('uses the schedule for a Saturday clipped by the month boundary', () {
+      final saturday =
+          ReportWeek(DateTime(2026, 10, 31), DateTime(2026, 10, 31));
+      final summary = summarizeWeek(
+        saturday,
+        odometerLogs: const [],
+        fuelLogs: const [],
+      );
+      expect(summary.shouldShowInReport(fiveDay), isFalse);
+      expect(summary.shouldShowInReport(const WorkSchedule()), isTrue);
+    });
+
+    test('hides a zero-mileage weekend even with readings or refuels', () {
+      final weekend = ReportWeek(DateTime(2026, 11, 7), DateTime(2026, 11, 8));
+      final summary = summarizeWeek(
+        weekend,
+        odometerLogs: [_odo('2026-11-06', 1000), _odo('2026-11-07', 1000)],
+        fuelLogs: [_fuel('2026-11-08', 'ГАЗ', 30)],
+      );
+      expect(summary.hasEntries, isTrue);
+      expect(summary.shouldShowInReport(fiveDay), isFalse);
+    });
+
+    test('keeps mileage on a non-working Sunday', () {
+      final sunday = ReportWeek(DateTime(2026, 11, 1), DateTime(2026, 11, 1));
+      final summary = summarizeWeek(
+        sunday,
+        odometerLogs: [_odo('2026-10-31', 1899), _odo('2026-11-01', 2058)],
+        fuelLogs: const [],
+      );
+      expect(summary.distance, 159);
+      expect(summary.shouldShowInReport(fiveDay), isTrue);
+      expect(summary.shouldShowInReport(const WorkSchedule()), isTrue);
+    });
+
+    test('respects a schedule that changes during the month', () {
+      final schedule = WorkSchedule([
+        FiveDayRange(DateTime(2026, 11, 1), DateTime(2026, 11, 14)),
+      ]);
+      final visible = november(schedule)
+          .where((summary) => summary.shouldShowInReport(schedule));
+      expect(
+        visible
+            .map((summary) => (summary.week.start.day, summary.week.end.day)),
+        [(2, 6), (9, 13), (16, 21), (23, 28), (30, 30)],
+      );
+    });
+
+    test('hidden fuel-only weekends still contribute to month totals', () {
+      final summaries = [
+        for (final week in buildReportWeeks(DateTime(2026, 11), fiveDay))
+          summarizeWeek(
+            week,
+            odometerLogs: const [],
+            fuelLogs: [_fuel('2026-11-08', 'ГАЗ', 30)],
+          ),
+      ];
+      expect(
+        summaries
+            .where((week) => week.shouldShowInReport(fiveDay))
+            .every((week) => week.fuelSummaries.isEmpty),
+        isTrue,
+      );
+      final month = summarizeMonth(
+        summaries,
+        odometerLogs: const [],
+        isWorkingDay: (day) => day.weekday <= DateTime.friday,
+        today: DateTime(2026, 11, 30),
+      );
+      expect(month.fuelSummaries.single.totalLiters, 30);
+      expect(month.daysWithoutReading, 21);
+    });
+  });
+
   // Mon 19 – Sat 24 October 2026.
   final week = ReportWeek(DateTime(2026, 10, 19), DateTime(2026, 10, 24));
 

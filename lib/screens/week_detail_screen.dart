@@ -13,7 +13,7 @@ import '../utils/form_validators.dart';
 import '../utils/weekly_report_utils.dart';
 import '../widgets/app_empty_state.dart';
 import '../widgets/inline_form_error.dart';
-import 'weekly_report_screen.dart' show formatLiters, formatReportWeekTitle;
+import 'weekly_report_screen.dart' show formatLiters;
 import '../theme/app_theme.dart';
 
 /// Entries of one day inside the week.

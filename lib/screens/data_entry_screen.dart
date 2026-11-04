@@ -916,7 +916,7 @@ class _NoteDialogState extends State<_NoteDialog> {
                   contentPadding: EdgeInsets.zero,
                   title: Text(
                     _dateTime != null
-                        ? DateFormat.yMMMd(languageCode).format(_dateTime!)
+                        ? formatFullDate(_dateTime!, languageCode)
                         : loc.chooseDate,
                   ),
                   trailing: Row(

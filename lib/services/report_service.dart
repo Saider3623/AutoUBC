@@ -242,10 +242,7 @@ class ReportService {
           ),
           pw.Inseparable(child: _buildMonthSection(month, numbers, t)),
           ...weeks
-              .where((week) =>
-                  week.hasEntries ||
-                  week.week.start.weekday <=
-                      schedule.workWeekDaysForWeekOf(week.week.start))
+              .where((week) => week.shouldShowInReport(schedule))
               .map((week) => pw.Inseparable(
                     child: _buildWeekSection(week, numbers, languageCode, t),
                   )),
@@ -298,9 +295,7 @@ class ReportService {
     String languageCode,
     _PdfTranslations t,
   ) {
-    final dateRange =
-        '${DateFormat('EEE dd.MM.yy', languageCode).format(week.week.start)} - '
-        '${DateFormat('EEE dd.MM.yy', languageCode).format(week.week.end)}';
+    final dateRange = formatReportWeekTitle(week.week, languageCode);
     String km(int? value) =>
         value == null ? '—' : '${numbers.format(value)} ${t.km}';
 

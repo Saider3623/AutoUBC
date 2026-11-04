@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:autoubc/utils/weekly_report_utils.dart';
 import 'package:autoubc/utils/work_schedule.dart';
@@ -13,6 +14,20 @@ ReportWeek _week(int startDay, int endDay) =>
     ReportWeek(DateTime(2026, 9, startDay), DateTime(2026, 9, endDay));
 
 void main() {
+  setUpAll(initializeDateFormatting);
+
+  test('uses full numeric dates in both report range endpoints', () {
+    final week = ReportWeek(DateTime(2026, 11, 2), DateTime(2026, 11, 6));
+    expect(formatReportWeekTitle(week, 'uk'), 'пн 02.11.26 - пт 06.11.26');
+    expect(formatReportWeekTitle(week, 'en'), 'Mon 02.11.26 - Fri 06.11.26');
+  });
+
+  test('uses a single date for a one-day report segment', () {
+    final week = ReportWeek(DateTime(2026, 11, 30), DateTime(2026, 11, 30));
+    expect(formatReportWeekTitle(week, 'uk'), 'пн 30.11.26');
+    expect(formatReportWeekTitle(week, 'en'), 'Mon 30.11.26');
+  });
+
   test('puts the current week first and preserves the other weeks order', () {
     final weeks = [
       _week(1, 6),

@@ -7,6 +7,7 @@ import '../models/service_log.dart';
 import '../providers/app_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/date_utils.dart';
 import '../utils/error_messages.dart';
 import '../utils/form_validators.dart';
 import '../utils/reminder_texts.dart';
@@ -148,7 +149,8 @@ class _ServiceBookScreenState extends State<ServiceBookScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              DateFormat.yMMMd(languageCode).format(log.date),
+                              DateFormat('dd.MM.yy', languageCode)
+                                  .format(log.date),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -403,7 +405,7 @@ class _ServiceLogDialogState extends State<ServiceLogDialog> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        DateFormat.yMMMd(languageCode).format(_date),
+                        formatFullDate(_date, languageCode),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ],

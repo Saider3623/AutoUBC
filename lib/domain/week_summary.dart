@@ -3,6 +3,7 @@ import '../models/odometer_log.dart';
 import '../utils/fuel_summary.dart';
 import '../utils/weekly_report_utils.dart';
 import '../utils/date_utils.dart';
+import '../utils/work_schedule.dart';
 
 /// More calendar days than this between the reading before a week and the
 /// week's first day means the week's mileage also covers days without
@@ -49,12 +50,17 @@ class WeekSummary {
 
   bool get hasMileage => distance > 0;
 
+  /// Working periods stay visible even without trips. Non-working periods
+  /// appear only when they have mileage, regardless of fuel-only entries.
+  bool shouldShowInReport(WorkSchedule schedule) =>
+      hasMileage ||
+      week.start.weekday <= schedule.workWeekDaysForWeekOf(week.start);
+
   double get totalLiters =>
       fuelSummaries.fold(0, (sum, item) => sum + item.totalLiters);
 }
 
-String _dateKey(DateTime date) =>
-    '${date.year.toString().padLeft(4, '0')}-'
+String _dateKey(DateTime date) => '${date.year.toString().padLeft(4, '0')}-'
     '${date.month.toString().padLeft(2, '0')}-'
     '${date.day.toString().padLeft(2, '0')}';
 

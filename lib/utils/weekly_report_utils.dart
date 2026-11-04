@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import 'work_schedule.dart';
 
 /// One segment of a report month: an inclusive range of calendar days, both
@@ -25,6 +27,13 @@ class ReportWeek {
 
   @override
   String toString() => 'ReportWeek($start..$end)';
+}
+
+/// Shared by report cards and the PDF; a one-day segment has a single date.
+String formatReportWeekTitle(ReportWeek week, String languageCode) {
+  final format = DateFormat('EEE dd.MM.yy', languageCode);
+  final start = format.format(week.start);
+  return week.start == week.end ? start : '$start - ${format.format(week.end)}';
 }
 
 /// Returns whether [date] falls inside the inclusive date range of [week].
