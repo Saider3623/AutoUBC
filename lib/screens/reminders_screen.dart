@@ -405,7 +405,7 @@ class _ReminderCard extends StatelessWidget {
 
     final subtitleText = usesKm
         ? loc.mileage(currentKm, status.dueKm ?? 0)
-        : DateFormat.yMMMd(languageCode).format(reminder.dueDate);
+        : DateFormat('dd.MM.yy', languageCode).format(reminder.dueDate);
     final repeats =
         usesKm ? (reminder.repeatKm ?? 0) > 0 : reminder.repeatMonths > 0;
     final decoration = reminder.isCompleted ? TextDecoration.lineThrough : null;
@@ -585,13 +585,13 @@ class _ReminderDialogState extends State<_ReminderDialog> {
         ? int.parse(_repeatMonthsController.text.trim())
         : 0;
     final repeatKm = usesKm ? int.parse(_repeatKmController.text.trim()) : null;
-    final startKm =
-        usesKm ? int.parse(_startKmController.text.trim()) : null;
+    final startKm = usesKm ? int.parse(_startKmController.text.trim()) : null;
 
     final reminder = Reminder()
       ..carId = widget.carId
       ..type = _type
-      ..title = _type == ReminderType.custom ? _titleController.text.trim() : null
+      ..title =
+          _type == ReminderType.custom ? _titleController.text.trim() : null
       ..dueDate = _dueDate
       ..repeatMonths = repeatMonths
       ..repeatKm = repeatKm
@@ -728,10 +728,11 @@ class _ReminderDialogState extends State<_ReminderDialog> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: ListTile(
-                      leading:
-                          const Icon(Icons.calendar_today, color: AppColors.muted),
+                      leading: const Icon(Icons.calendar_today,
+                          color: AppColors.muted),
                       title: Text(
-                        DateFormat.yMMMd(languageCode).format(_dueDate),
+                        DateFormat('d MMMM yyyy', languageCode)
+                            .format(_dueDate),
                         style: const TextStyle(fontSize: 16),
                       ),
                       onTap: () async {
@@ -807,7 +808,8 @@ class _ReminderDialogState extends State<_ReminderDialog> {
         if (widget.onDelete != null)
           TextButton(
             onPressed: _isSaving ? null : _delete,
-            child: Text(loc.delete, style: const TextStyle(color: AppColors.error)),
+            child: Text(loc.delete,
+                style: const TextStyle(color: AppColors.error)),
           ),
         TextButton(
           onPressed: () => Navigator.pop(context),

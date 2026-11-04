@@ -184,7 +184,7 @@ class ReminderNotifications {
           icon: _notificationIcon,
         ),
       );
-      final dateFormat = DateFormat.yMMMd(locale.languageCode);
+      final dateFormat = DateFormat('dd.MM.yy', locale.languageCode);
 
       for (final item in planned) {
         final reminder = item.reminder;

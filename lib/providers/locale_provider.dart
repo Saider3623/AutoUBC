@@ -6,7 +6,7 @@ class LocaleProvider extends ChangeNotifier {
   /// Languages of the interface; Ukrainian is the default.
   static const supportedLanguageCodes = ['uk', 'en'];
 
-  Locale? _locale;
+  Locale? _locale = const Locale('uk');
 
   Locale? get locale => _locale;
 
@@ -17,8 +17,7 @@ class LocaleProvider extends ChangeNotifier {
     final saved = prefs.getString('language_code');
     // A language that is no longer offered (or none saved) falls back to
     // Ukrainian.
-    final languageCode =
-        supportedLanguageCodes.contains(saved) ? saved! : 'uk';
+    final languageCode = supportedLanguageCodes.contains(saved) ? saved! : 'uk';
     _locale = Locale(languageCode);
     Intl.defaultLocale = languageCode;
     if (saved != languageCode) {
@@ -28,10 +27,13 @@ class LocaleProvider extends ChangeNotifier {
   }
 
   Future<void> setLocale(Locale locale) async {
-    _locale = locale;
-    Intl.defaultLocale = locale.languageCode;
+    final languageCode = supportedLanguageCodes.contains(locale.languageCode)
+        ? locale.languageCode
+        : 'uk';
+    _locale = Locale(languageCode);
+    Intl.defaultLocale = languageCode;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('language_code', locale.languageCode);
+    await prefs.setString('language_code', languageCode);
     notifyListeners();
   }
 }

@@ -42,7 +42,6 @@ String _capitalizeFirstLetter(String value) {
 
 class _PdfTranslations {
   final String reportTitle;
-  final String weekLabel;
   final String odometerStart;
   final String odometerEnd;
   final String mileage;
@@ -61,7 +60,6 @@ class _PdfTranslations {
 
   const _PdfTranslations({
     required this.reportTitle,
-    required this.weekLabel,
     required this.odometerStart,
     required this.odometerEnd,
     required this.mileage,
@@ -84,7 +82,6 @@ class _PdfTranslations {
       case 'en':
         return const _PdfTranslations(
           reportTitle: 'Report for car {carName}',
-          weekLabel: 'Week:  {dateRange}',
           odometerStart: 'Week start',
           odometerEnd: 'Week end',
           mileage: 'Weekly mileage',
@@ -105,7 +102,6 @@ class _PdfTranslations {
       default:
         return const _PdfTranslations(
           reportTitle: 'Звіт по автомобілю {carName}',
-          weekLabel: 'Тиждень:  {dateRange}',
           odometerStart: 'Початок тижня',
           odometerEnd: 'Кінець тижня',
           mileage: 'Пробіг за тиждень',
@@ -228,13 +224,13 @@ class ReportService {
                   ),
                 pw.Text(
                   DateFormat.yMMMM(languageCode).format(startDate),
-                  style:
-                      const pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
+                  style: const pw.TextStyle(
+                      fontSize: 14, color: PdfColors.grey700),
                 ),
                 pw.Text(
                   t.generated.replaceFirst(
                     '{date}',
-                    DateFormat.yMMMd(languageCode).add_Hm().format(now),
+                    DateFormat('dd.MM.yy', languageCode).format(now),
                   ),
                   style:
                       const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
@@ -245,9 +241,14 @@ class ReportService {
             ),
           ),
           pw.Inseparable(child: _buildMonthSection(month, numbers, t)),
-          ...weeks.map((week) => pw.Inseparable(
-                child: _buildWeekSection(week, numbers, languageCode, t),
-              )),
+          ...weeks
+              .where((week) =>
+                  week.hasEntries ||
+                  week.week.start.weekday <=
+                      schedule.workWeekDaysForWeekOf(week.week.start))
+              .map((week) => pw.Inseparable(
+                    child: _buildWeekSection(week, numbers, languageCode, t),
+                  )),
         ],
       ),
     );
@@ -274,9 +275,8 @@ class ReportService {
             1: pw.FlexColumnWidth(2),
           },
           children: [
-            _tableRow(t.monthMileage,
-                '${numbers.format(month.distance)} ${t.km}',
-                header: true),
+            _tableRow(
+                t.monthMileage, '${numbers.format(month.distance)} ${t.km}'),
             ...month.fuelSummaries.map(
               (fuel) => _tableRow(
                 '${fuel.fuelType} (${fuel.refuelCount})',
@@ -299,8 +299,8 @@ class ReportService {
     _PdfTranslations t,
   ) {
     final dateRange =
-        '${DateFormat('EEE d MMM', languageCode).format(week.week.start)} – '
-        '${DateFormat('EEE d MMM yyyy', languageCode).format(week.week.end)}';
+        '${DateFormat('EEE dd.MM.yy', languageCode).format(week.week.start)} - '
+        '${DateFormat('EEE dd.MM.yy', languageCode).format(week.week.end)}';
     String km(int? value) =>
         value == null ? '—' : '${numbers.format(value)} ${t.km}';
 
@@ -317,7 +317,7 @@ class ReportService {
           padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: const pw.BoxDecoration(color: PdfColors.blueGrey800),
           child: pw.Text(
-            t.weekLabel.replaceFirst('{dateRange}', dateRange),
+            dateRange,
             style: const pw.TextStyle(
               fontSize: 13,
               color: PdfColors.white,
@@ -330,7 +330,6 @@ class ReportService {
             width: double.infinity,
             padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: pw.BoxDecoration(
-              color: PdfColors.blueGrey50,
               border: pw.Border.all(color: PdfColors.blueGrey200, width: 0.5),
             ),
             child: pw.Text(
@@ -352,7 +351,7 @@ class ReportService {
               1: pw.FlexColumnWidth(2),
             },
             children: [
-              _tableRow(t.odometerStart, km(week.odometerStart), header: true),
+              _tableRow(t.odometerStart, km(week.odometerStart)),
               _tableRow(t.odometerEnd, km(week.odometerEnd)),
               _tableRow(
                 t.mileage,
@@ -370,8 +369,8 @@ class ReportService {
           pw.Padding(
             padding: const pw.EdgeInsets.only(top: 4),
             child: pw.Text(
-              t.gapNote.replaceFirst(
-                  '{date}', DateFormat.yMMMd(languageCode).format(gapDate)),
+              t.gapNote.replaceFirst('{date}',
+                  DateFormat('dd.MM.yy', languageCode).format(gapDate)),
               style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
             ),
           ),
@@ -386,10 +385,9 @@ class ReportService {
     return '$value ${t.l}';
   }
 
-  pw.TableRow _tableRow(String label, String value, {bool header = false}) {
-    final bg = header ? PdfColors.blueGrey50 : PdfColors.white;
+  pw.TableRow _tableRow(String label, String value) {
     return pw.TableRow(
-      decoration: pw.BoxDecoration(color: bg),
+      decoration: const pw.BoxDecoration(color: PdfColors.white),
       children: [
         pw.Padding(
           padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
