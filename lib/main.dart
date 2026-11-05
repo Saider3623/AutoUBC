@@ -19,7 +19,6 @@ import 'theme/app_theme.dart';
 import 'widgets/app_empty_state.dart';
 import 'widgets/cloud_comparison_dialog.dart';
 import 'widgets/sync_panel.dart';
-import 'widgets/sync_status_indicator.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -276,25 +275,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         },
       ),
       appBar: AppBar(
-        title: Consumer2<AppProvider, CloudSyncController>(
-          builder: (context, provider, cloud, child) {
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: Text(
-                    provider.selectedCar?.name ?? 'AutoUBC',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                // The indicator slot keeps a fixed width so its appearance or
-                // disappearance never shifts the car name.
-                const SizedBox(width: 10),
-                SyncStatusIndicator(
-                  cloud: cloud,
-                  onTap: cloud.isConnected ? _openSyncPanel : null,
-                ),
-              ],
+        title: Consumer<AppProvider>(
+          builder: (context, provider, child) {
+            return Text(
+              provider.selectedCar?.name ?? 'AutoUBC',
+              overflow: TextOverflow.ellipsis,
             );
           },
         ),

@@ -1001,7 +1001,7 @@ abstract class AppLocalizations {
   /// No description provided for @weekDetailTitle.
   ///
   /// In en, this message translates to:
-  /// **'Details: {range}'**
+  /// **'{range}'**
   String weekDetailTitle(String range);
 
   /// No description provided for @reminderStartKm.

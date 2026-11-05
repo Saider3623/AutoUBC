@@ -217,7 +217,7 @@
   "errorInvalidTime": "The time is not valid.",
   "errorPeriodEndsBeforeStart": "The end date is earlier than the start date.",
   "errorUnexpected": "Something went wrong. Try again.",
-  "weekDetailTitle": "Details: {range}",
+  "weekDetailTitle": "{range}",
   "@weekDetailTitle": {
     "placeholders": {
       "range": {

@@ -29,11 +29,23 @@ class ReportWeek {
   String toString() => 'ReportWeek($start..$end)';
 }
 
-/// Shared by report cards and the PDF; a one-day segment has a single date.
-String formatReportWeekTitle(ReportWeek week, String languageCode) {
-  final format = DateFormat('EEE dd.MM.yy', languageCode);
+/// Numeric dates without weekdays; a one-day segment has a single date.
+String formatReportWeekRange(ReportWeek week, String languageCode) {
+  final locale = languageCode == 'en' ? 'en' : 'uk';
+  final format = DateFormat('dd.MM.yy', locale);
   final start = format.format(week.start);
   return week.start == week.end ? start : '$start - ${format.format(week.end)}';
+}
+
+/// Shared by report cards and the PDF, with weekdays after the numeric dates.
+String formatReportWeekTitle(ReportWeek week, String languageCode) {
+  final locale = languageCode == 'en' ? 'en' : 'uk';
+  final weekday = DateFormat('EEE', locale);
+  final startDay = weekday.format(week.start);
+  final days = week.start == week.end
+      ? startDay
+      : '$startDay-${weekday.format(week.end)}';
+  return '${formatReportWeekRange(week, locale)} ($days)';
 }
 
 /// Returns whether [date] falls inside the inclusive date range of [week].

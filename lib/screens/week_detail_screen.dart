@@ -41,8 +41,12 @@ class WeekDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            loc.weekDetailTitle(formatReportWeekTitle(week, languageCode))),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            loc.weekDetailTitle(formatReportWeekRange(week, languageCode)),
+          ),
+        ),
       ),
       body: Consumer<AppProvider>(
         builder: (context, provider, child) {
@@ -58,7 +62,10 @@ class WeekDetailScreen extends StatelessWidget {
           for (final log in provider.odometerLogs) {
             final date = DateTime.tryParse(log.dateString);
             if (date != null && week.contains(date)) {
-              days.putIfAbsent(log.dateString, _DayEntries.new).odometer.add(log);
+              days
+                  .putIfAbsent(log.dateString, _DayEntries.new)
+                  .odometer
+                  .add(log);
             }
           }
           for (final log in provider.fuelLogs) {
@@ -82,7 +89,7 @@ class WeekDetailScreen extends StatelessWidget {
               final date = dates[index];
               final entries = days[date]!;
               entries.fuel.sort((a, b) => a.timeString.compareTo(b.timeString));
-              final formattedDate = DateFormat('EEEE, d MMMM', languageCode)
+              final formattedDate = DateFormat('dd.MM.yy', languageCode)
                   .format(DateTime.parse(date));
 
               return Card(
@@ -147,7 +154,8 @@ class WeekDetailScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(loc.delete, style: const TextStyle(color: AppColors.error)),
+            child: Text(loc.delete,
+                style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -399,8 +407,8 @@ class _EditFuelDialogState extends State<_EditFuelDialog> {
       ..dateString = widget.log.dateString
       ..timeString = _time
       ..fuelType = _fuelType
-      ..liters = double.parse(
-          normalizeDecimalInput(_litersController.text.trim()));
+      ..liters =
+          double.parse(normalizeDecimalInput(_litersController.text.trim()));
     setState(() {
       _isSaving = true;
       _error = null;
@@ -442,8 +450,8 @@ class _EditFuelDialogState extends State<_EditFuelDialog> {
                     ChoiceChip(
                       label: Text(type),
                       selected: type == _fuelType,
-                      selectedColor:
-                          fuelTypeColor(type, colorScheme).withValues(alpha: 0.15),
+                      selectedColor: fuelTypeColor(type, colorScheme)
+                          .withValues(alpha: 0.15),
                       onSelected: (_) => setState(() => _fuelType = type),
                     ),
                 ],

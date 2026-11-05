@@ -775,14 +775,6 @@ class _DataEntryScreenState extends State<DataEntryScreen>
         const SizedBox(height: 16),
         const Divider(thickness: 1),
         const SizedBox(height: 12),
-        Text(
-          loc.notes,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                letterSpacing: 0.4,
-              ),
-        ),
-        const SizedBox(height: 8),
         ...visible.map((note) => _buildNoteCard(context, note)),
         if (notes.length > _collapsedNotes)
           TextButton(
@@ -810,7 +802,7 @@ class _DataEntryScreenState extends State<DataEntryScreen>
             children: [
               if (note.dateTime != null)
                 Text(
-                  DateFormat.yMMMd(languageCode).format(note.dateTime!),
+                  DateFormat('dd.MM.yy', languageCode).format(note.dateTime!),
                   style: const TextStyle(
                     color: AppColors.muted,
                     fontSize: 14,

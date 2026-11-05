@@ -488,7 +488,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String weekDetailTitle(String range) {
-    return 'Details: $range';
+    return '$range';
   }
 
   @override

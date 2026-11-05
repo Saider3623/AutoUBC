@@ -426,20 +426,20 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
     final badgeForeground =
         isNoMileage ? _noMileageForeground : colorScheme.primary;
 
-    return Wrap(
-      alignment: WrapAlignment.spaceBetween,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 12,
-      runSpacing: 10,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            height: 1.2,
-            fontWeight: FontWeight.w700,
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.2,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
+        const SizedBox(width: 12),
         Semantics(
           label: statusLabel,
           child: Container(
@@ -505,14 +505,12 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
     ColorScheme colorScheme,
     String languageCode,
   ) {
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildOdometerColumn(summary, loc, languageCode),
-        const SizedBox(height: 14),
-        const Divider(height: 1, thickness: 1, color: _dividerColor),
-        const SizedBox(height: 14),
-        _buildFuelColumn(summary, loc, colorScheme),
+        Expanded(child: _buildOdometerColumn(summary, loc, languageCode)),
+        const SizedBox(width: 20),
+        Expanded(child: _buildFuelColumn(summary, loc, colorScheme)),
       ],
     );
   }
@@ -585,7 +583,6 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
   }
 
   Widget _buildMetricRow(String label, String value) {
-    // Each metric uses the full card width and can wrap at large font sizes.
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -599,16 +596,20 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 6),
         Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.25,
-              color: Color(0xFF202124),
-              fontWeight: FontWeight.w600,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.25,
+                color: Color(0xFF202124),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -623,32 +624,48 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
     String unit,
   ) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 9,
-          height: 9,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Container(
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(
-            fuelType,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.25,
-              color: color,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        Text(
-          '${formatLiters(liters)} $unit',
-          textAlign: TextAlign.end,
-          style: TextStyle(
-            fontSize: 13,
-            height: 1.25,
-            color: color,
-            fontWeight: FontWeight.w700,
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 6,
+            runSpacing: 2,
+            children: [
+              Text(
+                fuelType,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.25,
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '${formatLiters(liters)} $unit',
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.25,
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

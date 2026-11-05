@@ -16,16 +16,21 @@ ReportWeek _week(int startDay, int endDay) =>
 void main() {
   setUpAll(initializeDateFormatting);
 
-  test('uses full numeric dates in both report range endpoints', () {
-    final week = ReportWeek(DateTime(2026, 11, 2), DateTime(2026, 11, 6));
-    expect(formatReportWeekTitle(week, 'uk'), 'пн 02.11.26 - пт 06.11.26');
-    expect(formatReportWeekTitle(week, 'en'), 'Mon 02.11.26 - Fri 06.11.26');
+  test('puts weekdays after the full numeric report range', () {
+    final week = ReportWeek(DateTime(2026, 11, 16), DateTime(2026, 11, 20));
+    expect(formatReportWeekTitle(week, 'uk'), '16.11.26 - 20.11.26 (пн-пт)');
+    expect(formatReportWeekTitle(week, 'en'), '16.11.26 - 20.11.26 (Mon-Fri)');
+    expect(formatReportWeekTitle(week, 'ru'), '16.11.26 - 20.11.26 (пн-пт)');
+    expect(formatReportWeekRange(week, 'uk'), '16.11.26 - 20.11.26');
+    expect(formatReportWeekRange(week, 'en'), '16.11.26 - 20.11.26');
   });
 
   test('uses a single date for a one-day report segment', () {
     final week = ReportWeek(DateTime(2026, 11, 30), DateTime(2026, 11, 30));
-    expect(formatReportWeekTitle(week, 'uk'), 'пн 30.11.26');
-    expect(formatReportWeekTitle(week, 'en'), 'Mon 30.11.26');
+    expect(formatReportWeekTitle(week, 'uk'), '30.11.26 (пн)');
+    expect(formatReportWeekTitle(week, 'en'), '30.11.26 (Mon)');
+    expect(formatReportWeekRange(week, 'uk'), '30.11.26');
+    expect(formatReportWeekRange(week, 'en'), '30.11.26');
   });
 
   test('puts the current week first and preserves the other weeks order', () {

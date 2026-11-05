@@ -190,7 +190,7 @@
   "errorInvalidTime": "Неправильний час.",
   "errorPeriodEndsBeforeStart": "Дата завершення раніша за дату початку.",
   "errorUnexpected": "Щось пішло не так. Спробуйте ще раз.",
-  "weekDetailTitle": "Деталізація: {range}",
+  "weekDetailTitle": "{range}",
   "reminderStartKm": "Відлік від пробігу",
   "numberMustBePositive": "Введіть число, більше за нуль",
   "weeklyReportDistanceText": "Пробіг: {distance} км",
