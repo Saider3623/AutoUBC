@@ -512,16 +512,6 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String monthDaysWithoutReading(int days) {
-    return 'Робочих днів без показань: $days';
-  }
-
-  @override
-  String weekIncludesGap(String date) {
-    return 'Пробіг включає дні без показань від $date';
-  }
-
-  @override
   String get editOdometerTitle => 'Змінити показання';
 
   @override

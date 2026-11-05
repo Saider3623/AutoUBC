@@ -2,13 +2,7 @@ import '../models/fuel_log.dart';
 import '../models/odometer_log.dart';
 import '../utils/fuel_summary.dart';
 import '../utils/weekly_report_utils.dart';
-import '../utils/date_utils.dart';
 import '../utils/work_schedule.dart';
-
-/// More calendar days than this between the reading before a week and the
-/// week's first day means the week's mileage also covers days without
-/// readings (a weekend is at most two days).
-const int maxDaysWithoutReadingBeforeWeek = 2;
 
 /// Mileage and fuel of one report week, computed the same way for the screen
 /// and the PDF.
@@ -18,9 +12,6 @@ class WeekSummary {
   /// Reading the week starts from: the last reading before the week, or the
   /// first reading inside it when there is none before.
   final int? odometerStart;
-
-  /// Date (`YYYY-MM-DD`) of [odometerStart].
-  final String? odometerStartDate;
 
   /// Last reading inside the week; `null` when the week has no reading.
   final int? odometerEnd;
@@ -33,19 +24,13 @@ class WeekSummary {
   /// Whether the week has at least one odometer or fuel entry.
   final bool hasEntries;
 
-  /// Whether [distance] also includes days before the week that have no
-  /// reading (the previous reading is older than a weekend).
-  final bool includesGap;
-
   const WeekSummary({
     required this.week,
     required this.distance,
     required this.fuelSummaries,
     required this.hasEntries,
     this.odometerStart,
-    this.odometerStartDate,
     this.odometerEnd,
-    this.includesGap = false,
   });
 
   bool get hasMileage => distance > 0;
@@ -99,27 +84,18 @@ WeekSummary summarizeWeek(
   final startLog = before ?? (inWeek.isEmpty ? null : inWeek.first);
   final endLog = inWeek.isEmpty ? null : inWeek.last;
   var distance = 0;
-  var includesGap = false;
   if (startLog != null && endLog != null) {
     distance = endLog.odometer - startLog.odometer;
     if (distance < 0) distance = 0;
-    final previousDate =
-        before == null ? null : DateTime.tryParse(before.dateString);
-    if (previousDate != null && distance > 0) {
-      final daysBetween = calendarDaysBetween(previousDate, week.start) - 1;
-      includesGap = daysBetween > maxDaysWithoutReadingBeforeWeek;
-    }
   }
 
   return WeekSummary(
     week: week,
     odometerStart: startLog?.odometer,
-    odometerStartDate: startLog?.dateString,
     odometerEnd: endLog?.odometer,
     distance: distance,
     fuelSummaries: summarizeFuelLogsByType(weekFuel),
     hasEntries: inWeek.isNotEmpty || weekFuel.isNotEmpty,
-    includesGap: includesGap,
   );
 }
 
@@ -128,25 +104,14 @@ class MonthSummary {
   final int distance;
   final List<FuelTypeSummary> fuelSummaries;
 
-  /// Working days (Mon–Sat or Mon–Fri by the schedule) in the past part of
-  /// the month that have no odometer reading.
-  final int daysWithoutReading;
-
   const MonthSummary({
     required this.distance,
     required this.fuelSummaries,
-    required this.daysWithoutReading,
   });
 }
 
-/// Adds up [weeks] of one month. [isWorkingDay] decides which days count
-/// for [MonthSummary.daysWithoutReading]; days after [today] are not counted.
-MonthSummary summarizeMonth(
-  List<WeekSummary> weeks, {
-  required Iterable<OdometerLog> odometerLogs,
-  required bool Function(DateTime day) isWorkingDay,
-  required DateTime today,
-}) {
+/// Adds up the mileage and fuel of [weeks] of one month.
+MonthSummary summarizeMonth(List<WeekSummary> weeks) {
   final fuelByType = <String, ({int count, double liters})>{};
   var distance = 0;
   for (final week in weeks) {
@@ -157,19 +122,6 @@ MonthSummary summarizeMonth(
         count: (current?.count ?? 0) + fuel.refuelCount,
         liters: (current?.liters ?? 0) + fuel.totalLiters,
       );
-    }
-  }
-
-  final readingDays = {for (final log in odometerLogs) log.dateString};
-  final lastDay = DateTime(today.year, today.month, today.day);
-  var missing = 0;
-  for (final week in weeks) {
-    for (var day = week.week.start;
-        !day.isAfter(week.week.end) && !day.isAfter(lastDay);
-        day = addCalendarDays(day, 1)) {
-      if (isWorkingDay(day) && !readingDays.contains(_dateKey(day))) {
-        missing++;
-      }
     }
   }
 
@@ -185,6 +137,5 @@ MonthSummary summarizeMonth(
   return MonthSummary(
     distance: distance,
     fuelSummaries: fuelSummaries,
-    daysWithoutReading: missing,
   );
 }

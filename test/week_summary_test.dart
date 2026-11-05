@@ -96,14 +96,8 @@ void main() {
             .every((week) => week.fuelSummaries.isEmpty),
         isTrue,
       );
-      final month = summarizeMonth(
-        summaries,
-        odometerLogs: const [],
-        isWorkingDay: (day) => day.weekday <= DateTime.friday,
-        today: DateTime(2026, 11, 30),
-      );
+      final month = summarizeMonth(summaries);
       expect(month.fuelSummaries.single.totalLiters, 30);
-      expect(month.daysWithoutReading, 21);
     });
   });
 
@@ -124,7 +118,6 @@ void main() {
     expect(summary.odometerStart, 1000);
     expect(summary.odometerEnd, 1300);
     expect(summary.distance, 300);
-    expect(summary.includesGap, isFalse);
   });
 
   test('uses the first reading of the week when there is none before', () {
@@ -137,24 +130,26 @@ void main() {
     expect(summary.distance, 120);
   });
 
-  test('flags mileage that also covers days without readings', () {
+  test('keeps mileage from a reading recorded well before the week', () {
     final summary = summarizeWeek(
       week,
       odometerLogs: [_odo('2026-10-08', 1000), _odo('2026-10-22', 1900)],
       fuelLogs: const [],
     );
     expect(summary.distance, 900);
-    expect(summary.includesGap, isTrue);
-    expect(summary.odometerStartDate, '2026-10-08');
+    expect(summary.odometerStart, 1000);
+    expect(summary.odometerEnd, 1900);
   });
 
-  test('a weekend between readings is not a gap', () {
+  test('keeps mileage across a weekend between readings', () {
     final summary = summarizeWeek(
       ReportWeek(DateTime(2026, 10, 26), DateTime(2026, 10, 31)),
       odometerLogs: [_odo('2026-10-23', 1000), _odo('2026-10-26', 1100)],
       fuelLogs: const [],
     );
-    expect(summary.includesGap, isFalse);
+    expect(summary.odometerStart, 1000);
+    expect(summary.odometerEnd, 1100);
+    expect(summary.distance, 100);
   });
 
   test('a week with refuels but without readings keeps its fuel', () {
@@ -183,7 +178,7 @@ void main() {
     expect(summary.distance, 0);
   });
 
-  test('month totals add up the weeks and count missing working days', () {
+  test('month totals add up the mileage and fuel of the weeks', () {
     final weeks = [
       ReportWeek(DateTime(2026, 10, 1), DateTime(2026, 10, 3)),
       ReportWeek(DateTime(2026, 10, 4), DateTime(2026, 10, 4)),
@@ -206,20 +201,12 @@ void main() {
         summarizeWeek(week, odometerLogs: odometer, fuelLogs: fuel),
     ];
 
-    final month = summarizeMonth(
-      summaries,
-      odometerLogs: odometer,
-      isWorkingDay: (day) => day.weekday != DateTime.sunday,
-      today: DateTime(2026, 10, 7),
-    );
+    final month = summarizeMonth(summaries);
 
     expect(month.distance, 300);
     expect(
       {for (final f in month.fuelSummaries) f.fuelType: f.totalLiters},
       {'95': 5.0, 'ГАЗ': 55.0},
     );
-    // Missing: Mon 5 and Wed 7 (Sun 4 is a day off, days after the 7th
-    // are not counted yet).
-    expect(month.daysWithoutReading, 2);
   });
 }

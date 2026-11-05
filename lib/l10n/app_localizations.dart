@@ -1034,18 +1034,6 @@ abstract class AppLocalizations {
   /// **'Mileage: {distance} km'**
   String monthTotalDistance(String distance);
 
-  /// No description provided for @monthDaysWithoutReading.
-  ///
-  /// In en, this message translates to:
-  /// **'Working days without a reading: {days}'**
-  String monthDaysWithoutReading(int days);
-
-  /// No description provided for @weekIncludesGap.
-  ///
-  /// In en, this message translates to:
-  /// **'The mileage also covers days without readings since {date}'**
-  String weekIncludesGap(String date);
-
   /// No description provided for @editOdometerTitle.
   ///
   /// In en, this message translates to:

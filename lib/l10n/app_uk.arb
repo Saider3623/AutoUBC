@@ -196,8 +196,6 @@
   "weeklyReportDistanceText": "Пробіг: {distance} км",
   "monthSummaryTitle": "ПІДСУМОК МІСЯЦЯ",
   "monthTotalDistance": "Пробіг: {distance} км",
-  "monthDaysWithoutReading": "Робочих днів без показань: {days}",
-  "weekIncludesGap": "Пробіг включає дні без показань від {date}",
   "editOdometerTitle": "Змінити показання",
   "editRefuelTitle": "Змінити заправку",
   "timeLabel": "Час",

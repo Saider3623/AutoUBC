@@ -48,8 +48,6 @@ class _PdfTranslations {
   final String noMileage;
   final String monthTotal;
   final String monthMileage;
-  final String daysWithoutReading;
-  final String gapNote;
   final String generated;
   final String page;
   final String plate;
@@ -66,8 +64,6 @@ class _PdfTranslations {
     required this.noMileage,
     required this.monthTotal,
     required this.monthMileage,
-    required this.daysWithoutReading,
-    required this.gapNote,
     required this.generated,
     required this.page,
     required this.plate,
@@ -88,8 +84,6 @@ class _PdfTranslations {
           noMileage: 'No mileage',
           monthTotal: 'Month total',
           monthMileage: 'Mileage this month',
-          daysWithoutReading: 'Working days without a reading',
-          gapNote: 'The mileage includes days without readings since {date}',
           generated: 'Generated {date}',
           page: 'Page {page} of {pages}',
           plate: 'Plate',
@@ -108,8 +102,6 @@ class _PdfTranslations {
           noMileage: 'Без пробігу',
           monthTotal: 'Підсумок місяця',
           monthMileage: 'Пробіг за місяць',
-          daysWithoutReading: 'Робочих днів без показань',
-          gapNote: 'Пробіг включає дні без показань від {date}',
           generated: 'Сформовано {date}',
           page: 'Сторінка {page} з {pages}',
           plate: 'Держномер',
@@ -174,13 +166,7 @@ class ReportService {
         summarizeWeek(week, odometerLogs: odometerLogs, fuelLogs: fuelLogs),
     ];
     final now = DateTime.now();
-    final month = summarizeMonth(
-      weeks,
-      odometerLogs: odometerLogs,
-      today: now,
-      isWorkingDay: (day) =>
-          day.weekday != DateTime.sunday && !schedule.isNonWorkingSaturday(day),
-    );
+    final month = summarizeMonth(weeks);
     final numbers = NumberFormat.decimalPattern(languageCode);
 
     pdf.addPage(
@@ -280,8 +266,6 @@ class ReportService {
                 _formatLiters(fuel.totalLiters, t),
               ),
             ),
-            if (month.daysWithoutReading > 0)
-              _tableRow(t.daysWithoutReading, '${month.daysWithoutReading}'),
           ],
         ),
         pw.SizedBox(height: 20),
@@ -298,10 +282,6 @@ class ReportService {
     final dateRange = formatReportWeekTitle(week.week, languageCode);
     String km(int? value) =>
         value == null ? '—' : '${numbers.format(value)} ${t.km}';
-
-    final gapDate = week.includesGap && week.odometerStartDate != null
-        ? DateTime.tryParse(week.odometerStartDate!)
-        : null;
 
     return pw.Column(
       mainAxisSize: pw.MainAxisSize.min,
@@ -359,15 +339,6 @@ class ReportService {
                 ),
               ),
             ],
-          ),
-        if (gapDate != null)
-          pw.Padding(
-            padding: const pw.EdgeInsets.only(top: 4),
-            child: pw.Text(
-              t.gapNote.replaceFirst('{date}',
-                  DateFormat('dd.MM.yy', languageCode).format(gapDate)),
-              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
-            ),
           ),
         pw.SizedBox(height: 20),
       ],

@@ -121,11 +121,6 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
         };
         final month = summarizeMonth(
           [for (final week in monthWeeks) summaries[week]!],
-          odometerLogs: provider.odometerLogs,
-          today: today,
-          isWorkingDay: (day) =>
-              day.weekday != DateTime.sunday &&
-              !schedule.isNonWorkingSaturday(day),
         );
         final weeks = prioritizeCurrentReportWeek(
           monthWeeks
@@ -263,21 +258,6 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
                 ],
               ),
             ],
-            if (month.daysWithoutReading > 0) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: colorScheme.error),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      loc.monthDaysWithoutReading(month.daysWithoutReading),
-                      style: TextStyle(fontSize: 13, color: colorScheme.error),
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ],
         ),
       ),
@@ -330,40 +310,9 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
               _buildNoMileagePanel(loc)
             else
               _buildReportSections(summary, loc, colorScheme, languageCode),
-            if (summary.includesGap && summary.odometerStartDate != null) ...[
-              const SizedBox(height: 12),
-              _buildGapNote(summary.odometerStartDate!, loc, languageCode),
-            ],
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildGapNote(
-    String startDate,
-    AppLocalizations loc,
-    String languageCode,
-  ) {
-    final date = DateTime.tryParse(startDate);
-    final formatted =
-        date == null ? startDate : DateFormat.MMMd(languageCode).format(date);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Icon(Icons.info_outline, size: 16, color: _secondaryTextColor),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            loc.weekIncludesGap(formatted),
-            style: const TextStyle(
-              fontSize: 12.5,
-              height: 1.3,
-              color: _secondaryTextColor,
-            ),
-          ),
-        ),
-      ],
     );
   }
 

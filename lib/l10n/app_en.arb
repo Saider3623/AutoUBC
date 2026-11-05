@@ -244,22 +244,6 @@
       }
     }
   },
-  "monthDaysWithoutReading": "Working days without a reading: {days}",
-  "@monthDaysWithoutReading": {
-    "placeholders": {
-      "days": {
-        "type": "int"
-      }
-    }
-  },
-  "weekIncludesGap": "The mileage also covers days without readings since {date}",
-  "@weekIncludesGap": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
   "editOdometerTitle": "Edit reading",
   "editRefuelTitle": "Edit refuel",
   "timeLabel": "Time",

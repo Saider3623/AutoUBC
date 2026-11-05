@@ -511,16 +511,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String monthDaysWithoutReading(int days) {
-    return 'Working days without a reading: $days';
-  }
-
-  @override
-  String weekIncludesGap(String date) {
-    return 'The mileage also covers days without readings since $date';
-  }
-
-  @override
   String get editOdometerTitle => 'Edit reading';
 
   @override
