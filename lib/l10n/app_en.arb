@@ -276,13 +276,10 @@
   },
   "navEntry": "Entry",
   "navReport": "Report",
-  "previousReading": "Previous: {reading} km, {date}",
+  "previousReading": "Previous: {reading} km",
   "@previousReading": {
     "placeholders": {
       "reading": {
-        "type": "String"
-      },
-      "date": {
         "type": "String"
       }
     }

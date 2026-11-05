@@ -622,8 +622,7 @@ class _DataEntryScreenState extends State<DataEntryScreen>
                     final delta = typed == null ? null : typed - previous.odometer;
                     lines.add(Text(
                       [
-                        loc.previousReading(
-                            numbers.format(previous.odometer), dayLabel(previous)),
+                        loc.previousReading(numbers.format(previous.odometer)),
                         if (delta != null && delta >= 0)
                           '+${numbers.format(delta)} ${loc.km}',
                       ].join('  ·  '),

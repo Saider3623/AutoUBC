@@ -204,7 +204,7 @@
   "appVersion": "Версія {version} ({build})",
   "navEntry": "Ввід",
   "navReport": "Звіт",
-  "previousReading": "Попереднє: {reading} км, {date}",
+  "previousReading": "Попереднє: {reading} км",
   "readingBelowPrevious": "Менше за попереднє показання",
   "readingAboveNext": "Більше за наступне показання: {reading} км, {date}",
   "largeJumpConfirm": "+{distance} км за {days} дн. Усе одно зберегти?",

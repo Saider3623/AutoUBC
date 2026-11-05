@@ -542,8 +542,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get navReport => 'Звіт';
 
   @override
-  String previousReading(String reading, String date) {
-    return 'Попереднє: $reading км, $date';
+  String previousReading(String reading) {
+    return 'Попереднє: $reading км';
   }
 
   @override

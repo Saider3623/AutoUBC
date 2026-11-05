@@ -1085,8 +1085,8 @@ abstract class AppLocalizations {
   /// No description provided for @previousReading.
   ///
   /// In en, this message translates to:
-  /// **'Previous: {reading} km, {date}'**
-  String previousReading(String reading, String date);
+  /// **'Previous: {reading} km'**
+  String previousReading(String reading);
 
   /// No description provided for @readingBelowPrevious.
   ///
