@@ -22,25 +22,51 @@ Write-Host ""
 
 Write-Host "Step 0: Checking the release signing key..." -ForegroundColor Yellow
 $keyProperties = Join-Path $PSScriptRoot "android\key.properties"
+$defaultStorePath = Join-Path $PSScriptRoot "android\app\autoubc-release.jks"
 if (Test-Path -LiteralPath $keyProperties) {
     $storeFileLine = Get-Content -LiteralPath $keyProperties |
         Where-Object { $_ -match '^\s*storeFile\s*=' } |
         Select-Object -First 1
     if (-not $storeFileLine) {
-        Exit-WithError "android\key.properties has no storeFile entry."
+        Exit-WithError (@"
+android\key.properties has no storeFile entry.
+Restore the original key.properties from your backup to:
+  $keyProperties
+Or add storeFile=app/autoubc-release.jks if your original release keystore is at:
+  $defaultStorePath
+For another keystore location, set storeFile to its path relative to android\.
+Then run build.bat again.
+"@)
     }
     $storeFile = ($storeFileLine -split '=', 2)[1].Trim()
     $storePath = Join-Path (Join-Path $PSScriptRoot "android") $storeFile
     if (-not (Test-Path -LiteralPath $storePath)) {
-        Exit-WithError "The keystore from android\key.properties was not found: $storePath"
+        Exit-WithError (@"
+The release keystore from android\key.properties was not found.
+Restore your ORIGINAL release keystore (.jks) from your backup to:
+  $storePath
+This destination is configured by storeFile in:
+  $keyProperties
+Use the original keystore matching the keyAlias and passwords in that file.
+Then run build.bat again.
+"@)
     }
     Write-Host "Release key: $storeFile" -ForegroundColor Green
 } elseif ($AllowDebugSigning) {
     Write-Host "WARNING: no android\key.properties - the APK is signed with the DEBUG key." -ForegroundColor DarkYellow
     Write-Host "         It cannot be installed over a release-signed app." -ForegroundColor DarkYellow
 } else {
-    Exit-WithError ("android\key.properties not found. Create the release key as described in " +
-        "android\key.properties.example, or run .\build.ps1 -AllowDebugSigning for a test build.")
+    Exit-WithError (@"
+android\key.properties was not found.
+Restore your ORIGINAL signing files from your backup to these locations:
+  Release keystore (.jks): $defaultStorePath
+  Signing settings (key.properties): $keyProperties
+If key.properties was not backed up, copy android\key.properties.example to
+android\key.properties and fill in the ORIGINAL storePassword, keyAlias and
+keyPassword. For the keystore location above, use storeFile=app/autoubc-release.jks.
+Then run build.bat again. Use the original release key, not a newly generated key.
+For a test build only, you can run .\build.ps1 -AllowDebugSigning.
+"@)
 }
 
 Write-Host ""
