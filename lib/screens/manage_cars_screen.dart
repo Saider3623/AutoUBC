@@ -5,13 +5,12 @@ import '../l10n/app_localizations.dart';
 import '../models/car.dart';
 import '../providers/app_provider.dart';
 import '../utils/error_messages.dart';
-import '../widgets/app_version_text.dart';
 import '../widgets/work_schedule_card.dart';
 import 'backups_screen.dart';
 import '../theme/app_theme.dart';
 
 /// Settings: the selected car (name, plate, driver, fuel types, deletion) and
-/// app-wide options (working week, backups, version).
+/// app-wide options (working week, backups).
 class ManageCarsScreen extends StatefulWidget {
   final bool autoOpenAddCar;
 
@@ -337,8 +336,6 @@ class _ManageCarsScreenState extends State<ManageCarsScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              const AppVersionText(),
             ],
           ),
         ),
