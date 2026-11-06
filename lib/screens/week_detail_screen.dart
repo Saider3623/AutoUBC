@@ -89,7 +89,7 @@ class WeekDetailScreen extends StatelessWidget {
               final date = dates[index];
               final entries = days[date]!;
               entries.fuel.sort((a, b) => a.timeString.compareTo(b.timeString));
-              final formattedDate = DateFormat('dd.MM.yy', languageCode)
+              final formattedDate = DateFormat('dd.MM.yy (EEEE)', languageCode)
                   .format(DateTime.parse(date));
 
               return Card(

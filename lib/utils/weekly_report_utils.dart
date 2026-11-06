@@ -37,7 +37,7 @@ String formatReportWeekRange(ReportWeek week, String languageCode) {
   return week.start == week.end ? start : '$start - ${format.format(week.end)}';
 }
 
-/// Shared by report cards and the PDF, with weekdays after the numeric dates.
+/// PDF heading with weekdays after the numeric dates.
 String formatReportWeekTitle(ReportWeek week, String languageCode) {
   final locale = languageCode == 'en' ? 'en' : 'uk';
   final weekday = DateFormat('EEE', locale);

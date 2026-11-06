@@ -271,7 +271,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
     required bool isCurrentWeek,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    final weekTitle = formatReportWeekTitle(summary.week, languageCode);
+    final weekTitle = formatReportWeekRange(summary.week, languageCode);
     final numbers = NumberFormat.decimalPattern(languageCode);
     // The "nothing recorded" look is reserved for weeks without any entries;
     // a week with refuels but zero mileage still shows its data.
@@ -321,7 +321,7 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen>
     required String languageCode,
     required String label,
   }) {
-    final weekTitle = formatReportWeekTitle(week, languageCode);
+    final weekTitle = formatReportWeekRange(week, languageCode);
     const futureTextColor = Color(0xFF5B6874);
 
     return Card(
