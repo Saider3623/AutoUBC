@@ -779,19 +779,4 @@ class AppLocalizationsEn extends AppLocalizations {
   String reminderDeletedMessage(String title) {
     return 'Deleted: $title';
   }
-
-  @override
-  String get maintenanceResetTitle => 'Mark the maintenance done?';
-
-  @override
-  String maintenanceResetBody(int km) {
-    return 'The maintenance reminder is marked done; the next one is due at $km km.';
-  }
-
-  @override
-  String get maintenanceResetBodyOnce =>
-      'The maintenance reminder is marked done.';
-
-  @override
-  String get maintenanceResetAction => 'Mark done';
 }

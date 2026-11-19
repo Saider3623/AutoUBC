@@ -471,16 +471,5 @@
         "type": "String"
       }
     }
-  },
-  "maintenanceResetTitle": "Mark the maintenance done?",
-  "maintenanceResetBody": "The maintenance reminder is marked done; the next one is due at {km} km.",
-  "@maintenanceResetBody": {
-    "placeholders": {
-      "km": {
-        "type": "int"
-      }
-    }
-  },
-  "maintenanceResetBodyOnce": "The maintenance reminder is marked done.",
-  "maintenanceResetAction": "Mark done"
+  }
 }

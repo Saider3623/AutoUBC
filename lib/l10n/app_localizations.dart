@@ -1465,30 +1465,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deleted: {title}'**
   String reminderDeletedMessage(String title);
-
-  /// No description provided for @maintenanceResetTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Mark the maintenance done?'**
-  String get maintenanceResetTitle;
-
-  /// No description provided for @maintenanceResetBody.
-  ///
-  /// In en, this message translates to:
-  /// **'The maintenance reminder is marked done; the next one is due at {km} km.'**
-  String maintenanceResetBody(int km);
-
-  /// No description provided for @maintenanceResetBodyOnce.
-  ///
-  /// In en, this message translates to:
-  /// **'The maintenance reminder is marked done.'**
-  String get maintenanceResetBodyOnce;
-
-  /// No description provided for @maintenanceResetAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Mark done'**
-  String get maintenanceResetAction;
 }
 
 class _AppLocalizationsDelegate

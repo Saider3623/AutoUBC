@@ -205,10 +205,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noServiceLogs => 'Немає записів у сервісній книжці';
 
   @override
-  String get addServiceLog => 'Додати запис ТО';
+  String get addServiceLog => 'Додати запис';
 
   @override
-  String get editServiceLog => 'Редагувати запис ТО';
+  String get editServiceLog => 'Редагувати запис';
 
   @override
   String get mileageKm => 'Пробіг (км)';
@@ -780,19 +780,4 @@ class AppLocalizationsUk extends AppLocalizations {
   String reminderDeletedMessage(String title) {
     return 'Видалено: $title';
   }
-
-  @override
-  String get maintenanceResetTitle => 'Відмітити ТО виконаним?';
-
-  @override
-  String maintenanceResetBody(int km) {
-    return 'Нагадування про ТО буде відмічено виконаним, наступне — на $km км.';
-  }
-
-  @override
-  String get maintenanceResetBodyOnce =>
-      'Нагадування про ТО буде відмічено виконаним.';
-
-  @override
-  String get maintenanceResetAction => 'Відмітити';
 }
